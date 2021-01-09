@@ -1,0 +1,42 @@
+{
+  "Actions": [
+    {
+      "Icon": "images/actionImage",
+      "Name": "Home Assistant Entity",
+      "PropertyInspectorPath": "pi.html",
+      "States": [
+        {
+          "Image": "images/ha-button",
+          "TitleAlignment": "bottom",
+          "FontSize": "9"
+        }
+      ],
+      "SupportedInMultiActions": true,
+      "UUID": "de.perdoctus.streamdeck.ha.entity"
+    }
+  ],
+  "Category": "Home Assistant",
+  "CategoryIcon": "images/category",
+  "SDKVersion": 2,
+  "Author": "Christoph Giesche",
+  "CodePath": "plugin.html",
+  "Description": "Control your Home Assistant entities with stream deck.",
+  "Name": "Home Assistant",
+  "Icon": "images/ha-button",
+  "URL": "https://github.com/cgiesche/streamdeck-homeassistant",
+  "Version": "1.0",
+  "OS": [
+    {
+      "Platform": "mac",
+      "MinimumVersion" : "10.11"
+    },
+    {
+      "Platform": "windows",
+      "MinimumVersion" : "10"
+    }
+  ],
+  "Software":
+  {
+    "MinimumVersion" : "4.1"
+  }
+}

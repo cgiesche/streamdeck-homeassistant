@@ -1,4 +1,22 @@
-# streamdeck-homeassistant-vue
+# streamdeck-homeassistant
+
+## Supported Entities (Services)
+### General Support
+
+
+### Support
+* Switches (turn on, turn off, toggle)
+* Lights (turn on, turn off, toggle)
+
+## Supported Sensors:
+* Any binary sensor
+  * Variant "Plug"
+* Temperature
+* Humidity
+* Pressure
+* Power
+* Battery-Level
+* Weather (in progress)
 
 ## Project setup
 ```
