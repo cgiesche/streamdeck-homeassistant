@@ -22,7 +22,7 @@ jobs:
 
       - name: Zip Dist
         working-directory: ./dist
-        run: zip -r release.zip .*
+        run: zip -r release.zip ./*
 
       - name: Upload Release Asset
         id: upload-release-asset
