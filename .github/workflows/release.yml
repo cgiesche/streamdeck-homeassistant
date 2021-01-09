@@ -21,7 +21,8 @@ jobs:
         run: npm run build
 
       - name: Zip Dist
-        run: cd dist && zip -r release.zip .*
+        working-directory: ./dist
+        run: zip -r release.zip .*
 
       - name: Upload Release Asset
         id: upload-release-asset
