@@ -62,34 +62,31 @@ window.connectElgatoStreamDeckSocket = (inPort, inPluginUUID, inRegisterEvent, i
 
     const updateState = (state) => {
         let entity = new Entity(state.entity_id);
-        // TODO: Filter statt find (falls mehrfach konfiguriert!)
-        let changedContext = Object.keys(actionSettings).find(key => actionSettings[key].entityId === entity.entityId);
+        let changedContexts = Object.keys(actionSettings).filter(key => actionSettings[key].entityId === entity.entityId);
 
-        if (!changedContext) {
-            return;
-        }
+        changedContexts.forEach(changedContext => {
+            let newState = state.state;
+            let stateAttributes = state.attributes;
+            let deviceClass = stateAttributes.device_class || "default";
 
-        let newState = state.state;
-        let stateAttributes = state.attributes;
-        let deviceClass = stateAttributes.device_class || "default";
+            console.log(`Finding image for context ${changedContext}: ${entity.domain}.${deviceClass}(${newState})`)
 
-        console.log(`Finding image for context ${changedContext}: ${entity.domain}.${deviceClass}(${newState})`)
-
-        if (changedContext) {
-            if (IconFactory[entity.domain] && IconFactory[entity.domain][deviceClass]) {
-                console.log(`... sucess!`)
-                // domain, class, state
-                let svg = IconFactory[entity.domain][deviceClass](newState, stateAttributes);
-                let image = "data:image/svg+xml;charset=utf8," + svg;
-                SD.setImage(changedContext, image)
-            } else if (IconFactory[entity.domain] && IconFactory[entity.domain]["default"]) {
-                console.log(`... sucess (fallback)!`)
-                let svg = IconFactory[entity.domain]["default"](newState, stateAttributes);
-                setButtonSVG(svg, changedContext);
-            } else {
-                console.log(`... failed!`)
+            if (changedContext) {
+                if (IconFactory[entity.domain] && IconFactory[entity.domain][deviceClass]) {
+                    console.log(`... sucess!`)
+                    // domain, class, state
+                    let svg = IconFactory[entity.domain][deviceClass](newState, stateAttributes);
+                    let image = "data:image/svg+xml;charset=utf8," + svg;
+                    SD.setImage(changedContext, image)
+                } else if (IconFactory[entity.domain] && IconFactory[entity.domain]["default"]) {
+                    console.log(`... sucess (fallback)!`)
+                    let svg = IconFactory[entity.domain]["default"](newState, stateAttributes);
+                    setButtonSVG(svg, changedContext);
+                } else {
+                    console.log(`... failed!`)
+                }
             }
-        }
+        })
     }
 
     function setButtonSVG(svg, changedContext) {
