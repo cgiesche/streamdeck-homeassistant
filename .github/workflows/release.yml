@@ -1,4 +1,4 @@
-name: Create Release
+name: Create and upload release assets
 
 on:
   release:
@@ -21,9 +21,7 @@ jobs:
         run: npm run build
 
       - name: Zip Dist
-        run: |
-          cd dist
-          zip -r release.zip .*
+        run: cd dist && zip -r release.zip .*
 
       - name: Upload Release Asset
         id: upload-release-asset
@@ -32,6 +30,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./release.zip
+          asset_path: ./dist/release.zip
           asset_name: de.perdoctus.streamdeck.ha.zip
           asset_content_type: application/zip
