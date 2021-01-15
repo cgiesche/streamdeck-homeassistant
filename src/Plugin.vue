@@ -6,6 +6,7 @@
 import StreamDeck from "@/modules/common/streamdeck";
 import {Entity, Homeassistant} from "@/modules/common/homeassistant";
 import {IconFactory} from "@/modules/plugin/imageUtils";
+import Handlebars from "handlebars"
 
 export default {
   name: 'Plugin',
@@ -103,40 +104,44 @@ export default {
       }
 
       const updateState = (state) => {
-        let entity = new Entity(state.entity_id);
-        let changedContext = Object.keys(this.actionSettings).find(key => this.actionSettings[key].entityId === entity.entityId);
-
+        let entity = new Entity(state.entity_id)
+        let changedContext = Object.keys(this.actionSettings).find(key => this.actionSettings[key].entityId === entity.entityId)
         if (!changedContext) {
           return;
         }
 
+        let changedContextSettings = this.actionSettings[changedContext]
         let newState = state.state;
         let stateAttributes = state.attributes;
         let deviceClass = stateAttributes.device_class || "default";
 
         console.log(`Finding image for context ${changedContext}: ${entity.domain}.${deviceClass}(${newState})`)
 
-        if (changedContext) {
-          if (IconFactory[entity.domain] && IconFactory[entity.domain][deviceClass]) {
-            console.log(`... sucess!`)
-            // domain, class, state
-            let svg = IconFactory[entity.domain][deviceClass](newState, stateAttributes);
-            let image = "data:image/svg+xml;charset=utf8," + svg;
-            this.$SD.setImage(changedContext, image)
-          } else if (IconFactory[entity.domain] && IconFactory[entity.domain]["default"]) {
-            console.log(`... sucess (fallback)!`)
-            let svg = IconFactory[entity.domain]["default"](newState, stateAttributes);
-            setButtonSVG(svg, changedContext);
-          } else {
-            console.log(`... failed!`)
-          }
+
+
+        if (IconFactory[entity.domain] && IconFactory[entity.domain][deviceClass]) {
+          console.log(`... sucess!`)
+          // domain, class, state
+          let svg = IconFactory[entity.domain][deviceClass](newState, stateAttributes);
+          setButtonSVG(svg, changedContext)
+        } else if (IconFactory[entity.domain] && IconFactory[entity.domain]["default"]) {
+          console.log(`... sucess (fallback)!`)
+          let svg = IconFactory[entity.domain]["default"](newState, stateAttributes);
+          setButtonSVG(svg, changedContext);
+        } else {
+          console.log(`... failed!`)
+        }
+
+        if (changedContextSettings.useCustomTitle) {
+          const customTitle = new Handlebars.compile(changedContextSettings.buttonTitle)({...{state}, ...stateAttributes})
+          this.$SD.setTitle(changedContext, customTitle);
         }
       }
+    }
 
-      let setButtonSVG = (svg, changedContext) => {
-        let image = "data:image/svg+xml;charset=utf8," + svg;
-        this.$SD.setImage(changedContext, image)
-      }
+    let setButtonSVG = (svg, changedContext) => {
+      let image = "data:image/svg+xml;charset=utf8," + svg;
+      this.$SD.setImage(changedContext, image)
     }
   },
 }

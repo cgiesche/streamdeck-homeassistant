@@ -1,3 +1,5 @@
+import Handlebars from "handlebars"
+
 const colors = {
     action: "#FFFFFF",
     passive: "#bbbbbb",
@@ -9,48 +11,48 @@ const colors = {
 
 export const IconFactory = {
     "switch": {
-        default: (state) => {
+        default: (state, attributes) => {
             if (state === "on") {
-                return Image["switchOn"]();
+                return Image["switchOn"](state, attributes);
             } else {
-                return Image["switchOff"]()
+                return Image["switchOff"](state, attributes)
             }
         }
     },
 
     light: {
-        default: (state) => {
+        default: (state, attributes) => {
             if (state === "on") {
-                return Image["switchOn"]();
+                return Image["switchOn"](state, attributes);
             } else {
-                return Image["switchOff"]()
+                return Image["switchOff"](state, attributes)
             }
         }
     },
 
     binary_sensor: {
-        default: (state) => {
+        default: (state, attributes) => {
             if (state === "on") {
-                return Image["sensorOn"]();
+                return Image["sensorOn"](state, attributes);
             } else {
-                return Image["sensorOff"]()
+                return Image["sensorOff"](state, attributes)
             }
         },
 
-        plug: (state) => {
-            return Image["plug"](state);
+        plug: (state, attributes) => {
+            return Image["plug"](state, attributes);
         }
     },
 
     weather: {
-        default: (state) => {
-            return Image.weather(state)
+        default: (state, attributes) => {
+            return Image.weather(state, attributes)
         }
     },
 
     sensor: {
-        battery: (state) => {
-            return Image["battery"](state)
+        battery: (state, attributes) => {
+            return Image["battery"](state, attributes)
         },
 
         temperature: (state, attributes) => {
@@ -70,7 +72,7 @@ export const IconFactory = {
         },
 
         default: (state, attributes) => {
-            return Image.defaultSensor(state, "", attributes["unit_of_measurement"])
+            return Image.labelledIcon(state, "", attributes["unit_of_measurement"])
         }
     }
 
@@ -93,7 +95,8 @@ const Image = {
         return `<svg width="144" height="144" viewBox="0 0 144 144" xmlns="http://www.w3.org/2000/svg"><path fill="${colors.passive}" d="m100.57 14.186h-57.146c-13.786 0-25.001 11.215-25.001 25.001s11.215 25.001 25.001 25.001h57.146c13.786 0 25.001-11.215 25.001-25.001s-11.215-25.001-25.001-25.001zm0 46.431h-57.146c-11.817 0-21.43-9.613-21.43-21.43s9.613-21.43 21.43-21.43h57.146c11.817 0 21.43 9.613 21.43 21.43s-9.613 21.43-21.43 21.43z" stroke-width="1.7858"/></svg>`
     },
 
-    plug: (state) => {
+    plug: (state, attributes) => {
+        console.log(attributes)
         let color;
         if (state === "on") {
             color = colors.active
@@ -103,20 +106,20 @@ const Image = {
         return `<svg width="144" height="144" viewBox="0 0 144 144" xmlns="http://www.w3.org/2000/svg"><g fill="${color}" transform="matrix(.12332 .12932 -.12332 .12932 74.269 -34.817)" stroke-width="5.5994"><path d="m202.7 259.7-31.5 31.5c-5.6 5.6-8.6 13-8.6 20.9s3.1 15.3 8.6 20.9l6.1 6.1-3.7 3.7c-11.1 11.1-29.2 11.1-40.4 0l-31.4-31.4c-20.7-20.7-54.3-20.7-75 0s-20.7 54.3 0 75l31.4 31.5c5.4 5.4 8.4 12.6 8.4 20.2s-3 14.8-8.4 20.2c-4.8 4.8-4.8 12.5 0 17.3 2.4 2.4 5.5 3.6 8.7 3.6 3.1 0 6.3-1.2 8.7-3.6 10-10 15.5-23.3 15.5-37.5s-5.5-27.5-15.5-37.5l-31.4-31.5c-11.1-11.1-11.1-29.2 0-40.4s29.2-11.1 40.4 0l31.4 31.3c20.7 20.7 54.3 20.7 75 0l3.7-3.7 6.1 6.1c5.8 5.8 13.3 8.6 20.9 8.6s15.1-2.9 20.9-8.6l31.5-31.5c11.4 3.7 23.2 5.7 35 5.7 28.7 0 57.4-10.9 79.2-32.7l55.1-55.1 9.9 9.9c2.4 2.4 5.5 3.6 8.7 3.6s6.3-1.2 8.7-3.6c4.8-4.8 4.8-12.5 0-17.3l-40.5-40.5 67-67c4.8-4.8 4.8-12.5 0-17.3s-12.5-4.8-17.3 0l-67 67-62.7-62.6 67-67c4.8-4.8 4.8-12.5 0-17.3s-12.5-4.8-17.3 0l-67 67-40.5-40.5c-4.8-4.8-12.5-4.8-17.3 0s-4.8 12.5 0 17.3l9.9 9.9-55.1 55.1c-30.9 30.9-39.9 75.3-27.2 114.2zm44.4 26.9c-34.1-34.1-34.1-89.6 0-123.7l55.1-55.1 123.8 123.6-55.1 55.1c-34.2 34.2-89.7 34.2-123.8 0.1zm-33.4-3.2c4.5 7.3 9.8 14.2 16.1 20.5s13.2 11.6 20.5 16.1l-25.2 25.2c-1.9 2-5.1 2-7.1 0l-29.5-29.5c-1.3-1.3-1.5-2.8-1.5-3.5 0-0.8 0.2-2.3 1.5-3.5z" stroke-width="5.5994"/></g></svg>`
     },
 
-    battery: (level) => {
+    battery: (state, attributes) => {
+        console.log(attributes)
         let levelColor;
-        if (level < 15) {
+        if (state < 15) {
             levelColor = "#FF0000"
-        } else if (level < 30) {
+        } else if (state < 30) {
             levelColor = "#ff8600"
         } else {
             levelColor = "#00a400"
         }
-        return `<svg width="144" height="144" viewBox="0 0 144 144" xmlns="http://www.w3.org/2000/svg"><g transform="matrix(.5443 0 0 .5443 17.059 -15.377)" stroke-width="1.8372"><g stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8372"><g fill="${colors.passive}"><rect x="170.13" y="85.397" width="18.486" height="27.963" ry="1.442" stroke-width="3.2133"/><rect x="1.3597" y="58.699" width="180.21" height="81.36" ry="4.1957" stroke-width="17.114"/></g><rect x="8.7026" y="65.534" width="165.53" height="67.69" ry="3.4907" fill="${colors.bg}" stroke-width="14.96"/><rect x="12.773" y="69.895" width="${157.39 / 100 * level}" height="58.968" ry="3.0409" fill="${levelColor}" stroke-width="13.615"/></g></g></svg>`
+        return `<svg width="144" height="144" viewBox="0 0 144 144" xmlns="http://www.w3.org/2000/svg"><g transform="matrix(.5443 0 0 .5443 17.059 -15.377)" stroke-width="1.8372"><g stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8372"><g fill="${colors.passive}"><rect x="170.13" y="85.397" width="18.486" height="27.963" ry="1.442" stroke-width="3.2133"/><rect x="1.3597" y="58.699" width="180.21" height="81.36" ry="4.1957" stroke-width="17.114"/></g><rect x="8.7026" y="65.534" width="165.53" height="67.69" ry="3.4907" fill="${colors.bg}" stroke-width="14.96"/><rect x="12.773" y="69.895" width="${157.39 / 100 * state}" height="58.968" ry="3.0409" fill="${levelColor}" stroke-width="13.615"/></g></g></svg>`
     },
 
-    temperature: (level, attributes) => {
-        const unit = attributes.unit_of_measurement || "";
+    temperature: (state, attributes) => {
         const image = ` <g transform="matrix(1.8104 1.9461e-5 -1.9461e-5 1.8104 14.068 14.067)">
   <g id="Thermometer" clip-rule="evenodd" fill="${colors.bg}" fill-rule="evenodd">
    <path d="m36.911 47.814v-42.349c0-3.0137-2.2032-5.4658-4.9102-5.4658-2.708 0-4.9111 2.4521-4.9111 5.4658v42.349c-2.4365 1.6338-3.9268 4.3965-3.9268 7.3467 0 4.874 3.9649 8.8389 8.8379 8.8389 4.8731 0 8.8369-3.9649 8.8369-8.8389 0-2.9492-1.4902-5.7129-3.9267-7.3467zm-4.9102 14.186c-3.7705 0-6.8379-3.0684-6.8379-6.8389 0-2.4346 1.3135-4.7051 3.4268-5.9258 0.30959-0.1787 0.5-0.5088 0.5-0.8662v-42.903c0-1.9112 1.3056-3.4658 2.9111-3.4658 1.6045 0 2.9102 1.5546 2.9102 3.4658v42.903c0 0.3574 0.1904 0.6875 0.5 0.8662 2.1133 1.2207 3.4267 3.4922 3.4267 5.9258 0 3.7705-3.0674 6.8389-6.8369 6.8389z"/>
@@ -124,54 +127,37 @@ const Image = {
   </g>
  </g>`
 
-        return Image.defaultSensor(level + unit, image, "")
+        return Image.labelledIcon(state, attributes, {line1: "{{state}} {{unit_of_measurement}}"} , image)
     },
 
-    humidity: (level, attributes) => {
-        const unit = attributes.unit_of_measurement || "";
+    humidity: (state, attributes) => {
         const image = `<g transform="matrix(.33757 0 0 .33757 16.535 16.445)" fill="${colors.bgBlue}">
             <path d="m209.31 50.798c-2.452-3.337-7.147-4.055-10.485-1.602s-4.055 7.147-1.603 10.485c54.576 74.266 66.032 123.54 66.032 151.8 0 27.691-8.272 52.794-23.293 70.685-17.519 20.866-42.972 31.446-75.651 31.446-73.031 0-98.944-55.018-98.944-102.13 0-52.227 28.103-103.23 51.679-136.83 25.858-36.847 52.11-61.415 52.37-61.657 3.035-2.819 3.209-7.565 0.39-10.6-2.819-3.034-7.565-3.209-10.599-0.39-1.11 1.031-27.497 25.698-54.254 63.765-24.901 35.428-54.586 89.465-54.586 145.71 0 31.062 9.673 59.599 27.236 80.353 20.361 24.061 50.345 36.779 86.708 36.779 36.794 0 66.926-12.726 87.139-36.801 17.286-20.588 26.806-49.117 26.806-80.33-1e-3 -55.265-37.493-117.88-68.945-160.68z"/>
             <path d="m198.43 148.15-95.162 95.162c-2.929 2.929-2.929 7.678 0 10.606 1.465 1.464 3.385 2.197 5.304 2.197s3.839-0.732 5.304-2.197l95.162-95.162c2.929-2.929 2.929-7.678 0-10.606-2.931-2.929-7.679-2.929-10.608 0z"/>
             <path d="m191.96 207.9c-13.292 0-24.106 10.814-24.106 24.106s10.814 24.106 24.106 24.106 24.106-10.814 24.106-24.106-10.814-24.106-24.106-24.106zm0 33.212c-5.021 0-9.106-4.085-9.106-9.106s4.085-9.106 9.106-9.106 9.106 4.085 9.106 9.106-4.085 9.106-9.106 9.106z"/>
             <path d="m125.18 194.16c13.292 0 24.106-10.814 24.106-24.106s-10.814-24.106-24.106-24.106-24.106 10.814-24.106 24.106 10.814 24.106 24.106 24.106zm0-33.213c5.021 0 9.106 4.085 9.106 9.106s-4.085 9.106-9.106 9.106-9.106-4.085-9.106-9.106 4.084-9.106 9.106-9.106z"/>
             </g>`
-        return Image.defaultSensor(level + unit, image, "")
+        return Image.labelledIcon(state, attributes, {line1: "{{state}} {{unit_of_measurement}}"} , image)
     },
 
-    power: (level, attributes) => {
+    power: (state, attributes) => {
         const image = `<g transform="matrix(.28108 0 0 .28108 38.533 38.534)" fill="#6c6500">
   <path d="m205.07 98.678c-1.194-2.728-3.891-4.49-6.869-4.49h-62.33l30.023-84.167c1.197-3.357-0.134-7.094-3.184-8.938-3.052-1.845-6.979-1.287-9.395 1.333l-118.9 128.94c-2.019 2.189-2.551 5.366-1.355 8.094 1.194 2.728 3.891 4.49 6.869 4.49h40.521c4.143 0 7.5-3.358 7.5-7.5s-3.357-7.5-7.5-7.5h-23.403l82.365-89.315-21.24 59.543c-0.818 2.297-0.432 4.849 0.974 6.842 1.405 1.993 3.73 3.178 6.169 3.178h55.772l-82.353 89.305 21.243-59.533c0.82-2.297 0.472-4.849-0.934-6.842s-3.691-3.179-6.13-3.179h-0.074c-3.525 0-6.455 2.432-7.25 5.709l-33.348 93.456c-1.198 3.357 0.133 7.094 3.183 8.938 1.205 0.729 2.547 1.083 3.878 1.083 2.039 0 4.055-0.831 5.517-2.416l118.9-128.94c2.02-2.188 2.552-5.364 1.357-8.092z"/>
  </g>`
-        const unit = attributes.unit_of_measurement || "";
 
-        return Image.defaultSensor(level, image, unit)
+        return Image.labelledIcon(state, attributes, {line1: "{{state}} {{unit_of_measurement}}"} , image)
     },
 
-    pressure: (level, attributes) => {
+    pressure: (state, attributes) => {
         const image = `<g transform="matrix(.2088 0 0 .2088 21.063 21.063) translate(0,-572.36)">
    <path fill="${colors.bgBlue}" d="m203.21 877.27c2.6 0 5.2-1 7.1-3l20.3-20.6c4 1.9 8.5 3 13.2 3 16.9 0 30.7-13.7 30.7-30.6 0-4.6-1.1-8.9-2.9-12.7 0 0 0.1 0 0.1-0.1l23.5-23.9v6.2c0 5.5 4.5 10 10 10s10-4.5 10-10v-30.5c0-5.5-4.4-10-10-10h-30.7c-5.5 0-10 4.5-10 10s4.5 10 10 10h6.7l-23.7 24.2-0.1 0.1c-4.1-2-8.7-3.1-13.5-3.1-16.9 0-30.7 13.4-30.7 29.8 0 4.9 1.2 9.5 3.2 13.6l-20.3 20.6c-3.9 3.9-3.8 10.3 0.1 14.1 1.9 1.9 4.5 2.9 7 2.9zm40.7-60.999c5.8 0 10.7 4.5 10.7 9.8 0 6-4.7 10.6-10.7 10.6s-10.7-4.7-10.7-10.6c0-5.3 4.9-9.8 10.7-9.8z"/>
    <path fill="${colors.bg}" d="m292.21 638.57c6.4-19.3 0.5-41.1-15.8-54.2-18.1-16-46-16-64.9-0.1-16.3 13.1-22.3 35-15.9 54.3-95.2 21.8-166.4 106.8-166.4 208.1 0 117.8 96.3 213.6 214.7 213.6s214.8-95.8 214.8-213.6c0-101.3-71.3-186.3-166.5-208.1zm-68.1-38.8c0.1-0.1 0.2-0.1 0.2-0.2 11.5-9.7 28.3-9.8 39-0.2 0.1 0.1 0.3 0.2 0.4 0.4 10.5 8.4 13.8 23 8.4 35.1-9.2-1.2-18.7-1.8-28.2-1.8s-19 0.6-28.2 1.8c-5.5-12.1-2.2-26.701 8.4-35.1zm19.8 440.5c-78.3 0-146-46.2-176.9-112.7h353.7c-30.8 66.5-98.5 112.7-176.8 112.7zm-86.4-294.9c50.1-41.3 122.8-41.3 172.9 0 47.7 39.3 60.4 106.7 31.1 162.2h-235.2c-29.2-55.499-16.6-122.9 31.2-162.2zm270.5 162.3h-44.3c12.1-27.4 16.2-57.8 11.3-87.3-5.8-35.5-24.3-67.6-51.9-90.4-57.5-47.3-140.8-47.3-198.3 0-27.6 22.8-46.1 54.9-51.9 90.4-4.9 29.5-0.8 59.9 11.3 87.3h-45.2c-6.4-19.2-9.9-39.6-9.9-60.9 0.1-106.8 87.4-193.7 194.8-193.7s194.8 86.8 194.8 193.6c0 21.3-3.5 41.8-9.9 61h-0.8z"/>
  </g>`
-        const unit = attributes.unit_of_measurement || "";
 
-        return Image.defaultSensor(level, image, unit)
+        return Image.labelledIcon(state, attributes, {line1: "{{state}}", line2: "{{unit_of_measurement}}"} , image)
     },
 
-    defaultSensor: (line1, image = "", line2 = "", line3 = "") => {
-        const textPositionOffset = line2 ? -14 : 0;
-
-        return `<svg width="144" height="144" xmlns="http://www.w3.org/2000/svg">
-                    ${image}
-                    <g id="text-lines" fill="#FFF" font-family="sans-serif" font-size="28px" text-anchor="middle" alignment-baseline="central">
-                        <text x="75" y="${50 + textPositionOffset}" style="stroke:#000000;stroke-width:1.5px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;">${line1}</text>
-                        <text x="75" y="${82 + textPositionOffset}" style="stroke:#000000;stroke-width:1.5px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;">${line2}</text>
-                        <text x="75" y="${114 + textPositionOffset}" style="stroke:#000000;stroke-width:1.5px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;">${line3}</text>
-                    </g>
-                </svg>`
-    },
-
-    weather: (state) => {
-
+    weather: (state, attributes) => {
         let weatherIcon;
         // Icons: SVG 24x24
         switch (state) {
@@ -194,7 +180,24 @@ const Image = {
 
         let scaledWeatherIcon = `<g fill="${colors.bg}" transform="translate(24,6) scale(4,4)">${weatherIcon}</g>`
 
-        return Image.defaultSensor("24°C", scaledWeatherIcon, "1023 hPa", "60%")
+        return Image.labelledIcon(state, attributes, {line1: "TODO {{state}}"} , scaledWeatherIcon)
+    },
+
+    labelledIcon: (state, attributes, templates, image = "") => {
+        const line1 = new Handlebars.compile(templates.line1)({...{state}, ...attributes})
+        const line2 = new Handlebars.compile(templates.line2 || "")({...{state}, ...attributes})
+        const line3 = new Handlebars.compile(templates.line3 || "")({...{state}, ...attributes})
+
+        const textPositionOffset = line2 ? -14 : 0;
+
+        return `<svg width="144" height="144" xmlns="http://www.w3.org/2000/svg">
+                    ${image}
+                    <g id="text-lines" fill="#FFF" font-family="sans-serif" font-size="28px" text-anchor="middle" alignment-baseline="central">
+                        <text x="75" y="${50 + textPositionOffset}" style="stroke:#000000;stroke-width:1.5px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;">${line1}</text>
+                        <text x="75" y="${82 + textPositionOffset}" style="stroke:#000000;stroke-width:1.5px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;">${line2}</text>
+                        <text x="75" y="${114 + textPositionOffset}" style="stroke:#000000;stroke-width:1.5px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;">${line3}</text>
+                    </g>
+                </svg>`
     }
 
 }

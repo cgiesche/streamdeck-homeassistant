@@ -6,3 +6,7 @@ Vue.config.productionTip = false
 new Vue({
     render: h => h(Plugin),
 }).$mount('#plugin')
+
+new Vue({
+    render: h => h(Plugin),
+}).$mount()

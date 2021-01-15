@@ -49,10 +49,50 @@
             </option>
           </select>
         </div>
-        <div class="sdpi-item">
-          <div class="sdpi-item-label"><label for="titleTemplate">Title Template</label></div>
-          <input class="sdpi-item-value" id="titleTemplate" value="${this.state}" disabled>
+
+        <div type="checkbox" class="sdpi-item">
+          <div class="sdpi-item-label">Button image</div>
+          <input class="sdpi-item-value" id="chkNoBgImage" type="checkbox" v-model="noBackgroundImage">
+          <label for="chkNoBgImage"><span></span>hide</label>
         </div>
+
+        <div type="checkbox" class="sdpi-item">
+          <div class="sdpi-item-label">Custom Title</div>
+          <input class="sdpi-item-value" id="chkButtonTitle" type="checkbox" v-model="useCustomTitle">
+          <label for="chkButtonTitle"><span></span>use template string</label>
+        </div>
+
+        <template v-if="useCustomTitle">
+          <div class="sdpi-item">
+            <div class="sdpi-item-label"><label for="txtbuttonTitle">Title Template*</label></div>
+            <input v-model="buttonTitle" class="sdpi-item-value" id="txtbuttonTitle">
+          </div>
+          <p class="altColor">Available variables: {{ entityAttributes }}</p>
+          <p style="color: coral">You have to clear the main title to make this title template work.</p>
+        </template>
+
+        <div type="checkbox" class="sdpi-item">
+          <div class="sdpi-item-label">Custom Labels</div>
+          <input class="sdpi-item-value" id="chkUsebuttonTitle" type="checkbox" v-model="useCustomButtonLabels">
+          <label for="chkUsebuttonTitle"><span></span>use template string</label>
+        </div>
+
+        <template v-if="useCustomButtonLabels">
+          <div class="sdpi-item">
+            <div class="sdpi-item-label"><label for="txtLine1">Button line 1</label></div>
+            <input v-model="buttonLabelLine1" class="sdpi-item-value" id="txtLine1">
+          </div>
+          <div class="sdpi-item">
+            <div class="sdpi-item-label"><label for="txtLine2">Button line 2</label></div>
+            <input v-model="buttonLabelLine2" class="sdpi-item-value" id="txtLine2">
+          </div>
+          <div class="sdpi-item">
+            <div class="sdpi-item-label"><label for="txtLine3">Button line 3</label></div>
+            <input v-model="buttonLabelLine3" class="sdpi-item-value" id="txtLine3">
+          </div>
+          <p>Available variables: {{ entityAttributes }}</p>
+        </template>
+
         <div class="sdpi-item">
           <div class="sdpi-item-label">Save</div>
           <button class="sdpi-item-value" id="btnActionSave" v-on:click="saveSettings" v-bind:disabled="!domain">Save
@@ -78,14 +118,25 @@ export default {
       domain: "",
       entity: "",
       service: "",
-      titleTemplate: "",
+
+      noBackgroundImage: false,
+
+      // Custom Labels
+      useCustomTitle: false,
+      buttonTitle: "{{friendly_name}}",
+
+      useCustomButtonLabels: false,
+      buttonLabelLine1: "",
+      buttonLabelLine2: "",
+      buttonLabelLine3: "",
 
       availableDomains: [],
       availableEntities: [],
-      availableServices: []
+      availableServices: [],
+      availableAttributes: []
     }
   },
-  beforeCreate() {
+  created() {
     window.connectElgatoStreamDeckSocket = (inPort, inPropertyInspectorUUID, inRegisterEvent, inInfo, inActionInfo) => {
       this.$SD = new StreamDeck(inPort, inPropertyInspectorUUID, inRegisterEvent, inInfo, inActionInfo);
       this.$SD.on("globalsettings", (globalSettings) => {
@@ -94,27 +145,7 @@ export default {
           this.accessToken = globalSettings.accessToken;
 
           if (this.serverUrl && this.accessToken) {
-            this.$HA = new Homeassistant(this.serverUrl, this.accessToken, () => {
-              this.$HA.getStates((states) => {
-                this.availableDomains = states
-                    .map(state => new Entity(state.entity_id).domain)
-                    .reduce(
-                        (acc, curr) => acc.add(curr), new Set()
-                    );
-
-                this.availableEntities = states
-                    .map((state) => {
-                          return {
-                            value: new Entity(state.entity_id),
-                            text: state.attributes.friendly_name
-                          }
-                        }
-                    )
-              });
-              this.$HA.getServices((services) => {
-                this.availableServices = services;
-              });
-            })
+            this.connectHomeAssistant()
           }
         }
       })
@@ -125,7 +156,15 @@ export default {
         this.domain = actionSettings["domain"]
         this.entity = actionSettings["entityId"]
         this.service = actionSettings["service"]
-        this.titleTemplate = actionSettings["titleTemplate"]
+
+        this.noBackgroundImage = actionSettings["noBackgroundImage"]
+
+        this.useCustomTitle = actionSettings["useCustomTitle"]
+        this.buttonTitle = actionSettings["buttonTitle"] || "{{friendly_name}}"
+        this.useCustomButtonLabels = actionSettings["useCustomButtonLabels"]
+        this.buttonLabelLine1 = actionSettings["buttonLabelLine1"]
+        this.buttonLabelLine2 = actionSettings["buttonLabelLine2"]
+        this.buttonLabelLine3 = actionSettings["buttonLabelLine3"]
       })
     }
   },
@@ -136,57 +175,72 @@ export default {
     },
 
     domainServices: function () {
-      let services = Object.keys(this.availableServices[this.domain] || [])
+      return Object.keys(this.availableServices[this.domain] || [])
           .map(key => {
             return {
               serviceId: key,
               serviceDetails: this.availableServices[this.domain][key]
             }
-          });
-      console.log("SERVICES")
-      console.log(services)
-      return services
+          })
     },
 
     domainEntities: function () {
-      let domains = this.availableEntities
-          .filter((entityInfo) => entityInfo.value.domain === this.domain);
-      console.log("ENTITIES")
-      console.log(domains)
-      return domains
+      return this.availableEntities
+          .filter((entityInfo) => entityInfo.value.domain === this.domain)
+    },
+
+    entityAttributes: function () {
+      let entityAttributes = this.availableAttributes.find((attribute) => attribute.entity.entityId === this.entity)
+      if (entityAttributes && entityAttributes.attributes) {
+        return "{{state}}, " + entityAttributes.attributes
+            .map(attribute => `{{${attribute}}}`)
+            .join(", ")
+      }
+      return "-"
     }
   },
 
   methods: {
-    saveGlobalSettings: function () {
-      this.$SD.saveGlobalSettings({"serverUrl": this.serverUrl, "accessToken": this.accessToken});
-
+    connectHomeAssistant: function () {
       if (this.$HA) {
         this.$HA.close();
       }
-      this.$HA = new Homeassistant(this.serverUrl, this.accessToken, () => {
-        this.$HA.getStates(
-            (states) => {
-              this.availableDomains = states
-                  .map(state => new Entity(state.entity_id).domain)
-                  .reduce(
-                      (acc, curr) => acc.add(curr), new Set()
-                  );
 
-              this.availableEntities = states
-                  .map((state) => {
-                        return {
-                          value: new Entity(state.entity_id),
-                          text: state.attributes.friendly_name
-                        }
-                      }
-                  )
-            }
-        );
+      this.$HA = new Homeassistant(this.serverUrl, this.accessToken, () => {
+        this.$HA.getStates((states) => {
+          this.availableDomains = states
+              .map(state => new Entity(state.entity_id).domain)
+              .reduce(
+                  (acc, curr) => acc.add(curr), new Set()
+              );
+
+          this.availableEntities = states
+              .map((state) => {
+                    return {
+                      value: new Entity(state.entity_id),
+                      text: state.attributes.friendly_name || state.entity_id
+                    }
+                  }
+              )
+
+          this.availableAttributes = states
+              .map((state) => {
+                return {
+                  entity: new Entity(state.entity_id),
+                  attributes: Object.keys(state.attributes)
+                }
+              })
+          console.log(this.availableAttributes)
+        });
         this.$HA.getServices((services) => {
           this.availableServices = services;
         });
       })
+    },
+
+    saveGlobalSettings: function () {
+      this.$SD.saveGlobalSettings({"serverUrl": this.serverUrl, "accessToken": this.accessToken});
+      this.connectHomeAssistant()
     },
 
     saveSettings: function () {
@@ -194,7 +248,16 @@ export default {
         domain: this.domain,
         entityId: this.entity,
         service: this.service,
-        titleTemplate: this.titleTemplate,
+
+        noBackgroundImage: this.noBackgroundImage,
+
+        useCustomTitle: this.useCustomTitle,
+        buttonTitle: this.buttonTitle,
+
+        useCustomButtonLabels: this.useCustomButtonLabels,
+        buttonLabelLine1: this.buttonLabelLine1,
+        buttonLabelLine2: this.buttonLabelLine2,
+        buttonLabelLine3: this.buttonLabelLine3
       }
 
       this.$SD.saveSettings(actionSettings)
