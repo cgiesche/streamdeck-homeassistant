@@ -19,7 +19,6 @@ export default class StreamDeck {
         this.on = (evt, fn) => this.events.on(evt, fn)
 
         this.streamDeckWebsocket.onmessage = (evt) => {
-            console.log(`StreamDeck Message: ${evt.data}`)
             let incomingEvent = JSON.parse(evt.data);
             switch (incomingEvent.event) {
                 case "didReceiveGlobalSettings":
@@ -96,6 +95,24 @@ export default class StreamDeck {
                 "target": ["software", "hardware"],
                 "state": 0
             }
+        }
+
+        this.streamDeckWebsocket.send(JSON.stringify(message))
+    }
+
+    showAlert(context) {
+        let message = {
+            "event": "showAlert",
+            "context": context
+        }
+
+        this.streamDeckWebsocket.send(JSON.stringify(message))
+    }
+
+    showOk(context) {
+        let message = {
+            "event": "showOk",
+            "context": context
         }
 
         this.streamDeckWebsocket.send(JSON.stringify(message))

@@ -70,13 +70,15 @@ export class Homeassistant {
         this.sendCommand(subscribeEventCommand, callback);
     }
 
-    callService(service, entity, callback) {
+    callService(service, entity, callback = null) {
         let callServiceCommand = new CallServiceCommand(this.nextRequestId(), service, entity);
         this.sendCommand(callServiceCommand, callback)
     }
 
     sendCommand(command, callback) {
-        this.requests.set(command.id, callback);
+        if (callback) {
+            this.requests.set(command.id, callback);
+        }
         this.websocket.send(JSON.stringify(command));
     }
 

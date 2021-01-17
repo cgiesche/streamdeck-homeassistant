@@ -15,6 +15,7 @@ export default {
     return {
       $SD: null,
       $HA: null,
+      $reconnectTimeout: null,
       actionSettings: {},
       globalSettings: {}
     }
@@ -33,16 +34,29 @@ export default {
       const onHAConnected = () => {
         this.$HA.getStates(entitiyStatesChanged)
         this.$HA.subscribeEvents(entityStateChanged)
+        showOk()
       }
 
       const onHAError = (msg) => {
         console.log(`Home Assistant connection error: ${msg}`)
-        window.setTimeout(connectHomeAssistant, 2000)
+        showAlert()
+        window.clearTimeout(this.$reconnectTimeout)
+        this.$reconnectTimeout = window.setTimeout(connectHomeAssistant, 5000)
       }
 
       const onHAClosed = (msg) => {
         console.log(`Home Assistant connection closed, trying to reopen connection: ${msg}`)
-        window.setTimeout(connectHomeAssistant, 2000)
+        showAlert()
+        window.clearTimeout(this.$reconnectTimeout)
+        this.$reconnectTimeout = window.setTimeout(connectHomeAssistant, 5000)
+      }
+
+      const showAlert = () => {
+        Object.keys(this.actionSettings).forEach(key => this.$SD.showAlert(key))
+      }
+
+      const showOk = () => {
+        Object.keys(this.actionSettings).forEach(key => this.$SD.showOk(key))
       }
 
       this.$SD.on("connected", () => {
@@ -54,15 +68,15 @@ export default {
         if (this.$HA) {
           let context = message.context
           let settings = this.actionSettings[context];
-          this.$HA.callService(settings.service, new Entity(settings.entityId), () => {
-          })
+          if (settings.service) {
+            this.$HA.callService(settings.service, new Entity(settings.entityId))
+          }
         }
       })
 
       this.$SD.on("willAppear", (message) => {
         let context = message.context;
         this.actionSettings[context] = message.payload.settings
-
         if (this.$HA) {
           this.$HA.getStates(entitiyStatesChanged)
         }
@@ -103,39 +117,49 @@ export default {
         }
       }
 
-      const updateState = (state) => {
-        let entity = new Entity(state.entity_id)
-        let changedContext = Object.keys(this.actionSettings).find(key => this.actionSettings[key].entityId === entity.entityId)
-        if (!changedContext) {
-          return;
-        }
+      const updateState = (stateMessage) => {
+        let entity = new Entity(stateMessage.entity_id)
+        let changedContexts = Object.keys(this.actionSettings).filter(key => this.actionSettings[key].entityId === entity.entityId)
 
-        let changedContextSettings = this.actionSettings[changedContext]
-        let newState = state.state;
-        let stateAttributes = state.attributes;
-        let deviceClass = stateAttributes.device_class || "default";
+        changedContexts.forEach(currentContext => {
+              if (!currentContext) {
+                return;
+              }
 
-        console.log(`Finding image for context ${changedContext}: ${entity.domain}.${deviceClass}(${newState})`)
+              let contextSettings = this.actionSettings[currentContext]
+              let state = stateMessage.state;
+              let stateAttributes = stateMessage.attributes;
+              let deviceClass = stateAttributes.device_class || "default";
 
+              console.log(`Finding image for context ${currentContext}: ${entity.domain}.${deviceClass}(${state})`)
+              let labelTemplate = null;
+              if (contextSettings.useCustomButtonLabels) {
+                labelTemplate = {
+                  line1: contextSettings.buttonLabelLine1,
+                  line2: contextSettings.buttonLabelLine2,
+                  line3: contextSettings.buttonLabelLine3,
+                }
+              }
 
+              let svg;
+              if (IconFactory[entity.domain] && IconFactory[entity.domain][deviceClass]) {
+                console.log(`... sucess!`)
+                // domain, class, state
+                svg = IconFactory[entity.domain][deviceClass](state, stateAttributes, labelTemplate);
+              } else if (IconFactory[entity.domain] && IconFactory[entity.domain]["default"]) {
+                console.log(`... sucess (fallback)!`)
+                svg = IconFactory[entity.domain]["default"](state, stateAttributes, labelTemplate);
+              } else {
+                svg = IconFactory.default(state, stateAttributes, labelTemplate);
+              }
+              setButtonSVG(svg, currentContext)
 
-        if (IconFactory[entity.domain] && IconFactory[entity.domain][deviceClass]) {
-          console.log(`... sucess!`)
-          // domain, class, state
-          let svg = IconFactory[entity.domain][deviceClass](newState, stateAttributes);
-          setButtonSVG(svg, changedContext)
-        } else if (IconFactory[entity.domain] && IconFactory[entity.domain]["default"]) {
-          console.log(`... sucess (fallback)!`)
-          let svg = IconFactory[entity.domain]["default"](newState, stateAttributes);
-          setButtonSVG(svg, changedContext);
-        } else {
-          console.log(`... failed!`)
-        }
-
-        if (changedContextSettings.useCustomTitle) {
-          const customTitle = new Handlebars.compile(changedContextSettings.buttonTitle)({...{state}, ...stateAttributes})
-          this.$SD.setTitle(changedContext, customTitle);
-        }
+              if (contextSettings.useCustomTitle) {
+                const customTitle = new Handlebars.compile(contextSettings.buttonTitle)({...{state}, ...stateAttributes})
+                this.$SD.setTitle(currentContext, customTitle);
+              }
+            }
+        )
       }
     }
 

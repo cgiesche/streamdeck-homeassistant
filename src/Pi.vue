@@ -51,15 +51,9 @@
         </div>
 
         <div type="checkbox" class="sdpi-item">
-          <div class="sdpi-item-label">Button image</div>
-          <input class="sdpi-item-value" id="chkNoBgImage" type="checkbox" v-model="noBackgroundImage">
-          <label for="chkNoBgImage"><span></span>hide</label>
-        </div>
-
-        <div type="checkbox" class="sdpi-item">
           <div class="sdpi-item-label">Custom Title</div>
           <input class="sdpi-item-value" id="chkButtonTitle" type="checkbox" v-model="useCustomTitle">
-          <label for="chkButtonTitle"><span></span>use template string</label>
+          <label for="chkButtonTitle"><span></span></label>
         </div>
 
         <template v-if="useCustomTitle">
@@ -74,7 +68,7 @@
         <div type="checkbox" class="sdpi-item">
           <div class="sdpi-item-label">Custom Labels</div>
           <input class="sdpi-item-value" id="chkUsebuttonTitle" type="checkbox" v-model="useCustomButtonLabels">
-          <label for="chkUsebuttonTitle"><span></span>use template string</label>
+          <label for="chkUsebuttonTitle"><span></span></label>
         </div>
 
         <template v-if="useCustomButtonLabels">
@@ -105,6 +99,7 @@
 
 <script>
 import StreamDeck from "@/modules/common/streamdeck";
+import {ObjectUtils} from "@/modules/common/utils";
 import {Entity, Homeassistant} from "@/modules/common/homeassistant";
 
 export default {
@@ -118,8 +113,6 @@ export default {
       domain: "",
       entity: "",
       service: "",
-
-      noBackgroundImage: false,
 
       // Custom Labels
       useCustomTitle: false,
@@ -157,10 +150,9 @@ export default {
         this.entity = actionSettings["entityId"]
         this.service = actionSettings["service"]
 
-        this.noBackgroundImage = actionSettings["noBackgroundImage"]
-
         this.useCustomTitle = actionSettings["useCustomTitle"]
         this.buttonTitle = actionSettings["buttonTitle"] || "{{friendly_name}}"
+
         this.useCustomButtonLabels = actionSettings["useCustomButtonLabels"]
         this.buttonLabelLine1 = actionSettings["buttonLabelLine1"]
         this.buttonLabelLine2 = actionSettings["buttonLabelLine2"]
@@ -227,10 +219,9 @@ export default {
               .map((state) => {
                 return {
                   entity: new Entity(state.entity_id),
-                  attributes: Object.keys(state.attributes)
+                  attributes: ObjectUtils.paths(state.attributes)
                 }
               })
-          console.log(this.availableAttributes)
         });
         this.$HA.getServices((services) => {
           this.availableServices = services;
@@ -248,8 +239,6 @@ export default {
         domain: this.domain,
         entityId: this.entity,
         service: this.service,
-
-        noBackgroundImage: this.noBackgroundImage,
 
         useCustomTitle: this.useCustomTitle,
         buttonTitle: this.buttonTitle,
