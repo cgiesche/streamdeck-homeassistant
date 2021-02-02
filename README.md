@@ -22,6 +22,15 @@ service that does not need any more information but the entity id.
 * Battery-Level
 * Weather
 
+# Installation
+## Prequisites
+* Installed Stream-Deck application
+* Connected Stream-Deck
+
+## Download & Installation
+* Download latest plugin release https://github.com/cgiesche/streamdeck-homeassistant/releases
+* Open downloaded .sdplugin file. It will be automatically installed into your Stream-Deck application
+
 # Configuration
 There are two sections on the plugin's cofiguration panel:
  * Home Assistant Settings  
