@@ -1,5 +1,5 @@
 # streamdeck-homeassistant
-The aim of this project is to allow owners of an eglato StreamDeck to control their entities or display sensor data via
+The aim of this project is to allow owners of an elgato StreamDeck to control their entities or display sensor data via
 their StreamDeck. As the code is kept very generic, nearly every sensor should work out of the box as well as every
 service that does not need any more information but the entity id.
 
