@@ -24,7 +24,7 @@
   "Name": "Home Assistant",
   "Icon": "images/ha-button",
   "URL": "https://github.com/cgiesche/streamdeck-homeassistant",
-  "Version": "1.0",
+  "Version": "1.0.2",
   "OS": [
     {
       "Platform": "mac",

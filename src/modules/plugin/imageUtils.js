@@ -218,7 +218,7 @@ const Icon = {
     },
 
     labelledIcon: (state, attributes, templates = {}, image = "", labelTopOffset = 30) => {
-        const line1 = new Handlebars.compile(templates.line1 || "{{state}}")({...{state}, ...attributes, ...{colors}})
+        const line1 = new Handlebars.compile(templates.line1 || "")({...{state}, ...attributes, ...{colors}})
         const line2 = new Handlebars.compile(templates.line2 || "")({...{state}, ...attributes, ...{colors}})
         const line3 = new Handlebars.compile(templates.line3 || "")({...{state}, ...attributes, ...{colors}})
 
