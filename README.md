@@ -13,6 +13,7 @@ service that does not need any more information but the entity id.
 ### Entities with background-icons
 * Switches
 * Lights (same icon as switches)
+* Input Boolean (same icon as switches)
 * Binary Sensors (like switches, but without "moving" circle)
   * Plugs
 * Temperature
