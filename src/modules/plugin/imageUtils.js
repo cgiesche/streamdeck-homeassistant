@@ -37,15 +37,11 @@ export const IconFactory = {
     },
 
     light: {
-        default: (state, attributes, labelTemplate) => {
-            let icon;
-            if (state === "on") {
-                icon = Icon.switchOn;
-            } else {
-                icon = Icon.switchOff;
-            }
-            return Icon.labelledIcon(state, attributes, labelTemplate || IconFactory.switch._defaultLabelTemplate, icon)
-        }
+        default: (state, attributes, labelTemplate) => IconFactory.switch.default(state, attributes, labelTemplate)
+    },
+
+    input_boolean: {
+        default: (state, attributes, labelTemplate) => IconFactory.switch.default(state, attributes, labelTemplate)
     },
 
     binary_sensor: {
