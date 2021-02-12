@@ -202,6 +202,7 @@ export default {
         this.$HA.getStates((states) => {
           this.availableDomains = states
               .map(state => new Entity(state.entity_id).domain)
+              .sort()
               .reduce(
                   (acc, curr) => acc.add(curr), new Set()
               );
@@ -214,6 +215,7 @@ export default {
                     }
                   }
               )
+              .sort((a,b) => (a.text > b.text) ? 1 : ((b.text > a.text) ? -1 : 0))
 
           this.availableAttributes = states
               .map((state) => {
@@ -222,6 +224,7 @@ export default {
                   attributes: ObjectUtils.paths(state.attributes)
                 }
               })
+              //.sort((a,b) => (a.attributes > b.attributes) ? 1 : ((b.attributes > a.attributes) ? -1 : 0))
         });
         this.$HA.getServices((services) => {
           this.availableServices = services;
