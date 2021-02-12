@@ -224,7 +224,6 @@ export default {
                   attributes: ObjectUtils.paths(state.attributes)
                 }
               })
-              //.sort((a,b) => (a.attributes > b.attributes) ? 1 : ((b.attributes > a.attributes) ? -1 : 0))
         });
         this.$HA.getServices((services) => {
           this.availableServices = services;
