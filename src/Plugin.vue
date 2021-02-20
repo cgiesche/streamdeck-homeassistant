@@ -6,7 +6,7 @@
 import StreamDeck from "@/modules/common/streamdeck";
 import {Entity, Homeassistant} from "@/modules/common/homeassistant";
 import {IconFactory} from "@/modules/plugin/imageUtils";
-import Handlebars from "handlebars"
+import jinja from "jinja-js"
 
 export default {
   name: 'Plugin',
@@ -121,45 +121,50 @@ export default {
         let entity = new Entity(stateMessage.entity_id)
         let changedContexts = Object.keys(this.actionSettings).filter(key => this.actionSettings[key].entityId === entity.entityId)
 
-        changedContexts.forEach(currentContext => {
-              if (!currentContext) {
-                return;
-              }
+        changedContexts.forEach(context => {
+          try {
+            updateContextState(context, stateMessage, entity);
+          } catch (e) {
+            console.error(e)
+            this.$SD.setImage(context, null);
+            this.$SD.showAlert(context);
+          }
+        })
+      }
 
-              let contextSettings = this.actionSettings[currentContext]
-              let state = stateMessage.state;
-              let stateAttributes = stateMessage.attributes;
-              let deviceClass = stateAttributes.device_class || "default";
+      const updateContextState = (currentContext, stateMessage, entity) => {
+        let contextSettings = this.actionSettings[currentContext]
+        let state = stateMessage.state;
+        let stateAttributes = stateMessage.attributes;
+        let deviceClass = stateAttributes.device_class || "default";
 
-              console.log(`Finding image for context ${currentContext}: ${entity.domain}.${deviceClass}(${state})`)
-              let labelTemplate = null;
-              if (contextSettings.useCustomButtonLabels) {
-                labelTemplate = {
-                  line1: contextSettings.buttonLabelLine1,
-                  line2: contextSettings.buttonLabelLine2,
-                  line3: contextSettings.buttonLabelLine3,
-                }
-              }
+        console.log(`Finding image for context ${currentContext}: ${entity.domain}.${deviceClass}(${state})`)
+        let labelTemplate = null;
+        if (contextSettings.useCustomButtonLabels) {
+          labelTemplate = {
+            line1: contextSettings.buttonLabelLine1,
+            line2: contextSettings.buttonLabelLine2,
+            line3: contextSettings.buttonLabelLine3,
+          }
+        }
 
-              let svg;
-              if (IconFactory[entity.domain] && IconFactory[entity.domain][deviceClass]) {
-                console.log(`... sucess!`)
-                // domain, class, state
-                svg = IconFactory[entity.domain][deviceClass](state, stateAttributes, labelTemplate);
-              } else if (IconFactory[entity.domain] && IconFactory[entity.domain]["default"]) {
-                console.log(`... sucess (fallback)!`)
-                svg = IconFactory[entity.domain]["default"](state, stateAttributes, labelTemplate);
-              } else {
-                svg = IconFactory.default(state, stateAttributes, labelTemplate);
-              }
-              setButtonSVG(svg, currentContext)
+        let svg;
+        if (IconFactory[entity.domain] && IconFactory[entity.domain][deviceClass]) {
+          console.log(`... sucess!`)
+          // domain, class, state
+          svg = IconFactory[entity.domain][deviceClass](state, stateAttributes, labelTemplate);
+        } else if (IconFactory[entity.domain] && IconFactory[entity.domain]["default"]) {
+          console.log(`... sucess (fallback)!`)
+          svg = IconFactory[entity.domain]["default"](state, stateAttributes, labelTemplate);
+        } else {
+          svg = IconFactory.default(state, stateAttributes, labelTemplate);
+        }
+        setButtonSVG(svg, currentContext)
 
-              if (contextSettings.useCustomTitle) {
-                const customTitle = new Handlebars.compile(contextSettings.buttonTitle)({...{state}, ...stateAttributes})
-                this.$SD.setTitle(currentContext, customTitle);
-              }
-            }
-        )
+        if (contextSettings.useCustomTitle) {
+          const customTitle = jinja.render(contextSettings.buttonTitle, {...{state}, ...stateAttributes})
+          this.$SD.setTitle(currentContext, customTitle);
+        }
       }
     }
 
@@ -167,7 +172,8 @@ export default {
       let image = "data:image/svg+xml;charset=utf8," + svg;
       this.$SD.setImage(changedContext, image)
     }
-  },
+  }
+  ,
 }
 
 </script>
