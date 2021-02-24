@@ -5,11 +5,12 @@
   "scripts": {
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
+    "build-dev": "vue-cli-service build --mode development",
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
     "core-js": "^3.6.5",
-    "handlebars": "^4.7.6",
+    "jinja-js": "^0.1.8",
     "vue": "^2.6.11"
   },
   "devDependencies": {
