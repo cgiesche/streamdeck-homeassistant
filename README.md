@@ -53,15 +53,24 @@ After you saved your Home Assistant Settings, the plugin will automatically try 
  * Domain: Home Assistant entities are grouped by domains. Select the domain (for example "switch") of an entity, you want to configure.
  * Entity: This is the actual entity you are going to configure (for example "Kitchen Light")
  * Service: The service that will be called every time you press the StreamDeck button for this entity.
+ * Service Data JSON: JSON formatted data that is sent with your service call when you press a button.
+   Example:
+   ```
+   {
+     "brightness": 120,
+     "rgb_color": [255, 0, 0]
+   }
+   ```
+   Please note: If not specified in the JSON, the attribute `entity_id` is added automatically containing the selected entity's id. 
 
 ### Advanced configuration
  * Custom Title: Enable to override the main Title of this button. **You have to clear the main Title field on top to make this work!**
-   * Title Template: A template that will be used as the button's title. You can use any of the variables (depending on the selected entity) that are shown below the text-field. For example `{{temperature}}°C` or `{{friendly_name}}` or (this won't fit the button, but you get the idea) `The pressure is {{pressure}} and the wind speed is {{wind_speed}}.`  
+   * Title Template: A [nunjucks template](https://mozilla.github.io/nunjucks/templating.html) that will be used as the button's title. You can use any of the variables (depending on the selected entity) that are shown below the text-field. For example `{{temperature}}°C` or `{{friendly_name}}` or (this won't fit the button, but you get the idea) `The pressure is {{pressure}} and the wind speed is {{wind_speed}}.`  
      * The variable `{{state}}` always contains the "main state" of an entity (for example "on" and "off" for buttons or "12.4" for temperature sensors)
-     * The variable `{{unit_of_measurement}}` often contains the ... unit of measurement ... of an sensor's state (for example "°C" for a temperature sensor)
+     * The variable `{{unit_of_measurement}}` often contains the ... unit of measurement ... of a sensor's state (for example "°C" for a temperature sensor)
 
  * Custom Labels: Every button can display 3 lines of information, additional to the main title. You can customize them as you like.
-   * Button line X: Supports exactly the same template syntax as the main title (see above.)
+   * Button line X: Supports exactly the same [nunjucks template](https://mozilla.github.io/nunjucks/templating.html) syntax as the main title (see above.)
   
 After you hit the save button, the button should immediately show the new configuration.
   
