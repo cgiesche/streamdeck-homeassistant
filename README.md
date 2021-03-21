@@ -76,6 +76,9 @@ After you hit the save button, the button should immediately show the new config
   
 ![img.png](doc/entity_settings.png)
 
+# Happy? Consider to donate me a coffee :)
+[![buy me a coffee](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://www.paypal.com/donate?hosted_button_id=3UKRJEJVWV9H4)
+
 ## Project setup
 ```
 npm install
