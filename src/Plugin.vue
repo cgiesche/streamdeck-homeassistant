@@ -69,7 +69,18 @@ export default {
           let context = message.context
           let settings = this.actionSettings[context];
           if (settings.service) {
-            this.$HA.callService(settings.service, new Entity(settings.entityId))
+            try {
+              const entity = new Entity(settings.entityId);
+              const serviceData = settings.serviceData ? JSON.parse(settings.serviceData) : {};
+              // add default entity_id if not specified
+              if (!serviceData.entity_id) {
+                serviceData.entity_id = entity.entityId;
+              }
+              this.$HA.callService(settings.service, entity, serviceData)
+            } catch (e) {
+              console.error(e)
+              this.$SD.showAlert(context);
+            }
           }
         }
       })
