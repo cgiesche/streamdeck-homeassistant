@@ -21,11 +21,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Update manifest version
-          uses: jossef/action-set-json-field@v1
-          with:
-            file: public/manifest.json
-            field: Version
-            value: ${{ steps.semantic_release_info.outputs.git_tag }}
+        uses: jossef/action-set-json-field@v1
+        with:
+          file: public/manifest.json
+          field: Version
+          value: ${{ steps.semantic_release_info.outputs.git_tag }}
 
       - name: NPM Install
         run: npm install
