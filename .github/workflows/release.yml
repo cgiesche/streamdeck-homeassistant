@@ -14,10 +14,23 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2.1.4
 
+      - name: Get release info
+        id: semantic_release_info
+        uses: jossef/action-semantic-release-info@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update manifest version
+          uses: jossef/action-set-json-field@v1
+          with:
+            file: public/manifest.json
+            field: Version
+            value: ${{ steps.semantic_release_info.outputs.git_tag }}
+
       - name: NPM Install
         run: npm install
 
-      - name: Build
+      - name: VUE Build
         run: npm run build
 
       - name: Create plugin folder structure
