@@ -49,6 +49,10 @@
             </option>
           </select>
         </div>
+        <div type="textarea" class="sdpi-item" v-if="service">
+          <div class="sdpi-item-label"><label for="serviceData">Optional Service Data JSON</label></div>
+          <textarea class="sdpi-item-value textarea" id="serviceData" v-model="serviceData" rows="5"></textarea>
+        </div>
 
         <div type="checkbox" class="sdpi-item">
           <div class="sdpi-item-label">Custom Title</div>
@@ -113,6 +117,7 @@ export default {
       domain: "",
       entity: "",
       service: "",
+      serviceData: "",
 
       // Custom Labels
       useCustomTitle: false,
@@ -149,6 +154,7 @@ export default {
         this.domain = actionSettings["domain"]
         this.entity = actionSettings["entityId"]
         this.service = actionSettings["service"]
+        this.serviceData = actionSettings["serviceData"]
 
         this.useCustomTitle = actionSettings["useCustomTitle"]
         this.buttonTitle = actionSettings["buttonTitle"] || "{{friendly_name}}"
@@ -215,7 +221,7 @@ export default {
                     }
                   }
               )
-              .sort((a,b) => (a.text > b.text) ? 1 : ((b.text > a.text) ? -1 : 0))
+              .sort((a, b) => (a.text > b.text) ? 1 : ((b.text > a.text) ? -1 : 0))
 
           this.availableAttributes = states
               .map((state) => {
@@ -241,6 +247,7 @@ export default {
         domain: this.domain,
         entityId: this.entity,
         service: this.service,
+        serviceData: this.serviceData,
 
         useCustomTitle: this.useCustomTitle,
         buttonTitle: this.buttonTitle,
