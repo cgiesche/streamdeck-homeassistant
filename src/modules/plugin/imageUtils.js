@@ -1,4 +1,4 @@
-import jinja from "jinja-js"
+import nunjucks from "nunjucks"
 
 const colors = {
     action: "#FFFFFF",
@@ -214,9 +214,9 @@ const Icon = {
     },
 
     labelledIcon: (state, attributes, templates = {}, image = "", labelTopOffset = 30) => {
-        const line1 = jinja.render(templates.line1 || "", {...{state}, ...attributes, ...{colors}})
-        const line2 = jinja.render(templates.line2 || "", {...{state}, ...attributes, ...{colors}})
-        const line3 = jinja.render(templates.line3 || "", {...{state}, ...attributes, ...{colors}})
+        const line1 = nunjucks.renderString(templates.line1 || "", {...{state}, ...attributes, ...{colors}})
+        const line2 = nunjucks.renderString(templates.line2 || "", {...{state}, ...attributes, ...{colors}})
+        const line3 = nunjucks.renderString(templates.line3 || "", {...{state}, ...attributes, ...{colors}})
 
         return `<svg width="144" height="144" xmlns="http://www.w3.org/2000/svg">
                     ${image}

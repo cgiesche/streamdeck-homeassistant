@@ -45,5 +45,5 @@ jobs:
         with:
           upload_url: ${{ github.event.release.upload_url }}
           asset_path: ./release.zip
-          asset_name: StreamDeckHomeAssistant.streamDeckPlugin
+          asset_name: StreamDeckHomeAssistant-${{ steps.tagName.outputs.tag }}.streamDeckPlugin
           asset_content_type: application/zip

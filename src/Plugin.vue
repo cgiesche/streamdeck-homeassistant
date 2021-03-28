@@ -6,7 +6,7 @@
 import StreamDeck from "@/modules/common/streamdeck";
 import {Entity, Homeassistant} from "@/modules/common/homeassistant";
 import {IconFactory} from "@/modules/plugin/imageUtils";
-import jinja from "jinja-js"
+import nunjucks from "nunjucks"
 
 export default {
   name: 'Plugin',
@@ -173,7 +173,7 @@ export default {
         setButtonSVG(svg, currentContext)
 
         if (contextSettings.useCustomTitle) {
-          const customTitle = jinja.render(contextSettings.buttonTitle, {...{state}, ...stateAttributes})
+          const customTitle = nunjucks.renderString(contextSettings.buttonTitle, {...{state}, ...stateAttributes})
           this.$SD.setTitle(currentContext, customTitle);
         }
       }
