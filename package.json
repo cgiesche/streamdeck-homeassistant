@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "core-js": "^3.6.5",
-    "jinja-js": "^0.1.8",
+    "nunjucks": "^3.2.3",
     "vue": "^2.6.11"
   },
   "devDependencies": {
