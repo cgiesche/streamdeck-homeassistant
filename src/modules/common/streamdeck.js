@@ -27,6 +27,9 @@ export default class StreamDeck {
                 case "keyDown":
                     this.events.emit("keyDown", incomingEvent)
                     break;
+                case "keyUp":
+                    this.events.emit("keyUp", incomingEvent)
+                    break;
                 case "willAppear":
                     this.events.emit("willAppear", incomingEvent)
                     break;

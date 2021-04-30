@@ -1,103 +1,184 @@
 <template>
-  <div class="sdpi-wrapper">
+  <div class="container">
+    <p>Settings should open in a separate window!</p>
 
-    <div class="sdpi-item" id="messagegroup" type="group">
-      <div class="sdpi-item-label">Home Assistant Settings</div>
-      <div class="sdpi-item-group" id="messagegroup_items">
-        <div class="sdpi-item">
-          <div class="sdpi-item-label"><label for="serverUrl">Home Assistant Server URL</label></div>
-          <input v-model="serverUrl" class="sdpi-item-value" id="serverUrl" placeholder="localhost:443" required>
-        </div>
-        <div class="sdpi-item" style="min-height: 26px">
-          <div class="sdpi-item-label"><label for="accessToken">Access Token</label></div>
-          <input v-model="accessToken" type="password" class="sdpi-item-value" id="accessToken" required>
-        </div>
-        <div class="sdpi-item">
-          <div class="sdpi-item-label">Save</div>
-          <button class="sdpi-item-value" id="btnSave" v-on:click="saveGlobalSettings"
-                  v-bind:disabled="isHaSettingsComplete">Save
-          </button>
-        </div>
+    <window-portal ref="portal" open>
+      <div class="container mt-3">
+
+        <b-form>
+          <h2>Home Assistant Settings</h2>
+
+          <div>
+            <b-form-group
+                label="Home Assistant Server URL"
+                description="example: ws://localhost:8123/api/websocket"
+                label-for="serverUrl"
+                :state="serverUrlState">
+              <b-form-input id="serverUrl" v-model="serverUrl" :state="serverUrlState" trim required></b-form-input>
+            </b-form-group>
+          </div>
+
+          <div>
+            <b-form-group
+                label="Access-Token"
+                description="To find out how to obtain a Token, please visit https://developers.home-assistant.io/docs/auth_api/#long-lived-access-token"
+                label-for="accessToken"
+                :state="accessTokenState">
+              <b-form-input type="password" id="accessToken" v-model="accessToken" :state="accessTokenState" trim
+                            required></b-form-input>
+            </b-form-group>
+          </div>
+
+          <p class="text-danger" v-if="haError">{{haError}}</p>
+
+          <div>
+            <b-button id="btnSave" v-on:click="saveGlobalSettings" v-bind:disabled="isHaSettingsComplete">Save
+            </b-button>
+          </div>
+        </b-form>
+
+        <hr>
+
+        <b-form v-if="haConnected">
+          <h2>Entity Settings</h2>
+
+          <b-form-group
+              label="Domain"
+              label-for="domain"
+              description="The domain of the entity you want to configure">
+            <b-form-select id="domain" v-on:change="service = null; entity = null" v-model="domain"
+                           :options="availableDomains"></b-form-select>
+          </b-form-group>
+
+          <b-form-group
+              label="Entity"
+              label-for="entity"
+              description="The id of the entity you want to configure">
+            <b-form-select id="entity" v-on:change="service = null" v-model="entity" :options="domainEntities"
+                           value-field="value.entityId"
+                           text-field="value.name"></b-form-select>
+          </b-form-group>
+
+          <b-form-group
+              label="Service"
+              label-for="service"
+              description="(Optional) Service that should be called when the stream deck button is pushed."
+              v-if="domainServices.length > 0">
+            <b-input-group>
+              <b-form-select id="service" v-model="service" :options="domainServices" value-field="serviceId"
+                             text-field="serviceId"></b-form-select>
+              <b-input-group-append>
+                <b-button v-on:click="service = null">Clear</b-button>
+              </b-input-group-append>
+            </b-input-group>
+          </b-form-group>
+
+          <b-form-group
+              label="Service Data JSON"
+              label-for="serviceData"
+              description="(Optional) Service data that will be sent with the service call. If not specified in the JSON-Object, the attribute 'entity_id' will be added automatically."
+              :invalid-feedback="serviceDataFeedback"
+              :state="!serviceDataFeedback"
+              v-if="service">
+            <b-form-textarea
+                id="serviceData"
+                v-model="serviceData"
+                rows="3"
+                :state="!serviceDataFeedback"
+            ></b-form-textarea>
+          </b-form-group>
+
+          <b-form-group
+              label="Service (long press)"
+              label-for="serviceLongPress"
+              description="(Optional) Service that should be called when the stream deck button is pushed for longer than 300ms."
+              v-if="domainServices.length > 0">
+            <b-input-group>
+              <b-form-select id="serviceLongPress" v-model="serviceLongPress" :options="domainServices"
+                             value-field="serviceId"
+                             text-field="serviceId"></b-form-select>
+              <b-input-group-append>
+                <b-button v-on:click="serviceLongPress = null">Clear</b-button>
+              </b-input-group-append>
+            </b-input-group>
+          </b-form-group>
+
+          <b-form-group
+              label="Service (long press) Data JSON"
+              label-for="serviceDataLongPress"
+              description="(Optional) Service data that will be sent with the service call. If not specified in the JSON-Object, the attribute 'entity_id' will be added automatically."
+              :invalid-feedback="serviceDataLongPressFeedback"
+              :state="!serviceDataLongPressFeedback"
+              v-if="serviceLongPress">
+            <b-form-textarea
+                id="serviceDataLongPress"
+                v-model="serviceDataLongPress"
+                rows="3"
+                :state="!serviceDataLongPressFeedback"
+            ></b-form-textarea>
+          </b-form-group>
+
+          <b-form-checkbox
+              id="chkButtonTitle"
+              v-model="useCustomTitle">Enable custom button title
+          </b-form-checkbox>
+
+          <div v-if="useCustomTitle">
+            <p class="text-danger">You have to clear the main title in the main stream deck window to make this title
+              template work.</p>
+            <b-form-group
+                label-for="buttonTitle"
+                :description="'Available variables: ' + entityAttributes">
+              <b-form-textarea
+                  id="textarea"
+                  v-model="buttonTitle"
+                  rows="3"
+              ></b-form-textarea>
+            </b-form-group>
+          </div>
+
+          <b-form-checkbox
+              id="chkUsebuttonTitle"
+              v-model="useCustomButtonLabels">Enable custom labels
+          </b-form-checkbox>
+
+          <div v-if="useCustomButtonLabels">
+            <b-form-group
+                label-for="buttonLabelLine1"
+                :description="'Available variables: ' + entityAttributes">
+              <b-form-textarea
+                  id="buttonLabelLine1"
+                  v-model="buttonLabelLine1"
+                  rows="3">
+              </b-form-textarea>
+            </b-form-group>
+            <b-form-group
+                label-for="buttonLabelLine2"
+                :description="'Available variables: ' + entityAttributes">
+              <b-form-textarea
+                  id="buttonLabelLine2"
+                  v-model="buttonLabelLine2"
+                  rows="3">
+              </b-form-textarea>
+            </b-form-group>
+            <b-form-group
+                label-for="buttonLabelLine3"
+                :description="'Available variables: ' + entityAttributes">
+              <b-form-textarea
+                  id="buttonLabelLine3"
+                  v-model="buttonLabelLine3"
+                  rows="3">
+              </b-form-textarea>
+            </b-form-group>
+          </div>
+
+          <div>
+            <b-button id="btnActionSave" v-on:click="saveSettings" v-bind:disabled="!domain">Save</b-button>
+          </div>
+
+        </b-form>
       </div>
-    </div>
-
-    <div class="sdpi-item" id="messagegroup2" type="group">
-      <div class="sdpi-item-label">Entity Settings</div>
-      <div class="sdpi-item-group" id="messagegroup2_items">
-        <div class="sdpi-item">
-          <div class="sdpi-item-label"><label for="domain">Domain</label></div>
-          <select class="sdpi-item-value select" id="domain" v-model="domain">
-            <option v-for="domain in availableDomains" v-bind:key="domain">
-              {{ domain }}
-            </option>
-          </select>
-        </div>
-        <div class="sdpi-item">
-          <div class="sdpi-item-label"><label for="entity">Entity</label></div>
-          <select class="sdpi-item-value select" id="entity" v-model="entity">
-            <option v-for="entity in domainEntities" v-bind:key="entity.value.entityId"
-                    v-bind:value="entity.value.entityId">
-              {{ entity.text }}
-            </option>
-          </select>
-        </div>
-        <div class="sdpi-item">
-          <div class="sdpi-item-label"><label for="service">Service</label></div>
-          <select class="sdpi-item-value select" id="service" v-model="service">
-            <option v-for="service in domainServices" v-bind:key="service.serviceId" v-bind:value="service.serviceId">
-              {{ service.serviceId }} ({{ service.serviceDetails.description }})
-            </option>
-          </select>
-        </div>
-        <div type="textarea" class="sdpi-item" v-if="service">
-          <div class="sdpi-item-label"><label for="serviceData">Optional Service Data JSON</label></div>
-          <textarea class="sdpi-item-value textarea" id="serviceData" v-model="serviceData" rows="5"></textarea>
-        </div>
-
-        <div type="checkbox" class="sdpi-item">
-          <div class="sdpi-item-label">Custom Title</div>
-          <input class="sdpi-item-value" id="chkButtonTitle" type="checkbox" v-model="useCustomTitle">
-          <label for="chkButtonTitle"><span></span></label>
-        </div>
-
-        <template v-if="useCustomTitle">
-          <div class="sdpi-item">
-            <div class="sdpi-item-label"><label for="txtbuttonTitle">Title Template*</label></div>
-            <input v-model="buttonTitle" class="sdpi-item-value" id="txtbuttonTitle">
-          </div>
-          <p class="altColor">Available variables: {{ entityAttributes }}</p>
-          <p style="color: coral">You have to clear the main title to make this title template work.</p>
-        </template>
-
-        <div type="checkbox" class="sdpi-item">
-          <div class="sdpi-item-label">Custom Labels</div>
-          <input class="sdpi-item-value" id="chkUsebuttonTitle" type="checkbox" v-model="useCustomButtonLabels">
-          <label for="chkUsebuttonTitle"><span></span></label>
-        </div>
-
-        <template v-if="useCustomButtonLabels">
-          <div class="sdpi-item">
-            <div class="sdpi-item-label"><label for="txtLine1">Button line 1</label></div>
-            <input v-model="buttonLabelLine1" class="sdpi-item-value" id="txtLine1">
-          </div>
-          <div class="sdpi-item">
-            <div class="sdpi-item-label"><label for="txtLine2">Button line 2</label></div>
-            <input v-model="buttonLabelLine2" class="sdpi-item-value" id="txtLine2">
-          </div>
-          <div class="sdpi-item">
-            <div class="sdpi-item-label"><label for="txtLine3">Button line 3</label></div>
-            <input v-model="buttonLabelLine3" class="sdpi-item-value" id="txtLine3">
-          </div>
-          <p>Available variables: {{ entityAttributes }}</p>
-        </template>
-
-        <div class="sdpi-item">
-          <div class="sdpi-item-label">Save</div>
-          <button class="sdpi-item-value" id="btnActionSave" v-on:click="saveSettings" v-bind:disabled="!domain">Save
-          </button>
-        </div>
-      </div>
-    </div>
+    </window-portal>
   </div>
 </template>
 
@@ -105,9 +186,11 @@
 import StreamDeck from "@/modules/common/streamdeck";
 import {ObjectUtils} from "@/modules/common/utils";
 import {Entity, Homeassistant} from "@/modules/common/homeassistant";
+import WindowPortal from "@/components/WindowPortal";
 
 export default {
   name: 'Pi',
+  components: {WindowPortal},
   props: {},
   data: () => {
     return {
@@ -116,8 +199,11 @@ export default {
 
       domain: "",
       entity: "",
+
       service: "",
       serviceData: "",
+      serviceLongPress: "",
+      serviceDataLongPress: "",
 
       // Custom Labels
       useCustomTitle: false,
@@ -131,7 +217,11 @@ export default {
       availableDomains: [],
       availableEntities: [],
       availableServices: [],
-      availableAttributes: []
+      availableAttributes: [],
+
+      // Home-Assistant-State
+      haConnected: false,
+      haError: ""
     }
   },
   created() {
@@ -153,8 +243,15 @@ export default {
         let actionSettings = actionInfo.payload.settings
         this.domain = actionSettings["domain"]
         this.entity = actionSettings["entityId"]
-        this.service = actionSettings["service"]
-        this.serviceData = actionSettings["serviceData"]
+
+        if (actionSettings["service"]) {
+          this.service = actionSettings["service"].id
+          this.serviceData = actionSettings["service"].data
+        }
+        if (actionSettings["serviceLongPress"]) {
+          this.serviceLongPress = actionSettings["serviceLongPress"].id
+          this.serviceDataLongPress = actionSettings["serviceLongPress"].data
+        }
 
         this.useCustomTitle = actionSettings["useCustomTitle"]
         this.buttonTitle = actionSettings["buttonTitle"] || "{{friendly_name}}"
@@ -168,6 +265,38 @@ export default {
   },
 
   computed: {
+    serverUrlState: function () {
+      return this.serverUrl.length > 4
+    },
+
+    accessTokenState: function () {
+      return this.accessToken.length > 4
+    },
+
+    serviceDataFeedback: function () {
+      if (!this.serviceData) {
+        return "";
+      }
+      try {
+        const json = JSON.parse(this.serviceData);
+        return (typeof json === "object") ? "" : "Service data must be an JSON object."
+      } catch (e) {
+        return "Invalid JSON string.";
+      }
+    },
+
+    serviceDataLongPressFeedback: function () {
+      if (!this.serviceDataLongPress) {
+        return "";
+      }
+      try {
+        const json = JSON.parse(this.serviceDataLongPress);
+        return (typeof json === "object") ? "" : "Service data must be an JSON object."
+      } catch (e) {
+        return "Invalid JSON string.";
+      }
+    },
+
     isHaSettingsComplete: function () {
       return !this.serverUrl || !this.accessToken
     },
@@ -205,39 +334,50 @@ export default {
       }
 
       this.$HA = new Homeassistant(this.serverUrl, this.accessToken, () => {
-        this.$HA.getStates((states) => {
-          this.availableDomains = states
-              .map(state => new Entity(state.entity_id).domain)
-              .sort()
-              .reduce(
-                  (acc, curr) => acc.add(curr), new Set()
-              );
+            this.haConnected = true;
+            this.$HA.getStates((states) => {
+              this.availableDomains = Array.from(states
+                  .map(state => new Entity(state.entity_id).domain)
+                  .sort()
+                  .reduce(
+                      (acc, curr) => acc.add(curr), new Set()
+                  ));
 
-          this.availableEntities = states
-              .map((state) => {
+              this.availableEntities = states
+                  .map((state) => {
+                        return {
+                          value: new Entity(state.entity_id),
+                          text: state.attributes.friendly_name || state.entity_id
+                        }
+                      }
+                  )
+                  .sort((a, b) => (a.text > b.text) ? 1 : ((b.text > a.text) ? -1 : 0))
+
+              this.availableAttributes = states
+                  .map((state) => {
                     return {
-                      value: new Entity(state.entity_id),
-                      text: state.attributes.friendly_name || state.entity_id
+                      entity: new Entity(state.entity_id),
+                      attributes: ObjectUtils.paths(state.attributes)
                     }
-                  }
-              )
-              .sort((a, b) => (a.text > b.text) ? 1 : ((b.text > a.text) ? -1 : 0))
-
-          this.availableAttributes = states
-              .map((state) => {
-                return {
-                  entity: new Entity(state.entity_id),
-                  attributes: ObjectUtils.paths(state.attributes)
-                }
-              })
-        });
-        this.$HA.getServices((services) => {
-          this.availableServices = services;
-        });
-      })
+                  })
+            });
+            this.$HA.getServices((services) => {
+              this.availableServices = services;
+            });
+          },
+          () => {
+            this.haConnected = false;
+            this.haError = "Failed to connect websocket.";
+          },
+          () => {
+            this.haConnected = false;
+            this.haError = "Websocket was closed.";
+          }
+      )
     },
 
     saveGlobalSettings: function () {
+      this.haError = "";
       this.$SD.saveGlobalSettings({"serverUrl": this.serverUrl, "accessToken": this.accessToken});
       this.connectHomeAssistant()
     },
@@ -246,8 +386,15 @@ export default {
       let actionSettings = {
         domain: this.domain,
         entityId: this.entity,
-        service: this.service,
-        serviceData: this.serviceData,
+
+        service: {
+          id: this.service,
+          data: this.serviceData
+        },
+        serviceLongPress: {
+          id: this.serviceLongPress,
+          data: this.serviceDataLongPress
+        },
 
         useCustomTitle: this.useCustomTitle,
         buttonTitle: this.buttonTitle,

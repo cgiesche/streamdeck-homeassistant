@@ -17,7 +17,8 @@ export default {
       $HA: null,
       $reconnectTimeout: null,
       actionSettings: {},
-      globalSettings: {}
+      globalSettings: {},
+      buttonLongpressTimeouts: new Map() //context, timeout
     }
   },
   beforeCreate() {
@@ -64,24 +65,21 @@ export default {
       })
 
       this.$SD.on("keyDown", (message) => {
-        console.log(this.actionSettings)
-        if (this.$HA) {
-          let context = message.context
-          let settings = this.actionSettings[context];
-          if (settings.service) {
-            try {
-              const entity = new Entity(settings.entityId);
-              const serviceData = settings.serviceData ? JSON.parse(settings.serviceData) : {};
-              // add default entity_id if not specified
-              if (!serviceData.entity_id) {
-                serviceData.entity_id = entity.entityId;
-              }
-              this.$HA.callService(settings.service, entity, serviceData)
-            } catch (e) {
-              console.error(e)
-              this.$SD.showAlert(context);
-            }
-          }
+        let context = message.context
+
+        const timeout = setTimeout(buttonLongPress, 300, context);
+        this.buttonLongpressTimeouts.set(context, timeout)
+      })
+
+      this.$SD.on("keyUp", (message) => {
+        let context = message.context
+
+        // If "long press timeout" is still present, we perform a normal press
+        const lpTimeout = this.buttonLongpressTimeouts.get(context);
+        if (lpTimeout) {
+          clearTimeout(lpTimeout);
+          this.buttonLongpressTimeouts.delete(context)
+          buttonShortPress(context);
         }
       })
 
@@ -106,6 +104,41 @@ export default {
           this.$HA.getStates(entitiyStatesChanged)
         }
       })
+
+      const buttonShortPress = (context) => {
+        let settings = this.actionSettings[context];
+        callService(context, settings.service);
+      }
+
+      const buttonLongPress = (context) => {
+        this.buttonLongpressTimeouts.delete(context);
+        let settings = this.actionSettings[context];
+        if (settings.serviceLongPress.id) {
+          callService(context, settings.serviceLongPress);
+        } else {
+          callService(context, settings.service);
+        }
+      }
+
+      const callService = (context, serviceToCall) => {
+        let settings = this.actionSettings[context];
+        if (this.$HA) {
+          if (serviceToCall) {
+            try {
+              const entity = new Entity(settings.entityId);
+              const serviceData = serviceToCall.data ? JSON.parse(serviceToCall.data) : {};
+              // add default entity_id if not specified
+              if (!serviceData.entity_id) {
+                serviceData.entity_id = entity.entityId;
+              }
+              this.$HA.callService(serviceToCall.id, entity, serviceData)
+            } catch (e) {
+              console.error(e)
+              this.$SD.showAlert(context);
+            }
+          }
+        }
+      }
 
       const connectHomeAssistant = () => {
         if (this.globalSettings.serverUrl && this.globalSettings.accessToken) {

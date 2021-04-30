@@ -16,7 +16,7 @@ export const ObjectUtils = {
                         .map(subPath => `${keyPath}.${subPath}`)
                         .forEach(path => paths.push(path))
                 } else {
-                    paths.push(key)
+                    paths.push(keyPath)
                 }
             }
         )

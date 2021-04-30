@@ -35,8 +35,8 @@ service that does not need any more information but the entity id.
 # Configuration
 There are two sections on the plugin's cofiguration panel:
  * Home Assistant Settings  
-   Contains global settings for your Home Assistant installation. Once saved, the settings are valid for all Buttons.
- * Entity Settings  
+   Contains global settings for your Home Assistant installation. Once saved, the settings are used for all stream deck Buttons.
+ * Entity Settings
    Contains settings for an individual button.
 
 ## Home Assistant Settings
@@ -52,7 +52,8 @@ After you saved your Home Assistant Settings, the plugin will automatically try 
 ### Basic configuration
  * Domain: Home Assistant entities are grouped by domains. Select the domain (for example "switch") of an entity, you want to configure.
  * Entity: This is the actual entity you are going to configure (for example "Kitchen Light")
- * Service: The service that will be called every time you press the StreamDeck button for this entity.
+ * Service: The service that will be called every time you press the StreamDeck button.
+ * Service (long press): The service that will be called every time you press and hold the StreamDeck button for more than 300ms.
  * Service Data JSON: JSON formatted data that is sent with your service call when you press a button.
    Example:
    ```
@@ -79,25 +80,3 @@ After you hit the save button, the button should immediately show the new config
 # Happy? Consider to donating me a coffee :)
 [![buy me a coffee](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://www.paypal.com/donate?hosted_button_id=3UKRJEJVWV9H4)
 
-## Project setup
-```
-npm install
-```
-
-### Compiles and hot-reloads for development
-```
-npm run serve
-```
-
-### Compiles and minifies for production
-```
-npm run build
-```
-
-### Lints and fixes files
-```
-npm run lint
-```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
