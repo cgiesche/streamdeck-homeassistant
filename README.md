@@ -40,7 +40,7 @@ There are two sections on the plugin's cofiguration panel:
    Contains settings for an individual button.
 
 ## Home Assistant Settings
- * Server URL: `ws://your-homeassistant-ip-or-hostname:your-homeassistant-port/api/websocket`, for example (local network) `ws://192.126.0.5:8123` or (public, with ssl enabled on default port 443) `wss://my-secure-homeassistant.com`.
+ * Server URL: `ws://your-homeassistant-ip-or-hostname:your-homeassistant-port/api/websocket`, for example (local network) `ws://192.126.0.5:8123/api/websocket` or (public, with ssl enabled on default port 443) `wss://my-secure-homeassistant.com/api/websocket`.
  * Access Token: An long-lived access-token obtained from your Home Assistant.  
    _Long-lived access tokens can be created using the "Long-Lived Access Tokens" section at the bottom of a user's Home Assistant profile page._ (Quote from https://developers.home-assistant.io/docs/auth_api/#long-lived-access-token)
    
