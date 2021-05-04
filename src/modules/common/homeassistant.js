@@ -6,9 +6,10 @@ export class Homeassistant {
         this.websocket = new WebSocket(url)
         this.accessToken = accessToken;
         this.onReady = onReady;
+        this.onError = onError;
 
         this.websocket.onmessage = (evt) => this.handleMessage(evt);
-        this.websocket.onerror = onError;
+        this.websocket.onerror = () => { this.onError("Failed to connect to " + url) };
         this.websocket.onclose = onClose;
     }
 
@@ -42,6 +43,14 @@ export class Homeassistant {
                 }
                 break;
             case "auth_failed":
+                if (this.onError) {
+                    this.onError(messageData.message);
+                }
+                break;
+            case "auth_invalid":
+                if (this.onError) {
+                    this.onError(messageData.message);
+                }
                 break;
         }
     }
