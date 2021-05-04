@@ -266,11 +266,11 @@ export default {
 
   computed: {
     serverUrlState: function () {
-      return this.serverUrl.length > 4
+      return this.serverUrl && this.serverUrl.length > 4
     },
 
     accessTokenState: function () {
-      return this.accessToken.length > 4
+      return this.accessToken && this.accessToken.length > 4
     },
 
     serviceDataFeedback: function () {
@@ -333,47 +333,47 @@ export default {
         this.$HA.close();
       }
 
-      this.$HA = new Homeassistant(this.serverUrl, this.accessToken, () => {
-            this.haConnected = true;
-            this.$HA.getStates((states) => {
-              this.availableDomains = Array.from(states
-                  .map(state => new Entity(state.entity_id).domain)
-                  .sort()
-                  .reduce(
-                      (acc, curr) => acc.add(curr), new Set()
-                  ));
+      try {
+        this.$HA = new Homeassistant(this.serverUrl, this.accessToken, () => {
+              this.haConnected = true;
+              this.$HA.getStates((states) => {
+                this.availableDomains = Array.from(states
+                    .map(state => new Entity(state.entity_id).domain)
+                    .sort()
+                    .reduce(
+                        (acc, curr) => acc.add(curr), new Set()
+                    ));
 
-              this.availableEntities = states
-                  .map((state) => {
-                        return {
-                          value: new Entity(state.entity_id),
-                          text: state.attributes.friendly_name || state.entity_id
+                this.availableEntities = states
+                    .map((state) => {
+                          return {
+                            value: new Entity(state.entity_id),
+                            text: state.attributes.friendly_name || state.entity_id
+                          }
                         }
-                      }
-                  )
-                  .sort((a, b) => (a.text > b.text) ? 1 : ((b.text > a.text) ? -1 : 0))
+                    )
+                    .sort((a, b) => (a.text > b.text) ? 1 : ((b.text > a.text) ? -1 : 0))
 
-              this.availableAttributes = states
-                  .map((state) => {
-                    return {
-                      entity: new Entity(state.entity_id),
-                      attributes: ObjectUtils.paths(state.attributes)
-                    }
-                  })
-            });
-            this.$HA.getServices((services) => {
-              this.availableServices = services;
-            });
-          },
-          () => {
-            this.haConnected = false;
-            this.haError = "Failed to connect websocket.";
-          },
-          () => {
-            this.haConnected = false;
-            this.haError = "Websocket was closed.";
-          }
-      )
+                this.availableAttributes = states
+                    .map((state) => {
+                      return {
+                        entity: new Entity(state.entity_id),
+                        attributes: ObjectUtils.paths(state.attributes)
+                      }
+                    })
+              });
+              this.$HA.getServices((services) => {
+                this.availableServices = services;
+              });
+            },
+            (message) => {
+              this.haConnected = false;
+              this.haError = message;
+            }
+        )
+      } catch (e) {
+        this.haError = e
+      }
     },
 
     saveGlobalSettings: function () {
