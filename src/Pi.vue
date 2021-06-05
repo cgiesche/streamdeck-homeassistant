@@ -29,7 +29,7 @@
             </b-form-group>
           </div>
 
-          <p class="text-danger" v-if="haError">{{haError}}</p>
+          <p class="text-danger" v-if="haError">{{ haError }}</p>
 
           <div>
             <b-button id="btnSave" v-on:click="saveGlobalSettings" v-bind:disabled="isHaSettingsComplete">Save
@@ -129,11 +129,10 @@
             <b-form-group
                 label-for="buttonTitle"
                 :description="'Available variables: ' + entityAttributes">
-              <b-form-textarea
+              <b-form-input
                   id="textarea"
                   v-model="buttonTitle"
-                  rows="3"
-              ></b-form-textarea>
+              ></b-form-input>
             </b-form-group>
           </div>
 
@@ -144,30 +143,16 @@
 
           <div v-if="useCustomButtonLabels">
             <b-form-group
-                label-for="buttonLabelLine1"
+                label-for="buttonLabels"
                 :description="'Available variables: ' + entityAttributes">
               <b-form-textarea
-                  id="buttonLabelLine1"
-                  v-model="buttonLabelLine1"
-                  rows="3">
-              </b-form-textarea>
-            </b-form-group>
-            <b-form-group
-                label-for="buttonLabelLine2"
-                :description="'Available variables: ' + entityAttributes">
-              <b-form-textarea
-                  id="buttonLabelLine2"
-                  v-model="buttonLabelLine2"
-                  rows="3">
-              </b-form-textarea>
-            </b-form-group>
-            <b-form-group
-                label-for="buttonLabelLine3"
-                :description="'Available variables: ' + entityAttributes">
-              <b-form-textarea
-                  id="buttonLabelLine3"
-                  v-model="buttonLabelLine3"
-                  rows="3">
+                  id="buttonLabels"
+                  v-model="buttonLabels"
+                  rows="4" max-rows="4"
+              placeholder="Line 1 (may overlap with icon)
+Line 2 (may overlap with icon)
+Line 3
+Line 4 (may overlap with title)">
               </b-form-textarea>
             </b-form-group>
           </div>
@@ -210,14 +195,12 @@ export default {
       buttonTitle: "{{friendly_name}}",
 
       useCustomButtonLabels: false,
-      buttonLabelLine1: "",
-      buttonLabelLine2: "",
-      buttonLabelLine3: "",
+      buttonLabels: "",
 
       availableDomains: [],
       availableEntities: [],
       availableServices: [],
-      availableAttributes: [],
+      currentStates: [],
 
       // Home-Assistant-State
       haConnected: false,
@@ -257,9 +240,15 @@ export default {
         this.buttonTitle = actionSettings["buttonTitle"] || "{{friendly_name}}"
 
         this.useCustomButtonLabels = actionSettings["useCustomButtonLabels"]
-        this.buttonLabelLine1 = actionSettings["buttonLabelLine1"]
-        this.buttonLabelLine2 = actionSettings["buttonLabelLine2"]
-        this.buttonLabelLine3 = actionSettings["buttonLabelLine3"]
+        this.buttonLabels = actionSettings["buttonLabels"];
+
+        // backward compatibility
+        if (actionSettings["buttonLabelLine1"] || actionSettings["buttonLabelLine1"] || actionSettings["buttonLabelLine3"]) {
+          const l1 = actionSettings["buttonLabelLine1"] || ""
+          const l2 = actionSettings["buttonLabelLine2"] || ""
+          const l3 = actionSettings["buttonLabelLine3"] || ""
+          this.buttonLabels = `${l1}\n${l2}\n${l3}`
+        }
       })
     }
   },
@@ -317,14 +306,15 @@ export default {
     },
 
     entityAttributes: function () {
-      let entityAttributes = this.availableAttributes.find((attribute) => attribute.entity.entityId === this.entity)
-      if (entityAttributes && entityAttributes.attributes) {
-        return "{{state}}, " + entityAttributes.attributes
+      let currentEntityState = this.currentStates.find((state) => state.entity.entityId === this.entity)
+      if (currentEntityState && currentEntityState.attributes) {
+        return "{{state}}, " + currentEntityState.attributes
             .map(attribute => `{{${attribute}}}`)
             .join(", ")
       }
       return "-"
-    }
+    },
+
   },
 
   methods: {
@@ -354,7 +344,7 @@ export default {
                     )
                     .sort((a, b) => (a.text > b.text) ? 1 : ((b.text > a.text) ? -1 : 0))
 
-                this.availableAttributes = states
+                this.currentStates = states
                     .map((state) => {
                       return {
                         entity: new Entity(state.entity_id),
@@ -400,9 +390,7 @@ export default {
         buttonTitle: this.buttonTitle,
 
         useCustomButtonLabels: this.useCustomButtonLabels,
-        buttonLabelLine1: this.buttonLabelLine1,
-        buttonLabelLine2: this.buttonLabelLine2,
-        buttonLabelLine3: this.buttonLabelLine3
+        buttonLabels: this.buttonLabels
       }
 
       this.$SD.saveSettings(actionSettings)
