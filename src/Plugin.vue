@@ -5,7 +5,7 @@
 <script>
 import StreamDeck from "@/modules/common/streamdeck";
 import {Entity, Homeassistant} from "@/modules/common/homeassistant";
-import {IconFactory} from "@/modules/plugin/imageUtils";
+import {EntityButtonImageFactory, EntityConfigFactory} from "@/modules/plugin/entityButtonImageFactory";
 import nunjucks from "nunjucks"
 
 export default {
@@ -18,7 +18,9 @@ export default {
       $reconnectTimeout: null,
       actionSettings: {},
       globalSettings: {},
-      buttonLongpressTimeouts: new Map() //context, timeout
+      buttonLongpressTimeouts: new Map(), //context, timeout
+      entityConfigFactory: new EntityConfigFactory(),
+      buttonFactory: new EntityButtonImageFactory()
     }
   },
   beforeCreate() {
@@ -167,7 +169,7 @@ export default {
 
         changedContexts.forEach(context => {
           try {
-            updateContextState(context, stateMessage, entity);
+            updateContextState(context, entity, stateMessage);
           } catch (e) {
             console.error(e)
             this.$SD.setImage(context, null);
@@ -176,36 +178,24 @@ export default {
         })
       }
 
-      const updateContextState = (currentContext, stateMessage, entity) => {
+      const updateContextState = (currentContext, entity, stateObject) => {
         let contextSettings = this.actionSettings[currentContext]
-        let state = stateMessage.state;
-        let stateAttributes = stateMessage.attributes;
-        let deviceClass = stateAttributes.device_class || "default";
+        let labelTemplates = null;
 
-        console.log(`Finding image for context ${currentContext}: ${entity.domain}.${deviceClass}(${state})`)
-        let labelTemplate = null;
-        if (contextSettings.useCustomButtonLabels) {
-          labelTemplate = {
-            line1: contextSettings.buttonLabelLine1,
-            line2: contextSettings.buttonLabelLine2,
-            line3: contextSettings.buttonLabelLine3,
-          }
+        if (contextSettings.useCustomButtonLabels && contextSettings.buttonLabels) {
+          labelTemplates = contextSettings.buttonLabels.split("\n");
         }
+        let entityConfig = this.entityConfigFactory.determineConfig(entity.domain, stateObject, labelTemplates)
 
-        let svg;
-        if (IconFactory[entity.domain] && IconFactory[entity.domain][deviceClass]) {
-          console.log(`... sucess!`)
-          // domain, class, state
-          svg = IconFactory[entity.domain][deviceClass](state, stateAttributes, labelTemplate);
-        } else if (IconFactory[entity.domain] && IconFactory[entity.domain]["default"]) {
-          console.log(`... sucess (fallback)!`)
-          svg = IconFactory[entity.domain]["default"](state, stateAttributes, labelTemplate);
-        } else {
-          svg = IconFactory.default(state, stateAttributes, labelTemplate);
-        }
-        setButtonSVG(svg, currentContext)
+        entityConfig.isAction = contextSettings.service.id
+        entityConfig.isMultiAction = contextSettings.serviceLongPress.id
+        const buttonSvg = this.buttonFactory.createButton(entityConfig);
+
+        setButtonSVG(buttonSvg, currentContext)
 
         if (contextSettings.useCustomTitle) {
+          let state = stateObject.state;
+          let stateAttributes = stateObject.attributes;
           const customTitle = nunjucks.renderString(contextSettings.buttonTitle, {...{state}, ...stateAttributes})
           this.$SD.setTitle(currentContext, customTitle);
         }
