@@ -138,6 +138,7 @@
 
           <b-form-checkbox
               id="chkUsebuttonTitle"
+              v-if="!useStateImagesForOnOffStates"
               v-model="useCustomButtonLabels">Enable custom labels
           </b-form-checkbox>
 
@@ -194,6 +195,7 @@ export default {
       useCustomTitle: false,
       buttonTitle: "{{friendly_name}}",
 
+      useStateImagesForOnOffStates: false, // determined by action ID (manifest)
       useCustomButtonLabels: false,
       buttonLabels: "",
 
@@ -210,6 +212,13 @@ export default {
   created() {
     window.connectElgatoStreamDeckSocket = (inPort, inPropertyInspectorUUID, inRegisterEvent, inInfo, inActionInfo) => {
       this.$SD = new StreamDeck(inPort, inPropertyInspectorUUID, inRegisterEvent, inInfo, inActionInfo);
+
+      // Dual State entity (custom icons for on/off)
+      const inActionInfoObject = JSON.parse(inActionInfo);
+      if (inActionInfoObject["action"] === "de.perdoctus.streamdeck.ha.dual-state-entity") {
+        this.useStateImagesForOnOffStates = true;
+      }
+
       this.$SD.on("globalsettings", (globalSettings) => {
         if (globalSettings) {
           this.serverUrl = globalSettings.serverUrl;
@@ -240,7 +249,7 @@ export default {
         this.buttonTitle = actionSettings["buttonTitle"] || "{{friendly_name}}"
 
         this.useCustomButtonLabels = actionSettings["useCustomButtonLabels"]
-        this.buttonLabels = actionSettings["buttonLabels"];
+        this.buttonLabels = actionSettings["buttonLabels"]
 
         // backward compatibility
         if (actionSettings["buttonLabelLine1"] || actionSettings["buttonLabelLine1"] || actionSettings["buttonLabelLine3"]) {
@@ -389,6 +398,7 @@ export default {
         useCustomTitle: this.useCustomTitle,
         buttonTitle: this.buttonTitle,
 
+        useStateImagesForOnOffStates: this.useStateImagesForOnOffStates, // determined by action ID (manifest)
         useCustomButtonLabels: this.useCustomButtonLabels,
         buttonLabels: this.buttonLabels
       }
