@@ -16,11 +16,12 @@ export default {
       $SD: null,
       $HA: null,
       $reconnectTimeout: null,
+      useStateImagesForOnOffStates: false,
       actionSettings: {},
       globalSettings: {},
       buttonLongpressTimeouts: new Map(), //context, timeout
       entityConfigFactory: new EntityConfigFactory(),
-      buttonFactory: new EntityButtonImageFactory()
+      buttonImageFactory: new EntityButtonImageFactory()
     }
   },
   beforeCreate() {
@@ -189,9 +190,17 @@ export default {
 
         entityConfig.isAction = contextSettings.service.id
         entityConfig.isMultiAction = contextSettings.serviceLongPress.id
-        const buttonSvg = this.buttonFactory.createButton(entityConfig);
+        const buttonImage = this.buttonImageFactory.createButton(entityConfig);
 
-        setButtonSVG(buttonSvg, currentContext)
+        if (contextSettings.useStateImagesForOnOffStates) {
+          if (stateObject.state === "on") {
+            this.$SD.setState(currentContext, 1);
+          } else {
+            this.$SD.setState(currentContext, 0);
+          }
+        } else {
+          setButtonSVG(buttonImage, currentContext)
+        }
 
         if (contextSettings.useCustomTitle) {
           let state = stateObject.state;

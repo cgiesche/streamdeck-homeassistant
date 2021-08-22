@@ -120,6 +120,21 @@ export default class StreamDeck {
 
         this.streamDeckWebsocket.send(JSON.stringify(message))
     }
+
+    /**
+     * @param number 0-based index of state to set.
+     */
+    setState(context, number) {
+        let message = {
+            "event": "setState",
+            "context": context,
+            "payload": {
+                "state": number
+            }
+        }
+
+        this.streamDeckWebsocket.send(JSON.stringify(message))
+    }
 }
 
 const ELGEvents = {
