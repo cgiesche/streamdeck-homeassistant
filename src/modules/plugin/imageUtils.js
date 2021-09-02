@@ -18,7 +18,7 @@ export const IconFactory = {
     getS: function (iconName) {
         const iconNameRaw = iconName.substring(4)
         const iconNamePascalCase = iconNameRaw.replace(/(^\w|-\w)/g, IconFactory.clearAndUpper)
-        return "mdi" + iconNamePascalCase; //TODO: kaputt!
+        return "mdi" + iconNamePascalCase;
     },
 
     clearAndUpper: function (text) {
