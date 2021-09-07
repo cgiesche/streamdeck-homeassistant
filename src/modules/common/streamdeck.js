@@ -82,8 +82,7 @@ export default class StreamDeck {
             "context": context,
             "payload": {
                 "title": title,
-                "target": ["software", "hardware"],
-                "state": 0
+                "target": ["software", "hardware"]
             }
         }
         this.streamDeckWebsocket.send(JSON.stringify(message))
