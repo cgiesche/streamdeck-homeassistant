@@ -188,8 +188,8 @@ export default {
         }
         let entityConfig = this.entityConfigFactory.determineConfig(entity.domain, stateObject, labelTemplates)
 
-        entityConfig.isAction = contextSettings.service.id
-        entityConfig.isMultiAction = contextSettings.serviceLongPress.id
+        entityConfig.isAction = contextSettings.service.id && (contextSettings.enableServiceIndicator === undefined || contextSettings.enableServiceIndicator) // undefined = on by default
+        entityConfig.isMultiAction = contextSettings.serviceLongPress.id && (contextSettings.enableServiceIndicator === undefined || contextSettings.enableServiceIndicator) // undefined = on by default
         const buttonImage = this.buttonImageFactory.createButton(entityConfig);
 
         if (contextSettings.useStateImagesForOnOffStates) {
