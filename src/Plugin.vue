@@ -134,7 +134,7 @@ export default {
               if (!serviceData.entity_id) {
                 serviceData.entity_id = entity.entityId;
               }
-              this.$HA.callService(serviceToCall.id, entity, serviceData)
+              this.$HA.callService(serviceToCall.id, settings.domain, serviceData)
             } catch (e) {
               console.error(e)
               this.$SD.showAlert(context);

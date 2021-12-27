@@ -324,7 +324,7 @@ export default {
 
     domainEntities: function () {
       return this.availableEntities
-          .filter((entityInfo) => entityInfo.value.domain === this.domain)
+          .filter((entityInfo) => entityInfo.value.domain === this.domain || this.domain == "homeassistant")
     },
 
     entityAttributes: function () {
@@ -355,6 +355,8 @@ export default {
                     .reduce(
                         (acc, curr) => acc.add(curr), new Set()
                     ));
+
+                this.availableDomains.push("homeassistant");
 
                 this.availableEntities = states
                     .map((state) => {
