@@ -79,8 +79,8 @@ export class Homeassistant {
         this.sendCommand(subscribeEventCommand, callback);
     }
 
-    callService(service, entity, serviceData, callback = null) {
-        let callServiceCommand = new CallServiceCommand(this.nextRequestId(), service, entity, serviceData);
+    callService(service, domain, serviceData, callback = null) {
+        let callServiceCommand = new CallServiceCommand(this.nextRequestId(), service, domain, serviceData);
         this.sendCommand(callServiceCommand, callback)
     }
 
@@ -125,9 +125,9 @@ class GetServicesCommand extends Command {
 }
 
 class CallServiceCommand extends Command {
-    constructor(iterationCount, service, entity, serviceData) {
+    constructor(iterationCount, service, domain, serviceData) {
         super(iterationCount, "call_service");
-        this.domain = entity.domain;
+        this.domain = domain;
         this.service = service;
         if (serviceData) {
             this.service_data = serviceData;
