@@ -70,7 +70,6 @@ export class Homeassistant {
     }
 
     getServices(callback) {
-        console.error(callback);
         let getServicesCommand = new GetServicesCommand(this.nextRequestId());
         this.sendCommand(getServicesCommand, callback)
     }
