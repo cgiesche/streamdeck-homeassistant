@@ -11,7 +11,7 @@ export const ObjectUtils = {
                     ObjectUtils.paths(object[key])
                         .map(subPath => `${keyPath}${subPath}`)
                         .forEach(path => paths.push(path))
-                } else if (typeof object[key] === 'object') {
+                } else if (typeof object[key] === 'object' && object[key] != null) {
                     ObjectUtils.paths(object[key])
                         .map(subPath => `${keyPath}.${subPath}`)
                         .forEach(path => paths.push(path))
