@@ -170,6 +170,9 @@ export default {
 
         changedContexts.forEach(context => {
           try {
+            if(stateMessage.last_updated != null) stateMessage.attributes["last_updated"] = new Date(stateMessage.last_updated).toLocaleTimeString();
+            if(stateMessage.last_changed != null) stateMessage.attributes["last_changed"] = new Date(stateMessage.last_changed).toLocaleTimeString();
+
             updateContextState(context, entity, stateMessage);
           } catch (e) {
             console.error(e)
@@ -205,6 +208,7 @@ export default {
         if (contextSettings.useCustomTitle) {
           let state = stateObject.state;
           let stateAttributes = stateObject.attributes;
+
           const customTitle = nunjucks.renderString(contextSettings.buttonTitle, {...{state}, ...stateAttributes})
           this.$SD.setTitle(currentContext, customTitle);
         }
