@@ -125,6 +125,18 @@ export class EntityConfigFactory {
             }
 
             return customizableDefaultConfig;
+        },
+
+        "window": (state, attributes, templates) => {
+            const customizableDefaultConfig = this.binary_sensor.default(state, attributes, templates);
+
+            if (state === 'on') {
+                customizableDefaultConfig.icon = Mdi.mdiWindowOpenVariant
+            } else if (state === 'off') {
+                customizableDefaultConfig.icon = Mdi.mdiWindowClosedVariant
+            }
+
+            return customizableDefaultConfig;
         }
     }
 
