@@ -198,6 +198,8 @@ export default {
         if (contextSettings.useStateImagesForOnOffStates) {
           if (stateObject.state === "on") {
             this.$SD.setState(currentContext, 1);
+          } else if (stateObject.state === "playing") {
+            this.$SD.setState(currentContext, 1);
           } else {
             this.$SD.setState(currentContext, 0);
           }
