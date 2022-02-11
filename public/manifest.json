@@ -12,7 +12,7 @@
         }
       ],
       "SupportedInMultiActions": true,
-      "UUID": "de.perdoctus.streamdeck.ha.entity"
+      "UUID": "de.perdoctus.streamdeck.homeassistant.entity"
     },
 
     {
@@ -32,7 +32,7 @@
         }
       ],
       "SupportedInMultiActions": true,
-      "UUID": "de.perdoctus.streamdeck.ha.dual-state-entity"
+      "UUID": "de.perdoctus.streamdeck.homeassistant.dual-state-entity"
     }
   ],
   "Category": "Home Assistant",
@@ -42,7 +42,7 @@
   "CodePath": "plugin.html",
   "Description": "Control your Home Assistant entities with stream deck.",
   "Name": "Home Assistant",
-  "Icon": "images/ha-button",
+  "Icon": "images/plugin/plugin",
   "URL": "https://github.com/cgiesche/streamdeck-homeassistant",
   "Version": "1.2.1",
   "OS": [
