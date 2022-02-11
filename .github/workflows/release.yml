@@ -32,10 +32,10 @@ jobs:
         run: npm run build
 
       - name: Create plugin folder structure
-        run: cp -r ./dist de.perdoctus.streamdeck.ha.sdPlugin
+        run: cp -r ./dist de.perdoctus.streamdeck.homeassistant.sdPlugin
 
       - name: Zip Dist
-        run: zip -r release.zip ./de.perdoctus.streamdeck.ha.sdPlugin
+        run: zip -r release.zip ./de.perdoctus.streamdeck.homeassistant.sdPlugin
 
       - name: Upload Release Asset
         id: upload-release-asset
@@ -45,5 +45,5 @@ jobs:
         with:
           upload_url: ${{ github.event.release.upload_url }}
           asset_path: ./release.zip
-          asset_name: StreamDeckHomeAssistant-${{ steps.tagName.outputs.tag }}.streamDeckPlugin
+          asset_name: de.perdoctus.streamdeck.homeassistant.streamDeckPlugin
           asset_content_type: application/zip

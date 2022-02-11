@@ -226,7 +226,7 @@ export default {
 
       // Dual State entity (custom icons for on/off)
       const inActionInfoObject = JSON.parse(inActionInfo);
-      if (inActionInfoObject["action"] === "de.perdoctus.streamdeck.ha.dual-state-entity") {
+      if (inActionInfoObject["action"] === "de.perdoctus.streamdeck.homeassistant.dual-state-entity") {
         this.useStateImagesForOnOffStates = true;
       }
 
@@ -324,7 +324,7 @@ export default {
 
     domainEntities: function () {
       return this.availableEntities
-          .filter((entityInfo) => entityInfo.value.domain === this.domain || this.domain == "homeassistant")
+          .filter((entityInfo) => entityInfo.value.domain === this.domain || this.domain === "homeassistant")
     },
 
     entityAttributes: function () {
