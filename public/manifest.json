@@ -2,7 +2,7 @@
   "Actions": [
     {
       "Icon": "images/actionImage",
-      "Name": "Entity",
+      "Name": "Entity (generic)",
       "PropertyInspectorPath": "pi.html",
       "States": [
         {
@@ -17,7 +17,7 @@
 
     {
       "Icon": "images/actionImage",
-      "Name": "Entity (User defined icons for 'on' and 'off' states; experimental)",
+      "Name": "Entity (custom icons)",
       "PropertyInspectorPath": "pi.html",
       "States": [
         {
