@@ -30,7 +30,11 @@ service that does not need any more information but the entity id.
 * Installed Stream-Deck application
 * Connected Stream-Deck
 
-## Download & Installation
+## Installation
+### Via official Stream Deck store
+You can find and install this plugin from the [official Stream Deck Store](https://apps.elgato.com/plugins/de.perdoctus.streamdeck.homeassistant)
+
+### Manual installation (not recommended)
 * Download latest plugin release [here][https://github.com/cgiesche/streamdeck-homeassistant/releases]
 * Open downloaded .sdplugin file. It will be automatically installed into your Stream-Deck application
   * Note for MacOS users: [manual installation steps][https://www.reddit.com/r/homeassistant/comments/laq2g4/homeassistant_streamdeck_plugin_dynamic_not_just/glu0zep/?utm_source=share&utm_medium=web2x&context=3]
