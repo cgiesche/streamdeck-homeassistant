@@ -114,7 +114,7 @@ export class EntityConfigFactory {
                 color
             }
         },
-            
+
         "plug": (state, attributes, templates) => {
             const customizableDefaultConfig = this.binary_sensor.default(state, attributes, templates);
 
