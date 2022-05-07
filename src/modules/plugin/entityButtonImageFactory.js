@@ -140,7 +140,7 @@ export class EntityConfigFactory {
         }
     }
     "cover" = {
-        "default": (state, attributes, templates) => {
+        "garage": (state, attributes, templates) => {
             let icon;
             let color = this.colors.unavailable;
 
