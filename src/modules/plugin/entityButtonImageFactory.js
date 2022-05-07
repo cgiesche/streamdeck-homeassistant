@@ -114,7 +114,31 @@ export class EntityConfigFactory {
                 color
             }
         },
+            
+        "plug": (state, attributes, templates) => {
+            const customizableDefaultConfig = this.binary_sensor.default(state, attributes, templates);
 
+            if (state === 'on') {
+                customizableDefaultConfig.icon = Mdi.mdiPowerPlugOutline
+            } else if (state === 'off') {
+                customizableDefaultConfig.icon = Mdi.mdiPowerPlugOffOutline
+            }
+
+            return customizableDefaultConfig;
+        },
+
+        "window": (state, attributes, templates) => {
+            const customizableDefaultConfig = this.binary_sensor.default(state, attributes, templates);
+
+            if (state === 'on') {
+                customizableDefaultConfig.icon = Mdi.mdiWindowOpenVariant
+            } else if (state === 'off') {
+                customizableDefaultConfig.icon = Mdi.mdiWindowClosedVariant
+            }
+
+            return customizableDefaultConfig;
+        }
+    }
     "cover" = {
         "default": (state, attributes, templates) => {
             let icon;
@@ -141,33 +165,8 @@ export class EntityConfigFactory {
                 icon,
                 color
             }
-        },
-            
-        "plug": (state, attributes, templates) => {
-            const customizableDefaultConfig = this.binary_sensor.default(state, attributes, templates);
-
-            if (state === 'on') {
-                customizableDefaultConfig.icon = Mdi.mdiPowerPlugOutline
-            } else if (state === 'off') {
-                customizableDefaultConfig.icon = Mdi.mdiPowerPlugOffOutline
-            }
-
-            return customizableDefaultConfig;
-        },
-
-        "window": (state, attributes, templates) => {
-            const customizableDefaultConfig = this.binary_sensor.default(state, attributes, templates);
-
-            if (state === 'on') {
-                customizableDefaultConfig.icon = Mdi.mdiWindowOpenVariant
-            } else if (state === 'off') {
-                customizableDefaultConfig.icon = Mdi.mdiWindowClosedVariant
-            }
-
-            return customizableDefaultConfig;
         }
     }
-
     sensor = {
         "humidity": (state, attributes, templates) => {
             const icon = Mdi.mdiWaterPercent;
