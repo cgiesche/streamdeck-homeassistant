@@ -58,7 +58,7 @@
           description="The id of the entity you want to configure">
         <b-form-select size="sm" id="entity" v-on:change="service = null" v-model="entity" :options="domainEntities"
                        value-field="value.entityId"
-                       text-field="value.name"></b-form-select>
+                       text-field="text"></b-form-select>
       </b-form-group>
 
       <b-form-group
@@ -374,7 +374,7 @@ export default {
                           }
                         }
                     )
-                    .sort((a, b) => (a.text > b.text) ? 1 : ((b.text > a.text) ? -1 : 0))
+                    .sort((a, b) => (a.text.toLowerCase() > b.text.toLowerCase()) ? 1 : ((b.text.toLowerCase() > a.text.toLowerCase()) ? -1 : 0))
 
                 this.currentStates = states
                     .map((state) => {
