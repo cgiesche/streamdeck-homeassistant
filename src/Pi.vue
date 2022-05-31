@@ -172,6 +172,12 @@ Line 4 (may overlap with title)">
           v-model="enableServiceIndicator">Show visual service indicator
       </b-form-checkbox>
 
+      <b-form-checkbox
+          size="sm"
+          id="chkHideIcon"
+          v-model="hideIcon">Hide button icon
+      </b-form-checkbox>
+
       <b-button size="sm" id="btnActionSave" v-on:click="saveSettings" v-bind:disabled="!domain">Save entity config
       </b-button>
 
@@ -209,6 +215,7 @@ export default {
       useCustomButtonLabels: false,
       buttonLabels: "",
       enableServiceIndicator: true,
+      hideIcon: false,
 
       availableDomains: [],
       availableEntities: [],
@@ -257,6 +264,7 @@ export default {
         }
 
         this.enableServiceIndicator = actionSettings["enableServiceIndicator"] || actionSettings["enableServiceIndicator"] === undefined;
+        this.hideIcon = actionSettings["hideIcon"];
 
         this.useCustomTitle = actionSettings["useCustomTitle"]
         this.buttonTitle = actionSettings["buttonTitle"] || "{{friendly_name}}"
@@ -415,6 +423,7 @@ export default {
 
         useStateImagesForOnOffStates: this.useStateImagesForOnOffStates, // determined by action ID (manifest)
         enableServiceIndicator: this.enableServiceIndicator,
+        hideIcon: this.hideIcon,
         useCustomButtonLabels: this.useCustomButtonLabels,
         buttonLabels: this.buttonLabels
       }
