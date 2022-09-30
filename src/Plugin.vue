@@ -197,12 +197,20 @@ export default {
         const buttonImage = this.buttonImageFactory.createButton(entityConfig);
 
         if (contextSettings.useStateImagesForOnOffStates) {
-          if (stateObject.state === "on") {
-            this.$SD.setState(currentContext, 1);
-          } else if (stateObject.state === "playing") {
-            this.$SD.setState(currentContext, 1);
-          } else {
-            this.$SD.setState(currentContext, 0);
+          switch(stateObject.state) {
+            case "on":
+            case "playing":
+            case "open":
+            case "opening":
+            case "home":
+            case "locked":
+            case "active":
+              console.log("Setting state of " + currentContext + " to 1")
+              this.$SD.setState(currentContext, 1);  
+              break;
+            default: 
+              console.log("Setting state of " + currentContext + " to 0")
+              this.$SD.setState(currentContext, 0);
           }
         } else {
           setButtonSVG(buttonImage, currentContext)
