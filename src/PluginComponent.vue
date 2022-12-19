@@ -9,7 +9,7 @@ import {EntityButtonImageFactory, EntityConfigFactory} from "@/modules/plugin/en
 import nunjucks from "nunjucks"
 
 export default {
-  name: 'Plugin',
+  name: 'PluginComponent',
   props: {},
   data: () => {
     return {

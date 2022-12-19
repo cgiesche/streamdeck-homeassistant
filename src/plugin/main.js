@@ -1,12 +1,8 @@
 import Vue from 'vue'
-import Plugin from '../Plugin.vue'
+import PluginComponent from '../PluginComponent.vue'
 
 Vue.config.productionTip = false
 
 new Vue({
-    render: h => h(Plugin),
+    render: h => h(PluginComponent),
 }).$mount('#plugin')
-
-new Vue({
-    render: h => h(Plugin),
-}).$mount()
