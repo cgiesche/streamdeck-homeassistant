@@ -193,6 +193,7 @@ export default {
 
         entityConfig.isAction = contextSettings.service.id && (contextSettings.enableServiceIndicator === undefined || contextSettings.enableServiceIndicator) // undefined = on by default
         entityConfig.isMultiAction = contextSettings.serviceLongPress.id && (contextSettings.enableServiceIndicator === undefined || contextSettings.enableServiceIndicator) // undefined = on by default
+        entityConfig.hideIcon = contextSettings.hideIcon
         const buttonImage = this.buttonImageFactory.createButton(entityConfig);
 
         if (contextSettings.useStateImagesForOnOffStates) {

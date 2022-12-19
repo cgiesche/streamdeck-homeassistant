@@ -75,7 +75,7 @@ After you saved your Home Assistant Settings, the plugin will automatically try 
      "entity_id": [
        "switch.osram_plug_01_bac00b0a_on_off",
        "switch.osram_plug_01_87c00a0a_on_off"
-     ]
+     ],
      "brightness": 120,
      "rgb_color": [255, 0, 0]
    }

@@ -282,7 +282,7 @@ export class EntityConfigFactory {
                 if (customizableDefaultConfig.icon) {
                     customizableDefaultConfig.templates.push(" ", " ")
                 }
-                customizableDefaultConfig.templates.push("{{temperature}}°C", "{{humidity}}%")
+                customizableDefaultConfig.templates.push("{{temperature}}{{unit_of_measurement | default('°C')}}", "{{humidity}}%")
             }
 
             return customizableDefaultConfig;
@@ -338,8 +338,9 @@ export class EntityButtonImageFactory {
     svgUtils = new SvgUtils();
 
     createButton(entityConfig) {
+        const buttonIcon = entityConfig.hideIcon ? undefined : entityConfig.icon;
         const buttonLines = this.#applyValuesToTemplates(entityConfig.templates, {...entityConfig.attributes, ...{state: entityConfig.state}});
-        return this.svgUtils.generateButtonSVG(buttonLines, entityConfig.icon, entityConfig.color, entityConfig.isAction, entityConfig.isMultiAction)
+        return this.svgUtils.generateButtonSVG(buttonLines, buttonIcon, entityConfig.color, entityConfig.isAction, entityConfig.isMultiAction)
     }
 
     #applyValuesToTemplates(templates, values) {

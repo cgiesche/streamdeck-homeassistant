@@ -58,7 +58,7 @@
           description="The id of the entity you want to configure">
         <b-form-select size="sm" id="entity" v-on:change="service = null" v-model="entity" :options="domainEntities"
                        value-field="value.entityId"
-                       text-field="value.name"></b-form-select>
+                       text-field="text"></b-form-select>
       </b-form-group>
 
       <b-form-group
@@ -172,6 +172,12 @@ Line 4 (may overlap with title)">
           v-model="enableServiceIndicator">Show visual service indicator
       </b-form-checkbox>
 
+      <b-form-checkbox
+          size="sm"
+          id="chkHideIcon"
+          v-model="hideIcon">Hide button icon
+      </b-form-checkbox>
+
       <b-button size="sm" id="btnActionSave" v-on:click="saveSettings" v-bind:disabled="!domain">Save entity config
       </b-button>
 
@@ -209,6 +215,7 @@ export default {
       useCustomButtonLabels: false,
       buttonLabels: "",
       enableServiceIndicator: true,
+      hideIcon: false,
 
       availableDomains: [],
       availableEntities: [],
@@ -257,6 +264,7 @@ export default {
         }
 
         this.enableServiceIndicator = actionSettings["enableServiceIndicator"] || actionSettings["enableServiceIndicator"] === undefined;
+        this.hideIcon = actionSettings["hideIcon"];
 
         this.useCustomTitle = actionSettings["useCustomTitle"]
         this.buttonTitle = actionSettings["buttonTitle"] || "{{friendly_name}}"
@@ -366,7 +374,7 @@ export default {
                           }
                         }
                     )
-                    .sort((a, b) => (a.text > b.text) ? 1 : ((b.text > a.text) ? -1 : 0))
+                    .sort((a, b) => (a.text.toLowerCase() > b.text.toLowerCase()) ? 1 : ((b.text.toLowerCase() > a.text.toLowerCase()) ? -1 : 0))
 
                 this.currentStates = states
                     .map((state) => {
@@ -415,6 +423,7 @@ export default {
 
         useStateImagesForOnOffStates: this.useStateImagesForOnOffStates, // determined by action ID (manifest)
         enableServiceIndicator: this.enableServiceIndicator,
+        hideIcon: this.hideIcon,
         useCustomButtonLabels: this.useCustomButtonLabels,
         buttonLabels: this.buttonLabels
       }
