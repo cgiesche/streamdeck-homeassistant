@@ -185,7 +185,7 @@ import {ObjectUtils} from "@/modules/common/utils";
 import {Entity, Homeassistant} from "@/modules/common/homeassistant";
 
 export default {
-  name: 'Pi',
+  name: 'PiComponent',
   components: {},
   props: {},
   data: () => {
