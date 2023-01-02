@@ -74,25 +74,6 @@ export const IconFactory = {
             return IconFactory.default(state, attributes, labelTemplate || IconFactory.sensor._defaultLabelTemplate)
         },
 
-        // temperature: (state, attributes, labelTemplate) => {
-        //     return Icon.labelledIcon(state, attributes, labelTemplate || IconFactory.sensor._defaultLabelTemplate, Icon.temperature)
-        // },
-        //
-        // humidity: (state, attributes, labelTemplate) => {
-        //     return Icon.labelledIcon(state, attributes, labelTemplate || IconFactory.sensor._defaultLabelTemplate, Icon.humidity)
-        // },
-        //
-        // power: (state, attributes, labelTemplate) => {
-        //     return Icon.labelledIcon(state, attributes, labelTemplate || IconFactory.sensor._defaultLabelTemplate, Icon.power)
-        // },
-        //
-        // pressure: (state, attributes, labelTemplate = null) => {
-        //     return Icon.labelledIcon(state, attributes, labelTemplate || IconFactory.sensor._defaultLabelTemplate, Icon.pressure)
-        // },
-        //
-        // default: (state, attributes, labelTemplate) => {
-        //     return Icon.labelledIcon(state, attributes, labelTemplate || IconFactory.sensor._defaultLabelTemplate)
-        // }
     },
 
     applyValues: (labelTemplates, values) => {
