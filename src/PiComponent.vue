@@ -253,33 +253,36 @@ export default {
 
       this.$SD.on("connected", (actionInfo) => {
         this.$SD.requestGlobalSettings()
-        let actionSettings = actionInfo.payload.settings
-        this.domain = actionSettings["domain"]
-        this.entity = actionSettings["entityId"]
-
-        if (actionSettings["service"]) {
-          this.service = actionSettings["service"].id
-          this.serviceData = actionSettings["service"].data
+        let settings = actionInfo.payload.settings
+        if (!settings.version || settings.version === 1) {
+            alert("Zu alte Settings :(")
         }
-        if (actionSettings["serviceLongPress"]) {
-          this.serviceLongPress = actionSettings["serviceLongPress"].id
-          this.serviceDataLongPress = actionSettings["serviceLongPress"].data
+        this.domain = settings["domain"]
+        this.entity = settings["entityId"]
+
+        if (settings["service"]) {
+          this.service = settings["service"].id
+          this.serviceData = settings["service"].data
+        }
+        if (settings["serviceLongPress"]) {
+          this.serviceLongPress = settings["serviceLongPress"].id
+          this.serviceDataLongPress = settings["serviceLongPress"].data
         }
 
-        this.enableServiceIndicator = actionSettings["enableServiceIndicator"] || actionSettings["enableServiceIndicator"] === undefined;
-        this.hideIcon = actionSettings["hideIcon"];
+        this.enableServiceIndicator = settings["enableServiceIndicator"] || settings["enableServiceIndicator"] === undefined;
+        this.hideIcon = settings["hideIcon"];
 
-        this.useCustomTitle = actionSettings["useCustomTitle"]
-        this.buttonTitle = actionSettings["buttonTitle"] || "{{friendly_name}}"
+        this.useCustomTitle = settings["useCustomTitle"]
+        this.buttonTitle = settings["buttonTitle"] || "{{friendly_name}}"
 
-        this.useCustomButtonLabels = actionSettings["useCustomButtonLabels"]
-        this.buttonLabels = actionSettings["buttonLabels"]
+        this.useCustomButtonLabels = settings["useCustomButtonLabels"]
+        this.buttonLabels = settings["buttonLabels"]
 
         // backward compatibility
-        if (actionSettings["buttonLabelLine1"] || actionSettings["buttonLabelLine1"] || actionSettings["buttonLabelLine3"]) {
-          const l1 = actionSettings["buttonLabelLine1"] || ""
-          const l2 = actionSettings["buttonLabelLine2"] || ""
-          const l3 = actionSettings["buttonLabelLine3"] || ""
+        if (settings["buttonLabelLine1"] || settings["buttonLabelLine1"] || settings["buttonLabelLine3"]) {
+          const l1 = settings["buttonLabelLine1"] || ""
+          const l2 = settings["buttonLabelLine2"] || ""
+          const l3 = settings["buttonLabelLine3"] || ""
           this.buttonLabels = `${l1}\n${l2}\n${l3}`
         }
       })
@@ -404,7 +407,8 @@ export default {
     },
 
     saveSettings: function () {
-      let actionSettings = {
+      let settings = {
+        version: 1,
         domain: this.domain,
         entityId: this.entity,
 
@@ -427,7 +431,7 @@ export default {
         buttonLabels: this.buttonLabels
       }
 
-      this.$SD.saveSettings(actionSettings)
+      this.$SD.saveSettings(settings)
     }
   }
 }
