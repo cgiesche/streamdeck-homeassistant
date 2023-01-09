@@ -22,7 +22,7 @@ export class SvgUtils {
 
         const s = Snap(this.buttonRes, this.buttonRes);
         const text = (text, lineNr) => {
-            s.text(0, 26 + lineNr * 36, [text])
+            s.text(0, 26 + lineNr * 36, text)
                 .attr(this.lineAttr)
                 .transform(`translateX(${this.halfRes})`);
         }

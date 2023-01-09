@@ -55,8 +55,9 @@
       <b-form-group
           label="Entity"
           label-for="entity"
-          description="The id of the entity you want to configure">
-        <b-form-select size="sm" id="entity" v-on:change="service = null" v-model="entity" :options="domainEntities"
+          description="The id of the entity you want to configure"
+          v-if="domainEntities.length > 0">
+        <b-form-select size="sm" id="entity" v-on:change="service = null; serviceLongPress = null;" v-model="entity" :options="domainEntities"
                        value-field="value.entityId"
                        text-field="text"></b-form-select>
       </b-form-group>
@@ -83,10 +84,11 @@
           :state="!serviceDataFeedback"
           v-if="service">
         <b-form-textarea
+            class="text-monospace"
             size="sm"
             id="serviceData"
             v-model="serviceData"
-            rows="3"
+            rows="5"
             :state="!serviceDataFeedback"
         ></b-form-textarea>
       </b-form-group>
@@ -114,10 +116,11 @@
           :state="!serviceDataLongPressFeedback"
           v-if="serviceLongPress">
         <b-form-textarea
+            class="text-monospace"
             size="sm"
             id="serviceDataLongPress"
             v-model="serviceDataLongPress"
-            rows="3"
+            rows="5"
             :state="!serviceDataLongPressFeedback"
         ></b-form-textarea>
       </b-form-group>
@@ -359,12 +362,8 @@ export default {
               this.$HA.getStates((states) => {
                 this.availableDomains = Array.from(states
                     .map(state => new Entity(state.entity_id).domain)
-                    .sort()
-                    .reduce(
-                        (acc, curr) => acc.add(curr), new Set()
-                    ));
-
-                this.availableDomains.push("homeassistant");
+                    .reduce((acc, curr) => acc.add(curr), new Set(["homeassistant", "notify"])))
+                    .sort();
 
                 this.availableEntities = states
                     .map((state) => {
