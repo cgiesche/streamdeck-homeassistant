@@ -57,7 +57,8 @@
           label-for="entity"
           description="The id of the entity you want to configure"
           v-if="domainEntities.length > 0">
-        <b-form-select size="sm" id="entity" v-on:change="service = null; serviceLongPress = null;" v-model="entity" :options="domainEntities"
+        <b-form-select size="sm" id="entity" v-on:change="service = null; serviceLongPress = null;" v-model="entity"
+                       :options="domainEntities"
                        value-field="value.entityId"
                        text-field="text"></b-form-select>
       </b-form-group>
@@ -192,6 +193,7 @@ Line 4 (may overlap with title)">
 import StreamDeck from "@/modules/common/streamdeck";
 import {ObjectUtils} from "@/modules/common/utils";
 import {Entity, Homeassistant} from "@/modules/common/homeassistant";
+import {Settings} from "@/modules/common/settings";
 
 export default {
   name: 'PiComponent',
@@ -205,8 +207,11 @@ export default {
       domain: "",
       entity: "",
 
+      serviceDomain: "",
       service: "",
       serviceData: "",
+
+      serviceLongPressDomain: "",
       serviceLongPress: "",
       serviceDataLongPress: "",
 
@@ -253,37 +258,27 @@ export default {
 
       this.$SD.on("connected", (actionInfo) => {
         this.$SD.requestGlobalSettings()
-        let settings = actionInfo.payload.settings
-        if (!settings.version || settings.version === 1) {
-            alert("Zu alte Settings :(")
+
+        let settings = Settings.parse(actionInfo.payload.settings);
+
+        this.domain = settings["display"]["domain"]
+        this.entity = settings["display"]["entityId"]
+        this.enableServiceIndicator = settings["display"]["enableServiceIndicator"] || settings["display"]["enableServiceIndicator"] === undefined;
+        this.hideIcon = settings["display"]["hideIcon"];
+        this.useCustomTitle = settings["display"]["useCustomTitle"]
+        this.buttonTitle = settings["display"]["buttonTitle"] || "{{friendly_name}}"
+        this.useCustomButtonLabels = settings["display"]["useCustomButtonLabels"]
+        this.buttonLabels = settings["display"]["buttonLabels"]
+
+        if (settings["button"]["service"]) {
+          this.serviceDomain = settings["button"]["service"].domain
+          this.service = settings["button"]["service"].name
+          this.serviceData = settings["button"]["service"].data
         }
-        this.domain = settings["domain"]
-        this.entity = settings["entityId"]
-
-        if (settings["service"]) {
-          this.service = settings["service"].id
-          this.serviceData = settings["service"].data
-        }
-        if (settings["serviceLongPress"]) {
-          this.serviceLongPress = settings["serviceLongPress"].id
-          this.serviceDataLongPress = settings["serviceLongPress"].data
-        }
-
-        this.enableServiceIndicator = settings["enableServiceIndicator"] || settings["enableServiceIndicator"] === undefined;
-        this.hideIcon = settings["hideIcon"];
-
-        this.useCustomTitle = settings["useCustomTitle"]
-        this.buttonTitle = settings["buttonTitle"] || "{{friendly_name}}"
-
-        this.useCustomButtonLabels = settings["useCustomButtonLabels"]
-        this.buttonLabels = settings["buttonLabels"]
-
-        // backward compatibility
-        if (settings["buttonLabelLine1"] || settings["buttonLabelLine1"] || settings["buttonLabelLine3"]) {
-          const l1 = settings["buttonLabelLine1"] || ""
-          const l2 = settings["buttonLabelLine2"] || ""
-          const l3 = settings["buttonLabelLine3"] || ""
-          this.buttonLabels = `${l1}\n${l2}\n${l3}`
+        if (settings["button"]["serviceLongPress"]) {
+          this.serviceLongPressDomain = settings["button"]["serviceLongPress"].domain
+          this.serviceLongPress = settings["button"]["serviceLongPress"].name
+          this.serviceDataLongPress = settings["button"]["serviceLongPress"].data
         }
       })
     }
@@ -408,27 +403,33 @@ export default {
 
     saveSettings: function () {
       let settings = {
-        version: 1,
-        domain: this.domain,
-        entityId: this.entity,
+        version: 2,
 
-        service: {
-          id: this.service,
-          data: this.serviceData
+        display: {
+          domain: this.domain,
+          entityId: this.entity,
+          useCustomTitle: this.useCustomTitle,
+          buttonTitle: this.buttonTitle,
+          enableServiceIndicator: this.enableServiceIndicator,
+          hideIcon: this.hideIcon,
+          useCustomButtonLabels: this.useCustomButtonLabels,
+          buttonLabels: this.buttonLabels,
+          useStateImagesForOnOffStates: this.useStateImagesForOnOffStates // determined by action ID (manifest)
         },
-        serviceLongPress: {
-          id: this.serviceLongPress,
-          data: this.serviceDataLongPress
-        },
 
-        useCustomTitle: this.useCustomTitle,
-        buttonTitle: this.buttonTitle,
+        button: {
+          service: {
+            domain: this.serviceDomain,
+            name: this.service,
+            data: this.serviceData
+          },
+          serviceLongPress: {
+            domain: this.serviceLongPressDomain,
+            name: this.serviceLongPress,
+            data: this.serviceDataLongPress
+          },
+        }
 
-        useStateImagesForOnOffStates: this.useStateImagesForOnOffStates, // determined by action ID (manifest)
-        enableServiceIndicator: this.enableServiceIndicator,
-        hideIcon: this.hideIcon,
-        useCustomButtonLabels: this.useCustomButtonLabels,
-        buttonLabels: this.buttonLabels
       }
 
       this.$SD.saveSettings(settings)

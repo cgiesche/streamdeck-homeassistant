@@ -7,6 +7,7 @@ import StreamDeck from "@/modules/common/streamdeck";
 import {Entity, Homeassistant} from "@/modules/common/homeassistant";
 import {EntityButtonImageFactory, EntityConfigFactory} from "@/modules/plugin/entityButtonImageFactory";
 import nunjucks from "nunjucks"
+import {Settings} from "@/modules/common/settings";
 
 export default {
   name: 'PluginComponent',
@@ -88,7 +89,7 @@ export default {
 
       this.$SD.on("willAppear", (message) => {
         let context = message.context;
-        this.actionSettings[context] = message.payload.settings
+        this.actionSettings[context] = Settings.parse(message.payload.settings)
         if (this.$HA) {
           this.$HA.getStates(entitiyStatesChanged)
         }
@@ -101,7 +102,7 @@ export default {
 
       this.$SD.on("didReceiveSettings", (message) => {
         let context = message.context;
-        this.actionSettings[context] = message.payload.settings
+        this.actionSettings[context] = Settings.parse(message.payload.settings)
 
         if (this.$HA) {
           this.$HA.getStates(entitiyStatesChanged)
@@ -110,16 +111,16 @@ export default {
 
       const buttonShortPress = (context) => {
         let settings = this.actionSettings[context];
-        callService(context, settings.service);
+        callService(context, settings.button.service);
       }
 
       const buttonLongPress = (context) => {
         this.buttonLongpressTimeouts.delete(context);
         let settings = this.actionSettings[context];
-        if (settings.serviceLongPress.id) {
-          callService(context, settings.serviceLongPress);
+        if (settings.button.serviceLongPress.name) {
+          callService(context, settings.button.serviceLongPress);
         } else {
-          callService(context, settings.service);
+          callService(context, settings.button.service);
         }
       }
 
@@ -128,13 +129,13 @@ export default {
         if (this.$HA) {
           if (serviceToCall) {
             try {
-              const entity = new Entity(settings.entityId);
+              const entity = new Entity(settings.display.entityId);
               const serviceData = serviceToCall.data ? JSON.parse(serviceToCall.data) : {};
               // add default entity_id if not specified
               if (!serviceData.entity_id) {
                 serviceData.entity_id = entity.entityId;
               }
-              this.$HA.callService(serviceToCall.id, settings.domain, serviceData)
+              this.$HA.callService(serviceToCall.name, serviceToCall.domain, serviceData)
             } catch (e) {
               console.error(e)
               this.$SD.showAlert(context);
@@ -166,7 +167,7 @@ export default {
 
       const updateState = (stateMessage) => {
         let entity = new Entity(stateMessage.entity_id)
-        let changedContexts = Object.keys(this.actionSettings).filter(key => this.actionSettings[key].entityId === entity.entityId)
+        let changedContexts = Object.keys(this.actionSettings).filter(key => this.actionSettings[key].display.entityId === entity.entityId)
 
         changedContexts.forEach(context => {
           try {
@@ -186,17 +187,17 @@ export default {
         let contextSettings = this.actionSettings[currentContext]
         let labelTemplates = null;
 
-        if (contextSettings.useCustomButtonLabels && contextSettings.buttonLabels) {
-          labelTemplates = contextSettings.buttonLabels.split("\n");
+        if (contextSettings.display.useCustomButtonLabels && contextSettings.display.buttonLabels) {
+          labelTemplates = contextSettings.display.buttonLabels.split("\n");
         }
         let entityConfig = this.entityConfigFactory.determineConfig(entity.domain, stateObject, labelTemplates)
 
-        entityConfig.isAction = contextSettings.service.id && (contextSettings.enableServiceIndicator === undefined || contextSettings.enableServiceIndicator) // undefined = on by default
-        entityConfig.isMultiAction = contextSettings.serviceLongPress.id && (contextSettings.enableServiceIndicator === undefined || contextSettings.enableServiceIndicator) // undefined = on by default
-        entityConfig.hideIcon = contextSettings.hideIcon
+        entityConfig.isAction = contextSettings.button.service.name && (contextSettings.display.enableServiceIndicator === undefined || contextSettings.display.enableServiceIndicator) // undefined = on by default
+        entityConfig.isMultiAction = contextSettings.button.serviceLongPress.name && (contextSettings.display.enableServiceIndicator === undefined || contextSettings.display.enableServiceIndicator) // undefined = on by default
+        entityConfig.hideIcon = contextSettings.display.hideIcon
         const buttonImage = this.buttonImageFactory.createButton(entityConfig);
 
-        if (contextSettings.useStateImagesForOnOffStates) {
+        if (contextSettings.display.useStateImagesForOnOffStates) {
           if (stateObject.state === "on") {
             this.$SD.setState(currentContext, 1);
           } else if (stateObject.state === "playing") {
@@ -208,11 +209,11 @@ export default {
           setButtonSVG(buttonImage, currentContext)
         }
 
-        if (contextSettings.useCustomTitle) {
+        if (contextSettings.display.useCustomTitle) {
           let state = stateObject.state;
           let stateAttributes = stateObject.attributes;
 
-          const customTitle = nunjucks.renderString(contextSettings.buttonTitle, {...{state}, ...stateAttributes})
+          const customTitle = nunjucks.renderString(contextSettings.display.buttonTitle, {...{state}, ...stateAttributes})
           this.$SD.setTitle(currentContext, customTitle);
         }
       }
