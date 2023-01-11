@@ -1,5 +1,5 @@
 import Vue from 'vue'
-import PiComponent from "@/PiComponent.vue";
+import PiComponent from "@/components/PiComponent.vue";
 import { BootstrapVue, IconsPlugin } from 'bootstrap-vue'
 
 import 'bootstrap/dist/css/bootstrap.css'

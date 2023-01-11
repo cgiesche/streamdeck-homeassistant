@@ -47,7 +47,7 @@
       <b-form-group
           label="Domain"
           label-for="domain"
-          description="The domain of the entity you want to configure">
+          description="The domain of the entity you want to display">
         <b-form-select size="sm" id="domain" v-on:change="service = null; entity = null" v-model="domain"
                        :options="availableEntityDomains"></b-form-select>
       </b-form-group>
@@ -55,12 +55,13 @@
       <b-form-group
           label="Entity"
           label-for="entity"
-          description="The id of the entity you want to configure"
+          description="The entity you want to display"
           v-if="domainEntities.length > 0">
         <b-form-select size="sm" id="entity" v-on:change="service = null; serviceLongPress = null;" v-model="entity"
                        :options="domainEntities"
-                       value-field="value.entityId"
-                       text-field="text"></b-form-select>
+                       text-field="title"
+                       value-field="entityId">
+        </b-form-select>
       </b-form-group>
 
       <b-form-checkbox
@@ -125,7 +126,8 @@ Line 4 (may overlap with title)">
       <b-form-group
           label="Service domain"
           label-for="serviceDomain">
-        <b-form-select size="sm" id="serviceDomain" v-on:change="service = null; serviceData = null;" v-model="serviceDomain"
+        <b-form-select size="sm" id="serviceDomain" v-on:change="service = null; serviceData = null;"
+                       v-model="serviceDomain"
                        :options="availableServiceDomains"></b-form-select>
       </b-form-group>
 
@@ -135,7 +137,8 @@ Line 4 (may overlap with title)">
           description="(Optional) Service that should be called when the stream deck button is pressed."
           v-if="serviceDomainServices.length > 0">
         <b-input-group>
-          <b-form-select size="sm" id="service" v-model="service" :options="serviceDomainServices" value-field="serviceId"
+          <b-form-select size="sm" id="service" v-model="service" :options="serviceDomainServices"
+                         value-field="serviceId"
                          text-field="serviceId"></b-form-select>
           <b-input-group-append>
             <b-button size="sm" v-on:click="service = null">Clear</b-button>
@@ -164,7 +167,8 @@ Line 4 (may overlap with title)">
       <b-form-group
           label="Service (long press) domain"
           label-for="serviceLongPressDomain">
-        <b-form-select size="sm" id="serviceLongPressDomain" v-on:change="service = null;" v-model="serviceLongPressDomain"
+        <b-form-select size="sm" id="serviceLongPressDomain" v-on:change="service = null;"
+                       v-model="serviceLongPressDomain"
                        :options="availableServiceDomains"></b-form-select>
       </b-form-group>
 
@@ -174,7 +178,8 @@ Line 4 (may overlap with title)">
           description="(Optional) Service that will be called when the stream deck button is pressed and held for longer than 300ms."
           v-if="serviceLongPressDomainServices.length > 0">
         <b-input-group>
-          <b-form-select size="sm" id="serviceLongPress" v-model="serviceLongPress" :options="serviceLongPressDomainServices"
+          <b-form-select size="sm" id="serviceLongPress" v-model="serviceLongPress"
+                         :options="serviceLongPressDomainServices"
                          value-field="serviceId"
                          text-field="serviceId"></b-form-select>
           <b-input-group-append>
@@ -268,7 +273,7 @@ import StreamDeck from "@/modules/common/streamdeck";
 import {ObjectUtils} from "@/modules/common/utils";
 import {Homeassistant} from "@/modules/homeassistant/homeassistant";
 import {Settings} from "@/modules/common/settings";
-import {Entity} from "@/modules/homeassistant/entity";
+import {Entity} from "@/modules/pi/entity";
 
 export default {
   name: 'PiComponent',
@@ -421,12 +426,11 @@ export default {
     },
 
     domainEntities: function () {
-      return this.availableEntities
-          .filter((entityInfo) => entityInfo.value.domain === this.domain)
+      return this.availableEntities.filter((entity) => entity.domain === this.domain)
     },
 
     entityAttributes: function () {
-      let currentEntityState = this.currentStates.find((state) => state.entity.entityId === this.entity)
+      let currentEntityState = this.currentStates.find((state) => state.entityId === this.entity)
       if (currentEntityState && currentEntityState.attributes) {
         return "{{state}}, " + currentEntityState.attributes
             .map(attribute => `{{${attribute}}}`)
@@ -448,24 +452,22 @@ export default {
               this.haConnected = true;
               this.$HA.getStates((states) => {
                 this.availableEntityDomains = Array.from(states
-                    .map(state => new Entity(state.entity_id).domain)
+                    .map(state => state.entity_id.split('.')[0])
                     .reduce((acc, curr) => acc.add(curr), new Set()))
                     .sort();
 
                 this.availableEntities = states
                     .map((state) => {
-                          return {
-                            value: new Entity(state.entity_id),
-                            text: state.attributes.friendly_name || state.entity_id
-                          }
+                          let splittedId = state.entity_id.split('.');
+                          return new Entity(splittedId[0], splittedId[1], state.attributes.friendly_name || state.entity_id)
                         }
                     )
-                    .sort((a, b) => (a.text.toLowerCase() > b.text.toLowerCase()) ? 1 : ((b.text.toLowerCase() > a.text.toLowerCase()) ? -1 : 0))
+                    .sort((a, b) => (a.title.toLowerCase() > b.title.toLowerCase()) ? 1 : ((b.title.toLowerCase() > a.title.toLowerCase()) ? -1 : 0))
 
                 this.currentStates = states
                     .map((state) => {
                       return {
-                        entity: new Entity(state.entity_id),
+                        entityId: state.entity_id,
                         attributes: ObjectUtils.paths(state.attributes)
                       }
                     })

@@ -8,7 +8,6 @@ import {Homeassistant} from "@/modules/homeassistant/homeassistant";
 import {EntityButtonImageFactory, EntityConfigFactory} from "@/modules/plugin/entityButtonImageFactory";
 import nunjucks from "nunjucks"
 import {Settings} from "@/modules/common/settings";
-import {Entity} from "@/modules/homeassistant/entity";
 
 export default {
   name: 'PluginComponent',
@@ -130,11 +129,10 @@ export default {
         if (this.$HA) {
           if (serviceToCall) {
             try {
-              const entity = new Entity(settings.display.entityId);
               const serviceData = serviceToCall.data ? JSON.parse(serviceToCall.data) : {};
               // add default entity_id if not specified
               if (!serviceData.entity_id) {
-                serviceData.entity_id = entity.entityId;
+                serviceData.entity_id = settings.display.entityId;
               }
               this.$HA.callService(serviceToCall.name, serviceToCall.domain, serviceData)
             } catch (e) {
@@ -167,15 +165,15 @@ export default {
       }
 
       const updateState = (stateMessage) => {
-        let entity = new Entity(stateMessage.entity_id)
-        let changedContexts = Object.keys(this.actionSettings).filter(key => this.actionSettings[key].display.entityId === entity.entityId)
+        let domain = stateMessage.entity_id.split('.')[0]
+        let changedContexts = Object.keys(this.actionSettings).filter(key => this.actionSettings[key].display.entityId === stateMessage.entity_id)
 
         changedContexts.forEach(context => {
           try {
             if(stateMessage.last_updated != null) stateMessage.attributes["last_updated"] = new Date(stateMessage.last_updated).toLocaleTimeString();
             if(stateMessage.last_changed != null) stateMessage.attributes["last_changed"] = new Date(stateMessage.last_changed).toLocaleTimeString();
 
-            updateContextState(context, entity, stateMessage);
+            updateContextState(context, domain, stateMessage);
           } catch (e) {
             console.error(e)
             this.$SD.setImage(context, null);
@@ -184,14 +182,14 @@ export default {
         })
       }
 
-      const updateContextState = (currentContext, entity, stateObject) => {
+      const updateContextState = (currentContext, domain, stateObject) => {
         let contextSettings = this.actionSettings[currentContext]
         let labelTemplates = null;
 
         if (contextSettings.display.useCustomButtonLabels && contextSettings.display.buttonLabels) {
           labelTemplates = contextSettings.display.buttonLabels.split("\n");
         }
-        let entityConfig = this.entityConfigFactory.determineConfig(entity.domain, stateObject, labelTemplates)
+        let entityConfig = this.entityConfigFactory.determineConfig(domain, stateObject, labelTemplates)
 
         entityConfig.isAction = contextSettings.button.service.name && (contextSettings.display.enableServiceIndicator === undefined || contextSettings.display.enableServiceIndicator) // undefined = on by default
         entityConfig.isMultiAction = contextSettings.button.serviceLongPress.name && (contextSettings.display.enableServiceIndicator === undefined || contextSettings.display.enableServiceIndicator) // undefined = on by default
