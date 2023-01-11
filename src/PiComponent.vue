@@ -266,8 +266,9 @@ Line 4 (may overlap with title)">
 <script>
 import StreamDeck from "@/modules/common/streamdeck";
 import {ObjectUtils} from "@/modules/common/utils";
-import {Entity, Homeassistant} from "@/modules/common/homeassistant";
+import {Homeassistant} from "@/modules/homeassistant/homeassistant";
 import {Settings} from "@/modules/common/settings";
+import {Entity} from "@/modules/homeassistant/entity";
 
 export default {
   name: 'PiComponent',

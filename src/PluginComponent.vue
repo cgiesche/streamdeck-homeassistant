@@ -4,10 +4,11 @@
 
 <script>
 import StreamDeck from "@/modules/common/streamdeck";
-import {Entity, Homeassistant} from "@/modules/common/homeassistant";
+import {Homeassistant} from "@/modules/homeassistant/homeassistant";
 import {EntityButtonImageFactory, EntityConfigFactory} from "@/modules/plugin/entityButtonImageFactory";
 import nunjucks from "nunjucks"
 import {Settings} from "@/modules/common/settings";
+import {Entity} from "@/modules/homeassistant/entity";
 
 export default {
   name: 'PluginComponent',

@@ -134,13 +134,3 @@ class CallServiceCommand extends Command {
         }
     }
 }
-
-export class Entity {
-
-    constructor(entityId) {
-        this.entityId = entityId
-        this.domain = entityId.split(".")[0];
-        this.name = entityId.split(".")[1];
-    }
-
-}
