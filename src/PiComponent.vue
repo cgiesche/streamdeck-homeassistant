@@ -39,17 +39,17 @@
       </div>
     </b-form>
 
-    <hr>
-
     <b-form v-if="haConnected">
-      <h5>Entity Settings</h5>
+      <hr>
+      <h5>Display Settings</h5>
+      <p>These settings define what is displayed on your stream deck button.</p>
 
       <b-form-group
           label="Domain"
           label-for="domain"
           description="The domain of the entity you want to configure">
         <b-form-select size="sm" id="domain" v-on:change="service = null; entity = null" v-model="domain"
-                       :options="availableDomains"></b-form-select>
+                       :options="availableEntityDomains"></b-form-select>
       </b-form-group>
 
       <b-form-group
@@ -63,13 +63,79 @@
                        text-field="text"></b-form-select>
       </b-form-group>
 
+      <b-form-checkbox
+          size="sm"
+          id="chkButtonTitle"
+          v-model="useCustomTitle">Custom title
+      </b-form-checkbox>
+
+      <div v-if="useCustomTitle">
+        <p class="text-danger">You have to clear the main title in the main stream deck window to make this title
+          template work.</p>
+        <b-form-group
+            label-for="buttonTitle"
+            :description="'Available variables: ' + entityAttributes">
+          <b-form-input
+              size="sm"
+              id="textarea"
+              v-model="buttonTitle"
+          ></b-form-input>
+        </b-form-group>
+      </div>
+
+      <b-form-checkbox
+          size="sm"
+          id="chkUsebuttonTitle"
+          v-if="!useStateImagesForOnOffStates"
+          v-model="useCustomButtonLabels">Custom labels
+      </b-form-checkbox>
+
+      <div v-if="useCustomButtonLabels">
+        <b-form-group
+            label-for="buttonLabels"
+            :description="'Available variables: ' + entityAttributes">
+          <b-form-textarea
+              size="sm"
+              id="buttonLabels"
+              v-model="buttonLabels"
+              rows="4" max-rows="4"
+              placeholder="Line 1 (may overlap with icon)
+Line 2 (may overlap with icon)
+Line 3
+Line 4 (may overlap with title)">
+          </b-form-textarea>
+        </b-form-group>
+      </div>
+
+      <b-form-checkbox
+          size="sm"
+          id="chkEnableServiceIndicator"
+          v-model="enableServiceIndicator">Show visual service indicator
+      </b-form-checkbox>
+
+      <b-form-checkbox
+          size="sm"
+          id="chkHideIcon"
+          v-model="hideIcon">Hide icon
+      </b-form-checkbox>
+
+      <hr>
+      <h5>Button Settings</h5>
+      <h6>Short Press</h6>
+      <b-form-group
+          label="Service domain"
+          label-for="serviceDomain">
+        <b-form-select size="sm" id="serviceDomain" v-on:change="service = null; serviceData = null;" v-model="serviceDomain"
+                       :options="availableServiceDomains"></b-form-select>
+      </b-form-group>
+
       <b-form-group
           label="Service"
           label-for="service"
           description="(Optional) Service that should be called when the stream deck button is pressed."
-          v-if="domainServices.length > 0">
+          v-if="serviceDomainServices.length > 0">
         <b-input-group>
-          <b-form-select size="sm" id="service" v-model="service" :options="domainServices" value-field="serviceId"
+          <b-form-select size="sm" id="service" v-model="service" :options="serviceDomainServices" value-field="serviceId"
                          text-field="serviceId"></b-form-select>
           <b-input-group-append>
             <b-button size="sm" v-on:click="service = null">Clear</b-button>
@@ -94,13 +160,21 @@
         ></b-form-textarea>
       </b-form-group>
 
+      <h6>Long Press</h6>
+      <b-form-group
+          label="Service (long press) domain"
+          label-for="serviceLongPressDomain">
+        <b-form-select size="sm" id="serviceLongPressDomain" v-on:change="service = null;" v-model="serviceLongPressDomain"
+                       :options="availableServiceDomains"></b-form-select>
+      </b-form-group>
+
       <b-form-group
           label="Service (long press)"
           label-for="serviceLongPress"
           description="(Optional) Service that will be called when the stream deck button is pressed and held for longer than 300ms."
-          v-if="domainServices.length > 0">
+          v-if="serviceLongPressDomainServices.length > 0">
         <b-input-group>
-          <b-form-select size="sm" id="serviceLongPress" v-model="serviceLongPress" :options="domainServices"
+          <b-form-select size="sm" id="serviceLongPress" v-model="serviceLongPress" :options="serviceLongPressDomainServices"
                          value-field="serviceId"
                          text-field="serviceId"></b-form-select>
           <b-input-group-append>
@@ -209,10 +283,12 @@ export default {
 
       serviceDomain: "",
       service: "",
+      serviceEntity: "",
       serviceData: "",
 
       serviceLongPressDomain: "",
       serviceLongPress: "",
+      serviceLongPressEntity: "",
       serviceDataLongPress: "",
 
       // Custom Labels
@@ -225,9 +301,12 @@ export default {
       enableServiceIndicator: true,
       hideIcon: false,
 
-      availableDomains: [],
+      availableEntityDomains: [],
       availableEntities: [],
+
+      availableServiceDomains: [],
       availableServices: [],
+
       currentStates: [],
 
       // Home-Assistant-State
@@ -321,19 +400,28 @@ export default {
       return !this.serverUrl || !this.accessToken
     },
 
-    domainServices: function () {
-      return Object.keys(this.availableServices[this.domain] || [])
+    serviceDomainServices: function () {
+      return Object.keys(this.availableServices[this.serviceDomain] || [])
           .map(key => {
             return {
               serviceId: key,
-              serviceDetails: this.availableServices[this.domain][key]
+              serviceDetails: this.availableServices[this.serviceDomain][key]
+            }
+          })
+    },
+    serviceLongPressDomainServices: function () {
+      return Object.keys(this.availableServices[this.serviceLongPressDomain] || [])
+          .map(key => {
+            return {
+              serviceId: key,
+              serviceDetails: this.availableServices[this.serviceLongPressDomain][key]
             }
           })
     },
 
     domainEntities: function () {
       return this.availableEntities
-          .filter((entityInfo) => entityInfo.value.domain === this.domain || this.domain === "homeassistant")
+          .filter((entityInfo) => entityInfo.value.domain === this.domain)
     },
 
     entityAttributes: function () {
@@ -358,9 +446,9 @@ export default {
         this.$HA = new Homeassistant(this.serverUrl, this.accessToken, () => {
               this.haConnected = true;
               this.$HA.getStates((states) => {
-                this.availableDomains = Array.from(states
+                this.availableEntityDomains = Array.from(states
                     .map(state => new Entity(state.entity_id).domain)
-                    .reduce((acc, curr) => acc.add(curr), new Set(["homeassistant", "notify"])))
+                    .reduce((acc, curr) => acc.add(curr), new Set()))
                     .sort();
 
                 this.availableEntities = states
@@ -383,6 +471,7 @@ export default {
               });
               this.$HA.getServices((services) => {
                 this.availableServices = services;
+                this.availableServiceDomains = Object.keys(services).sort();
               });
             },
             (message) => {
