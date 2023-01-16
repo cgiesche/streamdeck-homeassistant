@@ -48,7 +48,7 @@
           label="Domain"
           label-for="domain"
           description="The domain of the entity you want to display">
-        <b-form-select size="sm" id="domain" v-on:change="service = null; entity = null" v-model="domain"
+        <b-form-select size="sm" id="domain" v-on:change="entity = null" v-model="domain"
                        :options="availableEntityDomains"></b-form-select>
       </b-form-group>
 
@@ -57,7 +57,7 @@
           label-for="entity"
           description="The entity you want to display"
           v-if="domainEntities.length > 0">
-        <b-form-select size="sm" id="entity" v-on:change="service = null; serviceLongPress = null;" v-model="entity"
+        <b-form-select size="sm" id="entity" v-model="entity"
                        :options="domainEntities"
                        text-field="title"
                        value-field="entityId">
@@ -126,7 +126,7 @@ Line 4 (may overlap with title)">
       <b-form-group
           label="Service domain"
           label-for="serviceDomain">
-        <b-form-select size="sm" id="serviceDomain" v-on:change="service = null; serviceData = null;"
+        <b-form-select size="sm" id="serviceDomain" v-on:change="serviceId = null; serviceData = null;"
                        v-model="serviceDomain"
                        :options="availableServiceDomains"></b-form-select>
       </b-form-group>
@@ -137,11 +137,11 @@ Line 4 (may overlap with title)">
           description="(Optional) Service that should be called when the stream deck button is pressed."
           v-if="serviceDomainServices.length > 0">
         <b-input-group>
-          <b-form-select size="sm" id="service" v-model="service" :options="serviceDomainServices"
+          <b-form-select size="sm" id="service" v-model="serviceId" :options="serviceDomainServices"
                          value-field="serviceId"
-                         text-field="serviceId"></b-form-select>
+                         text-field="title"></b-form-select>
           <b-input-group-append>
-            <b-button size="sm" v-on:click="service = null">Clear</b-button>
+            <b-button size="sm" v-on:click="serviceId = null">Clear</b-button>
           </b-input-group-append>
         </b-input-group>
       </b-form-group>
@@ -152,7 +152,7 @@ Line 4 (may overlap with title)">
           description="(Optional) Service data that will be sent with the service call. If not specified in the JSON-Object, the attribute 'entity_id' will be added automatically."
           :invalid-feedback="serviceDataFeedback"
           :state="!serviceDataFeedback"
-          v-if="service">
+          v-if="serviceId">
         <b-form-textarea
             class="text-monospace"
             size="sm"
@@ -167,7 +167,7 @@ Line 4 (may overlap with title)">
       <b-form-group
           label="Service (long press) domain"
           label-for="serviceLongPressDomain">
-        <b-form-select size="sm" id="serviceLongPressDomain" v-on:change="service = null;"
+        <b-form-select size="sm" id="serviceLongPressDomain" v-on:change="serviceLongPressId = null;"
                        v-model="serviceLongPressDomain"
                        :options="availableServiceDomains"></b-form-select>
       </b-form-group>
@@ -178,12 +178,12 @@ Line 4 (may overlap with title)">
           description="(Optional) Service that will be called when the stream deck button is pressed and held for longer than 300ms."
           v-if="serviceLongPressDomainServices.length > 0">
         <b-input-group>
-          <b-form-select size="sm" id="serviceLongPress" v-model="serviceLongPress"
+          <b-form-select size="sm" id="serviceLongPress" v-model="serviceLongPressId"
                          :options="serviceLongPressDomainServices"
                          value-field="serviceId"
-                         text-field="serviceId"></b-form-select>
+                         text-field="title"></b-form-select>
           <b-input-group-append>
-            <b-button size="sm" v-on:click="serviceLongPress = null">Clear</b-button>
+            <b-button size="sm" v-on:click="serviceLongPressId = null">Clear</b-button>
           </b-input-group-append>
         </b-input-group>
       </b-form-group>
@@ -194,7 +194,7 @@ Line 4 (may overlap with title)">
           description="(Optional) Service data that will be sent with the service call. If not specified in the JSON-Object, the attribute 'entity_id' will be added automatically."
           :invalid-feedback="serviceDataLongPressFeedback"
           :state="!serviceDataLongPressFeedback"
-          v-if="serviceLongPress">
+          v-if="serviceLongPressId">
         <b-form-textarea
             class="text-monospace"
             size="sm"
@@ -274,6 +274,7 @@ import {ObjectUtils} from "@/modules/common/utils";
 import {Homeassistant} from "@/modules/homeassistant/homeassistant";
 import {Settings} from "@/modules/common/settings";
 import {Entity} from "@/modules/pi/entity";
+import {Service} from "@/modules/pi/service";
 
 export default {
   name: 'PiComponent',
@@ -288,12 +289,12 @@ export default {
       entity: "",
 
       serviceDomain: "",
-      service: "",
+      serviceId: "",
       serviceEntity: "",
       serviceData: "",
 
       serviceLongPressDomain: "",
-      serviceLongPress: "",
+      serviceLongPressId: "",
       serviceLongPressEntity: "",
       serviceDataLongPress: "",
 
@@ -357,12 +358,12 @@ export default {
 
         if (settings["button"]["service"]) {
           this.serviceDomain = settings["button"]["service"].domain
-          this.service = settings["button"]["service"].name
+          this.serviceId = settings["button"]["service"].domain + "." + settings["button"]["service"].name
           this.serviceData = settings["button"]["service"].data
         }
         if (settings["button"]["serviceLongPress"]) {
           this.serviceLongPressDomain = settings["button"]["serviceLongPress"].domain
-          this.serviceLongPress = settings["button"]["serviceLongPress"].name
+          this.serviceLongPressId = settings["button"]["serviceLongPress"].domain + "." + settings["button"]["serviceLongPress"].name
           this.serviceDataLongPress = settings["button"]["serviceLongPress"].data
         }
       })
@@ -407,22 +408,10 @@ export default {
     },
 
     serviceDomainServices: function () {
-      return Object.keys(this.availableServices[this.serviceDomain] || [])
-          .map(key => {
-            return {
-              serviceId: key,
-              serviceDetails: this.availableServices[this.serviceDomain][key]
-            }
-          })
+      return this.availableServices.filter(service => service.domain === this.serviceDomain)
     },
     serviceLongPressDomainServices: function () {
-      return Object.keys(this.availableServices[this.serviceLongPressDomain] || [])
-          .map(key => {
-            return {
-              serviceId: key,
-              serviceDetails: this.availableServices[this.serviceLongPressDomain][key]
-            }
-          })
+      return this.availableServices.filter(service => service.domain === this.serviceLongPressDomain)
     },
 
     domainEntities: function () {
@@ -473,7 +462,12 @@ export default {
                     })
               });
               this.$HA.getServices((services) => {
-                this.availableServices = services;
+                this.availableServices = Object.entries(services).flatMap(domainServices => {
+                  const domain = domainServices[0];
+                  return Object.entries(domainServices[1]).map(services => {
+                    return new Service(domain, services[0], services[1].name, services[1].description, services[1].fields)
+                  })
+                })
                 this.availableServiceDomains = Object.keys(services).sort();
               });
             },
@@ -512,12 +506,12 @@ export default {
         button: {
           service: {
             domain: this.serviceDomain,
-            name: this.service,
+            name: this.serviceId.split(".")[1],
             data: this.serviceData
           },
           serviceLongPress: {
             domain: this.serviceLongPressDomain,
-            name: this.serviceLongPress,
+            name: this.serviceLongPressId.split(".")[1],
             data: this.serviceDataLongPress
           },
         }
