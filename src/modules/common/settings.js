@@ -50,7 +50,39 @@ export class Settings {
         }
 
         if (settings.version === 2) {
-            return settings
+            let settingsV3 = settings;
+            settingsV3.version = 3
+            settingsV3.button.serviceShortPress = {
+                serviceId: "",
+                entityId: "",
+                serviceData: "",
+            }
+            settingsV3.button.serviceLongPress = {
+                serviceId: "",
+                entityId: "",
+                serviceData: "",
+            }
+
+            if (settings.button.service.name) {
+                settingsV3.button.serviceShortPress = {
+                    serviceId: settings.button.service.domain + '.' + settings.button.service.name,
+                    entityId: settings.button.service.domain + '.' + settings.display.entityId,
+                    serviceData: settings.button.service.data,
+                }
+            }
+            if (settings.button.serviceLongPress.name) {
+                settingsV3.button.serviceLongPress = {
+                    serviceId: settings.button.serviceLongPress.domain + '.' + settings.button.serviceLongPress.name,
+                    entityId: settings.button.serviceLongPress.domain + '.' + settings.display.entityId,
+                    serviceData: settings.button.serviceLongPress.data,
+                }
+            }
+
+            return this.parse(settingsV3)
+        }
+
+        if (settings.version === 3) {
+            return settings;
         }
     }
 }

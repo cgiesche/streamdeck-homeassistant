@@ -3,15 +3,17 @@ export class Service {
     #domain
     #name
     #title
-    #description;
-    #dataFields;
+    #description
+    #dataFields
+    #target
 
-    constructor(domain, name, title, description, dataFields) {
+    constructor(domain, name, title, description, dataFields, target) {
         this.#domain = domain;
         this.#name = name;
         this.#title = title;
         this.#description = description;
         this.#dataFields = dataFields;
+        this.#target = target;
     }
 
     get serviceId() {
@@ -37,4 +39,9 @@ export class Service {
     get dataFields() {
         return this.#dataFields;
     }
+
+    get target() {
+        return this.#target;
+    }
+
 }

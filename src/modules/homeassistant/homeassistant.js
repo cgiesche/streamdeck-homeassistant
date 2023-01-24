@@ -88,7 +88,10 @@ export class Homeassistant {
         if (callback) {
             this.requests.set(command.id, callback);
         }
-        this.websocket.send(JSON.stringify(command));
+
+        let commandJson = JSON.stringify(command);
+        console.log(`Sending HomeAssistant command ${commandJson}`)
+        this.websocket.send(commandJson);
     }
 
     nextRequestId() {

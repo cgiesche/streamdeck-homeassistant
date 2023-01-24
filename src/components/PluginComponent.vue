@@ -111,30 +111,30 @@ export default {
 
       const buttonShortPress = (context) => {
         let settings = this.actionSettings[context];
-        callService(context, settings.button.service);
+        callService(context, settings.button.serviceShortPress);
       }
 
       const buttonLongPress = (context) => {
         this.buttonLongpressTimeouts.delete(context);
         let settings = this.actionSettings[context];
-        if (settings.button.serviceLongPress.name) {
+        if (settings.button.serviceLongPress.serviceId) {
           callService(context, settings.button.serviceLongPress);
         } else {
-          callService(context, settings.button.service);
+          callService(context, settings.button.serviceShortPress);
         }
       }
 
       const callService = (context, serviceToCall) => {
-        let settings = this.actionSettings[context];
         if (this.$HA) {
-          if (serviceToCall) {
+          if (serviceToCall["serviceId"]) {
             try {
-              const serviceData = serviceToCall.data ? JSON.parse(serviceToCall.data) : {};
+              const serviceIdParts = serviceToCall.serviceId.split('.');
+              const serviceData = serviceToCall.serviceData ? JSON.parse(serviceToCall.serviceData) : {};
               // add default entity_id if not specified
-              if (!serviceData.entity_id) {
-                serviceData.entity_id = settings.display.entityId;
+              if (!serviceData.entity_id && serviceToCall.entityId) {
+                serviceData.entity_id = serviceToCall.entityId;
               }
-              this.$HA.callService(serviceToCall.name, serviceToCall.domain, serviceData)
+              this.$HA.callService(serviceIdParts[1], serviceIdParts[0], serviceData)
             } catch (e) {
               console.error(e)
               this.$SD.showAlert(context);
@@ -191,8 +191,8 @@ export default {
         }
         let entityConfig = this.entityConfigFactory.determineConfig(domain, stateObject, labelTemplates)
 
-        entityConfig.isAction = contextSettings.button.service.name && (contextSettings.display.enableServiceIndicator === undefined || contextSettings.display.enableServiceIndicator) // undefined = on by default
-        entityConfig.isMultiAction = contextSettings.button.serviceLongPress.name && (contextSettings.display.enableServiceIndicator === undefined || contextSettings.display.enableServiceIndicator) // undefined = on by default
+        entityConfig.isAction = contextSettings.button.serviceShortPress.serviceId && (contextSettings.display.enableServiceIndicator === undefined || contextSettings.display.enableServiceIndicator) // undefined = on by default
+        entityConfig.isMultiAction = contextSettings.button.serviceLongPress.serviceId && (contextSettings.display.enableServiceIndicator === undefined || contextSettings.display.enableServiceIndicator) // undefined = on by default
         entityConfig.hideIcon = contextSettings.display.hideIcon
         const buttonImage = this.buttonImageFactory.createButton(entityConfig);
 

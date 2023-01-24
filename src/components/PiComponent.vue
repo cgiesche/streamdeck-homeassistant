@@ -123,143 +123,16 @@ Line 4 (may overlap with title)">
       <hr>
       <h5>Button Settings</h5>
       <h6>Short Press</h6>
-      <b-form-group
-          label="Service domain"
-          label-for="serviceDomain">
-        <b-form-select size="sm" id="serviceDomain" v-on:change="serviceId = null; serviceData = null;"
-                       v-model="serviceDomain"
-                       :options="availableServiceDomains"></b-form-select>
-      </b-form-group>
+      <ServiceCallConfiguration :available-entities="availableEntities"
+                                :available-services="availableServices"
+                                v-model="serviceShortPress"
 
-      <b-form-group
-          label="Service"
-          label-for="service"
-          description="(Optional) Service that should be called when the stream deck button is pressed."
-          v-if="serviceDomainServices.length > 0">
-        <b-input-group>
-          <b-form-select size="sm" id="service" v-model="serviceId" :options="serviceDomainServices"
-                         value-field="serviceId"
-                         text-field="title"></b-form-select>
-          <b-input-group-append>
-            <b-button size="sm" v-on:click="serviceId = null">Clear</b-button>
-          </b-input-group-append>
-        </b-input-group>
-      </b-form-group>
-
-      <b-form-group
-          label="Service Data JSON"
-          label-for="serviceData"
-          description="(Optional) Service data that will be sent with the service call. If not specified in the JSON-Object, the attribute 'entity_id' will be added automatically."
-          :invalid-feedback="serviceDataFeedback"
-          :state="!serviceDataFeedback"
-          v-if="serviceId">
-        <b-form-textarea
-            class="text-monospace"
-            size="sm"
-            id="serviceData"
-            v-model="serviceData"
-            rows="5"
-            :state="!serviceDataFeedback"
-        ></b-form-textarea>
-      </b-form-group>
+      ></ServiceCallConfiguration>
 
       <h6>Long Press</h6>
-      <b-form-group
-          label="Service (long press) domain"
-          label-for="serviceLongPressDomain">
-        <b-form-select size="sm" id="serviceLongPressDomain" v-on:change="serviceLongPressId = null;"
-                       v-model="serviceLongPressDomain"
-                       :options="availableServiceDomains"></b-form-select>
-      </b-form-group>
-
-      <b-form-group
-          label="Service (long press)"
-          label-for="serviceLongPress"
-          description="(Optional) Service that will be called when the stream deck button is pressed and held for longer than 300ms."
-          v-if="serviceLongPressDomainServices.length > 0">
-        <b-input-group>
-          <b-form-select size="sm" id="serviceLongPress" v-model="serviceLongPressId"
-                         :options="serviceLongPressDomainServices"
-                         value-field="serviceId"
-                         text-field="title"></b-form-select>
-          <b-input-group-append>
-            <b-button size="sm" v-on:click="serviceLongPressId = null">Clear</b-button>
-          </b-input-group-append>
-        </b-input-group>
-      </b-form-group>
-
-      <b-form-group
-          label="Service (long press) Data JSON"
-          label-for="serviceDataLongPress"
-          description="(Optional) Service data that will be sent with the service call. If not specified in the JSON-Object, the attribute 'entity_id' will be added automatically."
-          :invalid-feedback="serviceDataLongPressFeedback"
-          :state="!serviceDataLongPressFeedback"
-          v-if="serviceLongPressId">
-        <b-form-textarea
-            class="text-monospace"
-            size="sm"
-            id="serviceDataLongPress"
-            v-model="serviceDataLongPress"
-            rows="5"
-            :state="!serviceDataLongPressFeedback"
-        ></b-form-textarea>
-      </b-form-group>
-
-      <b-form-checkbox
-          size="sm"
-          id="chkButtonTitle"
-          v-model="useCustomTitle">Enable custom button title
-      </b-form-checkbox>
-
-      <div v-if="useCustomTitle">
-        <p class="text-danger">You have to clear the main title in the main stream deck window to make this title
-          template work.</p>
-        <b-form-group
-            label-for="buttonTitle"
-            :description="'Available variables: ' + entityAttributes">
-          <b-form-input
-              size="sm"
-              id="textarea"
-              v-model="buttonTitle"
-          ></b-form-input>
-        </b-form-group>
-      </div>
-
-      <b-form-checkbox
-          size="sm"
-          id="chkUsebuttonTitle"
-          v-if="!useStateImagesForOnOffStates"
-          v-model="useCustomButtonLabels">Enable custom labels
-      </b-form-checkbox>
-
-      <div v-if="useCustomButtonLabels">
-        <b-form-group
-            label-for="buttonLabels"
-            :description="'Available variables: ' + entityAttributes">
-          <b-form-textarea
-              size="sm"
-              id="buttonLabels"
-              v-model="buttonLabels"
-              rows="4" max-rows="4"
-              placeholder="Line 1 (may overlap with icon)
-Line 2 (may overlap with icon)
-Line 3
-Line 4 (may overlap with title)">
-          </b-form-textarea>
-        </b-form-group>
-      </div>
-
-      <b-form-checkbox
-          size="sm"
-          id="chkEnableServiceIndicator"
-          v-model="enableServiceIndicator">Show visual service indicator
-      </b-form-checkbox>
-
-      <b-form-checkbox
-          size="sm"
-          id="chkHideIcon"
-          v-model="hideIcon">Hide button icon
-      </b-form-checkbox>
+      <ServiceCallConfiguration :available-entities="availableEntities"
+                                :available-services="availableServices"
+                                v-model="serviceLongPress"></ServiceCallConfiguration>
 
       <b-button size="sm" id="btnActionSave" v-on:click="saveSettings" v-bind:disabled="!domain">Save entity config
       </b-button>
@@ -275,10 +148,11 @@ import {Homeassistant} from "@/modules/homeassistant/homeassistant";
 import {Settings} from "@/modules/common/settings";
 import {Entity} from "@/modules/pi/entity";
 import {Service} from "@/modules/pi/service";
+import ServiceCallConfiguration from "@/components/ServiceCallConfiguration.vue";
 
 export default {
   name: 'PiComponent',
-  components: {},
+  components: {ServiceCallConfiguration},
   props: {},
   data: () => {
     return {
@@ -288,15 +162,8 @@ export default {
       domain: "",
       entity: "",
 
-      serviceDomain: "",
-      serviceId: "",
-      serviceEntity: "",
-      serviceData: "",
-
-      serviceLongPressDomain: "",
-      serviceLongPressId: "",
-      serviceLongPressEntity: "",
-      serviceDataLongPress: "",
+      serviceShortPress: {},
+      serviceLongPress: {},
 
       // Custom Labels
       useCustomTitle: false,
@@ -355,17 +222,8 @@ export default {
         this.buttonTitle = settings["display"]["buttonTitle"] || "{{friendly_name}}"
         this.useCustomButtonLabels = settings["display"]["useCustomButtonLabels"]
         this.buttonLabels = settings["display"]["buttonLabels"]
-
-        if (settings["button"]["service"]) {
-          this.serviceDomain = settings["button"]["service"].domain
-          this.serviceId = settings["button"]["service"].domain + "." + settings["button"]["service"].name
-          this.serviceData = settings["button"]["service"].data
-        }
-        if (settings["button"]["serviceLongPress"]) {
-          this.serviceLongPressDomain = settings["button"]["serviceLongPress"].domain
-          this.serviceLongPressId = settings["button"]["serviceLongPress"].domain + "." + settings["button"]["serviceLongPress"].name
-          this.serviceDataLongPress = settings["button"]["serviceLongPress"].data
-        }
+        this.serviceShortPress = settings["button"]["serviceShortPress"]
+        this.serviceLongPress = settings["button"]["serviceLongPress"]
       })
     }
   },
@@ -379,39 +237,8 @@ export default {
       return this.accessToken && this.accessToken.length > 4
     },
 
-    serviceDataFeedback: function () {
-      if (!this.serviceData) {
-        return "";
-      }
-      try {
-        const json = JSON.parse(this.serviceData);
-        return (typeof json === "object") ? "" : "Service data must be an JSON object."
-      } catch (e) {
-        return "Invalid JSON string.";
-      }
-    },
-
-    serviceDataLongPressFeedback: function () {
-      if (!this.serviceDataLongPress) {
-        return "";
-      }
-      try {
-        const json = JSON.parse(this.serviceDataLongPress);
-        return (typeof json === "object") ? "" : "Service data must be an JSON object."
-      } catch (e) {
-        return "Invalid JSON string.";
-      }
-    },
-
     isHaSettingsComplete: function () {
       return !this.serverUrl || !this.accessToken
-    },
-
-    serviceDomainServices: function () {
-      return this.availableServices.filter(service => service.domain === this.serviceDomain)
-    },
-    serviceLongPressDomainServices: function () {
-      return this.availableServices.filter(service => service.domain === this.serviceLongPressDomain)
     },
 
     domainEntities: function () {
@@ -465,7 +292,9 @@ export default {
                 this.availableServices = Object.entries(services).flatMap(domainServices => {
                   const domain = domainServices[0];
                   return Object.entries(domainServices[1]).map(services => {
-                    return new Service(domain, services[0], services[1].name, services[1].description, services[1].fields)
+                    let serviceName = services[0];
+                    let serviceData = services[1];
+                    return new Service(domain, serviceName, serviceData.name, serviceData.description, serviceData.fields, serviceData.target);
                   })
                 })
                 this.availableServiceDomains = Object.keys(services).sort();
@@ -489,7 +318,7 @@ export default {
 
     saveSettings: function () {
       let settings = {
-        version: 2,
+        version: 3,
 
         display: {
           domain: this.domain,
@@ -504,16 +333,8 @@ export default {
         },
 
         button: {
-          service: {
-            domain: this.serviceDomain,
-            name: this.serviceId.split(".")[1],
-            data: this.serviceData
-          },
-          serviceLongPress: {
-            domain: this.serviceLongPressDomain,
-            name: this.serviceLongPressId.split(".")[1],
-            data: this.serviceDataLongPress
-          },
+          serviceShortPress: this.serviceShortPress,
+          serviceLongPress: this.serviceLongPress,
         }
 
       }
