@@ -317,6 +317,32 @@ export class EntityConfigFactory {
         }
     }
 
+    lock = {
+        "default": (state, attributes, templates) => {
+            let icon = Mdi.mdiLockQuestion;
+            let color = this.colors.unavailable;
+
+            if (state === 'locked') {
+                icon = Mdi.mdiLock;
+                color = this.colors.ok;
+            } else if (state === 'locking') {
+                icon = Mdi.mdiLockClock;
+                color = this.colors.active;
+            } else if (state === 'unlocked') {
+                icon = Mdi.mdiLockOpen;
+                color = this.colors.warn;
+            }
+
+            return {
+                state,
+                attributes,
+                templates,
+                icon,
+                color
+            }
+        }
+    }
+
     vacuum = {
         "default": (state, attributes, templates) => {
             const icon = Mdi.mdiRobotVacuum;
