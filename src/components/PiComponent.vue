@@ -74,13 +74,15 @@
         <p class="text-danger">You have to clear the main title in the main stream deck window to make this title
           template work.</p>
         <b-form-group
-            label-for="buttonTitle"
-            :description="'Available variables: ' + entityAttributes">
+            label-for="buttonTitle">
           <b-form-input
               size="sm"
               id="textarea"
               v-model="buttonTitle"
           ></b-form-input>
+          <span class="form-text text-muted">Available attributes:
+            <span v-for="attr in entityAttributes" v-bind:key="attr">{{attr}} </span>
+          </span>
         </b-form-group>
       </div>
 
@@ -93,8 +95,7 @@
 
       <div v-if="useCustomButtonLabels">
         <b-form-group
-            label-for="buttonLabels"
-            :description="'Available variables: ' + entityAttributes">
+            label-for="buttonLabels">
           <b-form-textarea
               size="sm"
               id="buttonLabels"
@@ -105,6 +106,9 @@ Line 2 (may overlap with icon)
 Line 3
 Line 4 (may overlap with title)">
           </b-form-textarea>
+          <span class="form-text text-muted">Available attributes:
+            <span v-for="attr in entityAttributes" v-bind:key="attr">{{attr}} </span>
+          </span>
         </b-form-group>
       </div>
 
@@ -248,11 +252,10 @@ export default {
     entityAttributes: function () {
       let currentEntityState = this.currentStates.find((state) => state.entityId === this.entity)
       if (currentEntityState && currentEntityState.attributes) {
-        return "{{state}}, " + currentEntityState.attributes
-            .map(attribute => `{{${attribute}}}`)
-            .join(", ")
+        let attributes = currentEntityState.attributes.map(attribute => `{{${attribute}}}`);
+        return ["{{state}}", ...attributes]
       }
-      return "-"
+      return []
     },
 
   },

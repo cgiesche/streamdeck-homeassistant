@@ -1,7 +1,7 @@
 <template>
   <div class="mb-2">
     <b-form-group
-        label="Service domain"
+        label="Domain"
         label-for="serviceDomain">
       <b-input-group>
         <b-form-select size="sm" id="serviceDomain"
@@ -19,7 +19,6 @@
     <b-form-group
         label="Service"
         label-for="service"
-        description="(Optional) Service that should be called when the stream deck button is pressed."
         v-if="selectedDomain">
       <b-input-group>
         <b-form-select size="sm" id="service"
@@ -36,9 +35,8 @@
     </b-form-group>
 
     <b-form-group
-        label="Entity"
+        label="Entity (Optional)"
         label-for="entity"
-        description="(Optional) Entity to call the service on."
         v-if="domainEntities.length > 0">
       <b-input-group>
         <b-form-select size="sm" id="entity"
@@ -49,15 +47,14 @@
                        @input="update('entityId', $event)"
         ></b-form-select>
         <b-input-group-append>
-          <b-button size="sm" v-on:click="clear('entityId', 'serviceData')">Clear</b-button>
+          <b-button size="sm" v-on:click="clear('entityId')">Clear</b-button>
         </b-input-group-append>
       </b-input-group>
     </b-form-group>
 
     <b-form-group
-        label="Service Data JSON"
+        label="Service Data JSON (Optional)"
         label-for="serviceData"
-        description="(Optional) Service data that will be sent with the service call. If not specified in the JSON-Object, the attribute 'entity_id' will be added automatically."
         :invalid-feedback="serviceDataFeedback"
         :state="!serviceDataFeedback"
         v-if="value.serviceId">
@@ -73,11 +70,11 @@
   "option": "value"
 }'
       ></b-form-textarea>
+      <div class="small form-text text-muted mb-1" v-for="item in dataProperties" v-bind:key="item.name">
+        <span class="text-info">{{ item.name }}</span>: {{ item.info.description }}<br>
+        <span class="ml-2" v-if="item.info.example">Example: <i>{{ item.info.example }}</i></span>
+      </div>
     </b-form-group>
-    <div class="small form-text text-muted mb-1" v-for="item in dataProperties" v-bind:key="item.name">
-      <span class="text-info">{{ item.name }}</span>: {{ item.info.description }}<br>
-      <span class="ml-2" v-if="item.info.example">Example: <i>{{ item.info.example }}</i></span>
-    </div>
   </div>
 </template>
 <script>

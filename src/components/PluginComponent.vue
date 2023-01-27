@@ -3,6 +3,7 @@
 </template>
 
 <script>
+'use strict';
 import StreamDeck from "@/modules/common/streamdeck";
 import {Homeassistant} from "@/modules/homeassistant/homeassistant";
 import {EntityButtonImageFactory, EntityConfigFactory} from "@/modules/plugin/entityButtonImageFactory";
@@ -129,12 +130,8 @@ export default {
           if (serviceToCall["serviceId"]) {
             try {
               const serviceIdParts = serviceToCall.serviceId.split('.');
-              const serviceData = serviceToCall.serviceData ? JSON.parse(serviceToCall.serviceData) : {};
-              // add default entity_id if not specified
-              if (!serviceData.entity_id && serviceToCall.entityId) {
-                serviceData.entity_id = serviceToCall.entityId;
-              }
-              this.$HA.callService(serviceIdParts[1], serviceIdParts[0], serviceData)
+              const serviceData = serviceToCall.serviceData ? JSON.parse(serviceToCall.serviceData) : null;
+              this.$HA.callService(serviceIdParts[1], serviceIdParts[0], serviceToCall.entityId, serviceData)
             } catch (e) {
               console.error(e)
               this.$SD.showAlert(context);
@@ -218,8 +215,8 @@ export default {
       }
     }
 
-    let setButtonSVG = (svg, changedContext) => {
-      let image = "data:image/svg+xml;charset=utf8," + svg;
+    const setButtonSVG = (svg, changedContext) => {
+      const image = "data:image/svg+xml;charset=utf8," + svg;
       this.$SD.setImage(changedContext, image)
     }
   }
