@@ -15,22 +15,22 @@ export class SvgUtils {
             "stroke": "#000",
             "strokeWidth": 4,
         }
-
+        this.snap = Snap(this.buttonRes, this.buttonRes);
     }
 
     generateButtonSVG(labels, iconSVG, iconColor, isAction = false, isMultiAction = false) {
 
-        const s = Snap(this.buttonRes, this.buttonRes);
+
         const text = (text, lineNr) => {
-            s.text(0, 26 + lineNr * 36, text)
+            this.snap.text(0, 26 + lineNr * 36, text)
                 .attr(this.lineAttr)
                 .transform(`translateX(${this.halfRes})`);
         }
 
-        s.rect(0, 0, this.buttonRes, this.buttonRes).attr({fill: this.buttonBgColor})
+        this.snap.rect(0, 0, this.buttonRes, this.buttonRes).attr({fill: this.buttonBgColor})
 
         if (iconSVG) {
-            const icon = s.path(iconSVG)
+            const icon = this.snap.path(iconSVG)
             icon.attr("fill", iconColor);
             const iconBBox = icon.getBBox();
             const iconHeight = iconBBox.height;
@@ -43,7 +43,7 @@ export class SvgUtils {
 
         if (isAction) {
             const color = isMultiAction ? "#3e89ff" : "#62ff65"
-            s.circle(this.buttonRes - 1, 0, 15).attr("fill", color)
+            this.snap.circle(this.buttonRes - 1, 0, 15).attr("fill", color)
         }
 
         for (let i = 0; i < labels.length; i++) {
@@ -58,7 +58,9 @@ export class SvgUtils {
         // s.line(0, this.halfRes / 2, this.buttonRes, this.halfRes / 2).attr("stroke", "#FFFFFF")
         // s.line(0, this.halfRes * 1.5, this.buttonRes, this.halfRes * 1.5).attr("stroke", "#FFFFFF")
 
-        return s.outerSVG()
+        let outerSVG = this.snap.outerSVG();
+        this.snap.clear();
+        return outerSVG
     }
 
 }
