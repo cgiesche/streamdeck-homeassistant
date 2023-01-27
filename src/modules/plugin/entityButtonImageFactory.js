@@ -140,7 +140,34 @@ export class EntityConfigFactory {
             return customizableDefaultConfig;
         }
     }
+    "cover" = {
+        "garage": (state, attributes, templates) => {
+            let icon;
+            let color = this.colors.unavailable;
 
+            if (state === 'open') {
+                icon = Mdi.mdiGarageOpen
+                color = this.colors.active
+            } else if (state === 'closed') {
+                icon = Mdi.mdiGarage
+                color = this.colors.passive
+            } else if (state === 'closing') {
+                icon = Mdi.mdiArrowDownBox
+                color = this.colors.active
+            } else if (state === 'opening') {
+                icon = Mdi.mdiArrowUpBox 
+                color = this.colors.active
+            }
+
+            return {
+                state,
+                attributes,
+                templates,
+                icon,
+                color
+            }
+        }
+    }
     sensor = {
         "humidity": (state, attributes, templates) => {
             const icon = Mdi.mdiWaterPercent;
