@@ -5,7 +5,7 @@ export class Settings {
             settings.version = 1
         }
 
-        console.log(`Parsing version ${settings.version} settings.`)
+        console.log(`Parsing version ${settings.version} settings: ${JSON.stringify(settings)}`)
 
         if (settings.version === 1) {
             let settingsV2 = {
@@ -66,14 +66,14 @@ export class Settings {
             if (settings.button.service.name) {
                 settingsV3.button.serviceShortPress = {
                     serviceId: settings.button.service.domain + '.' + settings.button.service.name,
-                    entityId: settings.button.service.domain + '.' + settings.display.entityId,
+                    entityId: settings.display.entityId,
                     serviceData: settings.button.service.data,
                 }
             }
             if (settings.button.serviceLongPress.name) {
                 settingsV3.button.serviceLongPress = {
                     serviceId: settings.button.serviceLongPress.domain + '.' + settings.button.serviceLongPress.name,
-                    entityId: settings.button.serviceLongPress.domain + '.' + settings.display.entityId,
+                    entityId: settings.display.entityId,
                     serviceData: settings.button.serviceLongPress.data,
                 }
             }
