@@ -50,18 +50,8 @@ export class Settings {
         }
 
         if (settings.version === 2) {
-            let settingsV3 = settings;
+            let settingsV3 = {...settings};
             settingsV3.version = 3
-            settingsV3.button.serviceShortPress = {
-                serviceId: "",
-                entityId: "",
-                serviceData: "",
-            }
-            settingsV3.button.serviceLongPress = {
-                serviceId: "",
-                entityId: "",
-                serviceData: "",
-            }
 
             if (settings.button.service.name) {
                 settingsV3.button.serviceShortPress = {
@@ -69,14 +59,29 @@ export class Settings {
                     entityId: settings.display.entityId,
                     serviceData: settings.button.service.data,
                 }
+            } else {
+                settingsV3.button.serviceShortPress = {
+                    serviceId: "",
+                    entityId: "",
+                    serviceData: "",
+                }
             }
+
             if (settings.button.serviceLongPress.name) {
                 settingsV3.button.serviceLongPress = {
                     serviceId: settings.button.serviceLongPress.domain + '.' + settings.button.serviceLongPress.name,
                     entityId: settings.display.entityId,
                     serviceData: settings.button.serviceLongPress.data,
                 }
+            } else {
+                settingsV3.button.serviceLongPress = {
+                    serviceId: "",
+                    entityId: "",
+                    serviceData: "",
+                }
             }
+
+            delete settingsV3.button.service
 
             return this.parse(settingsV3)
         }
