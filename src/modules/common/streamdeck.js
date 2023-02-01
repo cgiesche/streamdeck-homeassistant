@@ -134,6 +134,17 @@ export default class StreamDeck {
 
         this.streamDeckWebsocket.send(JSON.stringify(message))
     }
+
+    log(message) {
+        let messageEvent = {
+            "event": "logMessage",
+            "payload": {
+                "message": message
+            }
+        }
+
+        this.streamDeckWebsocket.send(JSON.stringify(messageEvent))
+    }
 }
 
 const ELGEvents = {
