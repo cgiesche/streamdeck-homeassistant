@@ -162,6 +162,11 @@ export default {
       }
 
       const updateState = (stateMessage) => {
+        if (!stateMessage.entity_id) {
+          console.log(`Missing entity_id in updated state: ${stateMessage}`)
+          return;
+        }
+
         let domain = stateMessage.entity_id.split('.')[0]
         let changedContexts = Object.keys(this.actionSettings).filter(key => this.actionSettings[key].display.entityId === stateMessage.entity_id)
 
