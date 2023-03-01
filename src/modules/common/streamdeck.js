@@ -82,7 +82,7 @@ export default class StreamDeck {
             "context": context,
             "payload": {
                 "title": title,
-                "target": ["software", "hardware"]
+                "target": 0,
             }
         }
         this.streamDeckWebsocket.send(JSON.stringify(message))
@@ -94,7 +94,7 @@ export default class StreamDeck {
             "context": context,
             "payload": {
                 "image": image,
-                "target": ["software", "hardware"],
+                "target": 0,
                 "state": 0
             }
         }
