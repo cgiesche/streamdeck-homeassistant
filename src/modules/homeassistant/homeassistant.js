@@ -28,6 +28,9 @@ export class Homeassistant {
                 this.sendAuthentication();
                 break;
             case "result":
+                if (!messageData.success) {
+                    throw messageData.error.message
+                }
                 if (this.requests.has(messageData.id)) {
                     this.requests.get(messageData.id)(messageData.result);
                 }
@@ -79,8 +82,8 @@ export class Homeassistant {
         this.sendCommand(subscribeEventCommand, callback);
     }
 
-    callService(service, domain, serviceData, callback = null) {
-        let callServiceCommand = new CallServiceCommand(this.nextRequestId(), service, domain, serviceData);
+    callService(service, domain, entity_id = null, serviceData = null, callback = null) {
+        let callServiceCommand = new CallServiceCommand(this.nextRequestId(), service, domain, entity_id, serviceData);
         this.sendCommand(callServiceCommand, callback)
     }
 
@@ -88,7 +91,10 @@ export class Homeassistant {
         if (callback) {
             this.requests.set(command.id, callback);
         }
-        this.websocket.send(JSON.stringify(command));
+
+        let commandJson = JSON.stringify(command);
+        console.log(`Sending HomeAssistant command ${commandJson}`)
+        this.websocket.send(commandJson);
     }
 
     nextRequestId() {
@@ -125,22 +131,15 @@ class GetServicesCommand extends Command {
 }
 
 class CallServiceCommand extends Command {
-    constructor(iterationCount, service, domain, serviceData) {
+    constructor(iterationCount, service, domain, entity_id, serviceData) {
         super(iterationCount, "call_service");
         this.domain = domain;
         this.service = service;
+        if (entity_id) {
+            this.target = {"entity_id": entity_id};
+        }
         if (serviceData) {
             this.service_data = serviceData;
         }
     }
-}
-
-export class Entity {
-
-    constructor(entityId) {
-        this.entityId = entityId
-        this.domain = entityId.split(".")[0];
-        this.name = entityId.split(".")[1];
-    }
-
 }

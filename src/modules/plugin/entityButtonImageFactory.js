@@ -1,3 +1,4 @@
+'use strict';
 import * as Mdi from "@mdi/js";
 import nunjucks from "nunjucks"
 import {SvgUtils} from "@/modules/plugin/svgUtils";

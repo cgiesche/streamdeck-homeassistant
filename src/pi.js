@@ -1,5 +1,5 @@
 import Vue from 'vue'
-import PiComponent from "@/PiComponent.vue";
+import PiComponent from "@/components/PiComponent.vue";
 import { BootstrapVue, IconsPlugin } from 'bootstrap-vue'
 
 import 'bootstrap/dist/css/bootstrap.css'
@@ -12,7 +12,8 @@ Vue.use(BootstrapVue)
 Vue.use(IconsPlugin)
 
 Vue.config.productionTip = false
+Vue.config.devtools = true;
 
 new Vue({
     render: h => h(PiComponent),
-}).$mount('#pi')
+}).$mount("app")

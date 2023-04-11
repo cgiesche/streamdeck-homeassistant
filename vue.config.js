@@ -10,8 +10,14 @@ module.exports = {
         config.resolve.alias.set("snapsvg", "snapsvg/dist/snap.svg.js");
     },
     pages: {
-        plugin: 'src/plugin/main.js',
-        pi: 'src/pi/main.js'
+        plugin: {
+            entry: 'src/plugin.js',
+            template: 'public/plugin.html'
+        },
+        pi: {
+            entry: 'src/pi.js',
+            template: 'public/pi.html'
+        }
     },
     publicPath: './'
 }
