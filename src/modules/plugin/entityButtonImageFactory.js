@@ -189,15 +189,15 @@ export class EntityConfigFactory {
         "temperature": (state, attributes, templates) => {
             const icon = Mdi.mdiThermometer;
 
-            let nonRetardedTemperature = 0 + state;
+            let temperature = 0 + state;
             if (attributes.unit_of_measurement === "°F") {
-                nonRetardedTemperature = nonRetardedTemperature / 1.8
+                temperature = (temperature - 32) * 5/9;
             }
 
             let color = "#00a400";
-            if (nonRetardedTemperature < 5) {
+            if (temperature < 5) {
                 color = "#3838f8";
-            } else if (nonRetardedTemperature > 25) {
+            } else if (temperature > 25) {
                 color = "#fa4848";
             }
 
