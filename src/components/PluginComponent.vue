@@ -40,7 +40,6 @@ export default {
       const onHAConnected = () => {
         this.$HA.getStates(entitiyStatesChanged)
         this.$HA.subscribeEvents(entityStateChanged)
-        showOk()
       }
 
       const onHAError = (msg) => {
@@ -59,10 +58,6 @@ export default {
 
       const showAlert = () => {
         Object.keys(this.actionSettings).forEach(key => this.$SD.showAlert(key))
-      }
-
-      const showOk = () => {
-        Object.keys(this.actionSettings).forEach(key => this.$SD.showOk(key))
       }
 
       this.$SD.on("connected", () => {
