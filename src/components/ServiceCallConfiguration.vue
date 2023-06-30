@@ -126,16 +126,17 @@ export default {
         return [];
       }
       let selectedService = this.availableServices.filter(service => service.serviceId === this.value.serviceId)[0]
-      if (selectedService && selectedService["target"] && selectedService.target["entity"]) {
-        if (selectedService.target.entity["domain"]) {
-          return this.availableEntities.filter(entity => entity.domain === selectedService.target.entity.domain)
+      if (selectedService && selectedService.target && Array.isArray(selectedService.target.entity)) {
+        let targetDomains = selectedService.target.entity.filter(entity => entity.domain).flatMap(entity => entity.domain);
+        if (targetDomains.length > 0) {
+          return this.availableEntities.filter(entity => targetDomains.includes(entity.domain))
         } else {
           return this.availableEntities;
         }
-      } else {
-        return [];
       }
-    },
+      return [];
+    }
+    ,
     serviceDataFeedback: function () {
       if (!this.value.serviceData) {
         return "";
@@ -146,7 +147,8 @@ export default {
       } catch (e) {
         return "Invalid JSON string: " + e;
       }
-    },
+    }
+    ,
     dataProperties: function () {
       if (this.availableServices && this.availableEntities && this.value.serviceId) {
         let selectedService = this.availableServices.filter(service => service.serviceId === this.value.serviceId)[0]
