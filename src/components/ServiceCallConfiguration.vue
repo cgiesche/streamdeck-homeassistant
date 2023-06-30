@@ -79,7 +79,10 @@
 </template>
 <script>
 
+let titleSort =(s1, s2) => s1.title.toLowerCase() > s2.title.toLowerCase() ? 1 : -1;
+
 export default {
+
   props: [
     'value', // model
     'availableServices', // Service[]
@@ -113,13 +116,16 @@ export default {
       if (!this.availableServices) {
         return [];
       }
-      return this.availableServices.map(service => service.domain).filter((element, index, array) => array.indexOf(element) === index)
+      return this.availableServices.map(service => service.domain)
+          .filter((element, index, array) => array.indexOf(element) === index)
+          .sort();
     },
     domainServices: function () {
       if (!this.availableServices || !this.selectedDomain) {
         return [];
       }
-      return this.availableServices.filter(service => service.domain === this.selectedDomain);
+      return this.availableServices.filter(service => service.domain === this.selectedDomain)
+          .sort(titleSort);
     },
     domainEntities: function () {
       if (!this.availableServices || !this.availableEntities || !this.value.serviceId) {
@@ -129,9 +135,9 @@ export default {
       if (selectedService && selectedService.target && Array.isArray(selectedService.target.entity)) {
         let targetDomains = selectedService.target.entity.filter(entity => entity.domain).flatMap(entity => entity.domain);
         if (targetDomains.length > 0) {
-          return this.availableEntities.filter(entity => targetDomains.includes(entity.domain))
+          return this.availableEntities.filter(entity => targetDomains.includes(entity.domain)).sort(titleSort);
         } else {
-          return this.availableEntities;
+          return this.availableEntities.filter(entity => entity).sort(titleSort);
         }
       }
       return [];
