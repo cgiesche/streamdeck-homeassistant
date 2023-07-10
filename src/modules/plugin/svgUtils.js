@@ -22,12 +22,6 @@ export class SvgUtils {
     generateButtonSVG(labels, iconSVG, iconColor, isAction = false, isMultiAction = false) {
 
 
-        const text = (text, lineNr) => {
-            this.snap.text(0, 26 + lineNr * 36, text)
-                .attr(this.lineAttr)
-                .transform(`translateX(${this.halfRes})`);
-        }
-
         this.snap.rect(0, 0, this.buttonRes, this.buttonRes).attr({fill: this.buttonBgColor})
 
         if (iconSVG) {
@@ -47,8 +41,13 @@ export class SvgUtils {
             this.snap.circle(this.buttonRes - 1, 0, 15).attr("fill", color)
         }
 
+        let currentLineNumber = 0;
         for (let i = 0; i < labels.length; i++) {
-            text(labels[i], i)
+            let lines = labels[i].split("\n");
+            for (let i = currentLineNumber; i < (lines.length + currentLineNumber); i++) {
+                this.drawText(lines[i - currentLineNumber], i);
+            }
+            currentLineNumber += lines.length;
         }
 
         // Debug Grid
@@ -62,6 +61,13 @@ export class SvgUtils {
         let outerSVG = this.snap.outerSVG();
         this.snap.clear();
         return outerSVG
+    }
+
+    drawText(text, lineNr) {
+        const escapedText = urlencode(text);
+        this.snap.text(0, 26 + lineNr * 36, escapedText)
+            .attr(this.lineAttr)
+            .transform(`translateX(${this.halfRes})`);
     }
 
 }
