@@ -1,4 +1,5 @@
 import Snap from "snapsvg"
+import {urlencode} from "nunjucks/src/filters";
 
 export class SvgUtils {
 
