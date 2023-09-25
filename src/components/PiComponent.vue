@@ -1,350 +1,328 @@
 <template>
-  <div class="container p-1">
+  <div class="container-fluid">
 
-    <b-form>
-      <h5>Server Settings</h5>
+    <h1>Server Settings</h1>
+    <div class="clearfix">
 
-      <div>
-        <b-form-group
-            label="Home Assistant Server URL"
-            description="example: ws://localhost:8123/api/websocket"
-            label-for="serverUrl"
-            :state="serverUrlState">
-          <b-form-input size="sm" id="serverUrl" v-model="serverUrl" :state="serverUrlState" trim
-                        required></b-form-input>
-        </b-form-group>
+      <div class="mb-3">
+        <label class="form-label" for="serverUrl">Server URL</label>
+        <input id="serverUrl" v-model="serverUrl" class="form-control form-control-sm" type="email">
+        <div class="form-text"><strong>Without SSL</strong> ws://localhost:8123/api/websocket
+        </div>
+        <div class="form-text"><strong>With SSL</strong> wss://ha.mydomain.net:8123/api/websocket (requires a trusted
+          certificate)
+        </div>
       </div>
 
-      <div>
-        <b-form-group
-            label="Access-Token"
-            label-for="accessToken"
-            :state="accessTokenState">
-          <b-form-input size="sm" type="password" id="accessToken" v-model="accessToken" :state="accessTokenState" trim
-                        required></b-form-input>
-          <b-form-text>Long-lived access tokens can be created using the "Long-Lived Access Tokens" section at the
-            bottom of a user's Home Assistant profile page. Source: <a
-                href='https://developers.home-assistant.io/docs/auth_api/#long-lived-access-token'>Home Assistant
-              documentation</a>.
-          </b-form-text>
-        </b-form-group>
+      <div class="mb-3">
+        <label class="form-label" for="accessToken">Access-Token</label>
+        <input id="accessToken" v-model="accessToken" class="form-control form-control-sm" required type="password">
+        <div class="form-text">Long-lived access tokens can be created using the "Long-Lived Access Tokens"
+          section at the
+          bottom of a user's Home Assistant profile page.
+          <a class="info"
+             href='https://developers.home-assistant.io/docs/auth_api/#long-lived-access-token' target="_blank">Home
+            Assistant
+            documentation</a></div>
       </div>
 
-      <p class="text-danger" v-if="haError">{{ haError }}</p>
 
-      <div>
-        <b-button size="sm" id="btnSave" v-on:click="saveGlobalSettings" v-bind:disabled="isHaSettingsComplete">Save and
-          (re)connect
-        </b-button>
+      <div v-if="haError" class="alert alert-danger alert-dismissible" role="alert">
+        {{ haError }}
+        <button class="btn-close" type="button" @click="haError = ''"></button>
       </div>
-    </b-form>
 
-    <b-form v-if="haConnected">
-      <hr>
-      <h5>Display Settings</h5>
-      <p>These settings define what is displayed on your stream deck button.</p>
+      <button id="mybutton" :disabled="!isHaSettingsComplete || haConnectionState === 'connecting'"
+              class="btn btn-sm btn-primary float-end"
+              v-on:click="saveGlobalSettings">
+        <span v-if="haConnectionState === 'connecting'" aria-hidden="true" class="spinner-border spinner-border-sm"
+              role="status"></span>
+        <span>{{ haConnectionState === 'connected' ? "Reconnect" : "Connect" }}</span>
+      </button>
+    </div>
 
-      <b-form-group
-          label="Domain"
-          label-for="domain"
-          description="The domain of the entity you want to display">
-        <b-form-select size="sm" id="domain" v-on:change="entity = null" v-model="domain"
-                       :options="availableEntityDomains"></b-form-select>
-      </b-form-group>
+    <div v-if="haConnectionState === 'connected'" class="clearfix mb-3">
+      <h1>Button appearance</h1>
 
-      <b-form-group
-          label="Entity"
-          label-for="entity"
-          description="The entity you want to display"
-          v-if="domainEntities.length > 0">
-        <b-form-select size="sm" id="entity" v-model="entity"
-                       :options="domainEntities"
-                       text-field="title"
-                       value-field="entityId">
-        </b-form-select>
-      </b-form-group>
+      <div class="mb-3">
+        <label class="form-label" for="accessToken">Domain</label>
+        <select id="domain" v-model="domain" class="form-select form-select-sm"
+                title="The domain of the entity you want to display"
+                v-on:change="entity = ''">
+          <option v-for="availableDomain in availableEntityDomains" v-bind:key="availableDomain">{{
+              availableDomain
+            }}
+          </option>
+        </select>
+      </div>
 
-      <b-form-checkbox
-          size="sm"
-          id="chkButtonTitle"
-          v-model="useCustomTitle">Custom title
-      </b-form-checkbox>
+      <div class="mb-3">
+        <label class="form-label" for="entity">Entity</label>
+        <select id="entity" v-model="entity" class="form-select form-select-sm" title="The entity you want to display">
+          <option v-for="domainEntity in domainEntities" v-bind:key="domainEntity.entityId"
+                  :value="domainEntity.entityId">{{
+              domainEntity.title
+            }}
+          </option>
+        </select>
+      </div>
+
+      <div class="form-check">
+        <input id="chkButtonTitle" v-model="useCustomTitle" class="form-check-input" type="checkbox">
+        <label class="form-check-label" for="chkButtonTitle">Use custom title</label>
+      </div>
 
       <div v-if="useCustomTitle">
-        <p class="text-danger">You have to clear the main title in the main stream deck window to make this title
-          template work.</p>
-        <b-form-group
-            label-for="buttonTitle">
-          <b-form-input
-              size="sm"
-              id="textarea"
-              v-model="buttonTitle"
-          ></b-form-input>
-          <span class="form-text text-muted">Available attributes:
-            <span v-for="attr in entityAttributes" v-bind:key="attr">{{attr}} </span>
-          </span>
-        </b-form-group>
+
+        <div class="mb-3">
+          <input id="buttonTitle" v-model="buttonTitle" class="form-control form-control-sm"
+                 placeholder="{{friendly_name}}"
+                 type="text">
+          <span class="form-text text-danger">You have to clear the main title in the main stream deck window to make this
+            title
+            template work.</span>
+          <details>
+            <summary>Available variables</summary>
+            <div v-for="attr in entityAttributes" v-bind:key="attr" class="form-text font-monospace">{{ attr }}</div>
+          </details>
+        </div>
       </div>
 
-      <b-form-checkbox
-          size="sm"
-          id="chkUsebuttonTitle"
-          v-if="!useStateImagesForOnOffStates"
-          v-model="useCustomButtonLabels">Custom labels
-      </b-form-checkbox>
+      <div class="form-check">
+        <input id="chkCustomLabels" v-model="useCustomButtonLabels" class="form-check-input" type="checkbox">
+        <label class="form-check-label" for="chkCustomLabels">Custom labels</label>
+      </div>
 
       <div v-if="useCustomButtonLabels">
-        <b-form-group
-            label-for="buttonLabels">
-          <b-form-textarea
-              size="sm"
-              id="buttonLabels"
-              v-model="buttonLabels"
-              rows="4" max-rows="4"
-              placeholder="Line 1 (may overlap with icon)
-Line 2 (may overlap with icon)
-Line 3
-Line 4 (may overlap with title)">
-          </b-form-textarea>
-          <span class="form-text text-muted">Available attributes:
-            <span v-for="attr in entityAttributes" v-bind:key="attr">{{attr}} </span>
-          </span>
-        </b-form-group>
+        <div class="mb-3">
+          <textarea id="buttonLabels" v-model="buttonLabels" class="form-control font-monospace"
+                    placeholder="Line 1 (may overlap with icon)"
+                    rows="4"></textarea>
+          <details>
+            <summary>Available variables</summary>
+            <div v-for="attr in entityAttributes" v-bind:key="attr" class="form-text font-monospace">{{ attr }}</div>
+          </details>
+        </div>
       </div>
 
-      <b-form-checkbox
-          size="sm"
-          id="chkEnableServiceIndicator"
-          v-model="enableServiceIndicator">Show visual service indicator
-      </b-form-checkbox>
+      <div class="form-check">
+        <input id="chkEnableServiceIndicator" v-model="enableServiceIndicator" class="form-check-input" type="checkbox">
+        <label class="form-check-label" for="chkEnableServiceIndicator">Show visual service indicators</label>
+      </div>
 
-      <b-form-checkbox
-          size="sm"
-          id="chkHideIcon"
-          v-model="hideIcon">Hide icon
-      </b-form-checkbox>
+      <div class="form-check mb-3">
+        <input id="chkHideIcon" v-model="hideIcon" class="form-check-input" type="checkbox">
+        <label class="form-check-label" for="chkHideIcon">Hide icon</label>
+      </div>
 
-      <hr>
-      <h5>Button Settings</h5>
+      <h1>Button actions</h1>
+
       <h6>Short Press</h6>
-      <ServiceCallConfiguration :available-entities="availableEntities"
+      <ServiceCallConfiguration v-model="serviceShortPress"
+                                :available-entities="availableEntities"
                                 :available-services="availableServices"
-                                v-model="serviceShortPress"
 
       ></ServiceCallConfiguration>
 
       <h6>Long Press</h6>
-      <ServiceCallConfiguration :available-entities="availableEntities"
-                                :available-services="availableServices"
-                                v-model="serviceLongPress"></ServiceCallConfiguration>
+      <ServiceCallConfiguration v-model="serviceLongPress"
+                                :available-entities="availableEntities"
+                                :available-services="availableServices"></ServiceCallConfiguration>
 
-      <b-button size="sm" id="btnActionSave" v-on:click="saveSettings" v-bind:disabled="!domain">Save entity config
-      </b-button>
+      <button id="mybutton" :disabled="!domain" class="btn btn-sm btn-primary float-end"
+              v-on:click="saveSettings">
+        Save configuration
+      </button>
 
-    </b-form>
+    </div>
   </div>
 </template>
 
-<script>
-import StreamDeck from "@/modules/common/streamdeck";
-import {ObjectUtils} from "@/modules/common/utils";
-import {Homeassistant} from "@/modules/homeassistant/homeassistant";
+<script setup>
+
+import {StreamDeck} from "@/modules/common/streamdeck";
 import {Settings} from "@/modules/common/settings";
+import {Homeassistant} from "@/modules/homeassistant/homeassistant";
 import {Entity} from "@/modules/pi/entity";
 import {Service} from "@/modules/pi/service";
+import {computed, onMounted, ref} from "vue";
 import ServiceCallConfiguration from "@/components/ServiceCallConfiguration.vue";
+import {ObjectUtils} from "@/modules/common/utils";
 
-export default {
-  name: 'PiComponent',
-  components: {ServiceCallConfiguration},
-  props: {},
-  data: () => {
-    return {
-      serverUrl: "",
-      accessToken: "",
+let $HA = null;
+let $SD = null;
 
-      domain: "",
-      entity: "",
+const serverUrl = ref("")
+const accessToken = ref("")
+const domain = ref("")
+const entity = ref("")
+const serviceShortPress = ref({})
+const serviceLongPress = ref({})
+const useCustomTitle = ref(false)
+const buttonTitle = ref("{{friendly_name}}")
+const useStateImagesForOnOffStates = ref(false) // determined by action ID (manifest)
+const useCustomButtonLabels = ref(false)
+const buttonLabels = ref("")
+const enableServiceIndicator = ref(true)
+const hideIcon = ref(false)
+const availableEntityDomains = ref([])
+const availableEntities = ref([])
+const availableServiceDomains = ref([])
+const availableServices = ref([])
+const currentStates = ref([])
+const haConnectionState = ref("disconnected") // disconnected, connecting, connected
+const haError = ref("")
 
-      serviceShortPress: {},
-      serviceLongPress: {},
 
-      // Custom Labels
-      useCustomTitle: false,
-      buttonTitle: "{{friendly_name}}",
+onMounted(() => {
+  window.connectElgatoStreamDeckSocket = (inPort, inPropertyInspectorUUID, inRegisterEvent, inInfo, inActionInfo) => {
+    $SD = new StreamDeck(inPort, inPropertyInspectorUUID, inRegisterEvent, inInfo, inActionInfo);
 
-      useStateImagesForOnOffStates: false, // determined by action ID (manifest)
-      useCustomButtonLabels: false,
-      buttonLabels: "",
-      enableServiceIndicator: true,
-      hideIcon: false,
-
-      availableEntityDomains: [],
-      availableEntities: [],
-
-      availableServiceDomains: [],
-      availableServices: [],
-
-      currentStates: [],
-
-      // Home-Assistant-State
-      haConnected: false,
-      haError: ""
+    // Dual State entity (custom icons for on/off)
+    const inActionInfoObject = JSON.parse(inActionInfo);
+    if (inActionInfoObject["action"] === "de.perdoctus.streamdeck.homeassistant.dual-state-entity") {
+      useStateImagesForOnOffStates.value = true;
     }
-  },
-  created: function () {
-    window.connectElgatoStreamDeckSocket = (inPort, inPropertyInspectorUUID, inRegisterEvent, inInfo, inActionInfo) => {
-      this.$SD = new StreamDeck(inPort, inPropertyInspectorUUID, inRegisterEvent, inInfo, inActionInfo);
 
-      // Dual State entity (custom icons for on/off)
-      const inActionInfoObject = JSON.parse(inActionInfo);
-      if (inActionInfoObject["action"] === "de.perdoctus.streamdeck.homeassistant.dual-state-entity") {
-        this.useStateImagesForOnOffStates = true;
-      }
+    $SD.on("globalsettings", (globalSettings) => {
+      if (globalSettings) {
+        serverUrl.value = globalSettings.serverUrl;
+        accessToken.value = globalSettings.accessToken;
 
-      this.$SD.on("globalsettings", (globalSettings) => {
-        if (globalSettings) {
-          this.serverUrl = globalSettings.serverUrl;
-          this.accessToken = globalSettings.accessToken;
-
-          if (this.serverUrl && this.accessToken) {
-            this.connectHomeAssistant()
-          }
+        if (serverUrl.value && accessToken.value) {
+          connectHomeAssistant()
         }
-      })
-
-      this.$SD.on("connected", (actionInfo) => {
-        this.$SD.requestGlobalSettings()
-
-        let settings = Settings.parse(actionInfo.payload.settings);
-
-        this.domain = settings["display"]["domain"]
-        this.entity = settings["display"]["entityId"]
-        this.enableServiceIndicator = settings["display"]["enableServiceIndicator"] || settings["display"]["enableServiceIndicator"] === undefined;
-        this.hideIcon = settings["display"]["hideIcon"];
-        this.useCustomTitle = settings["display"]["useCustomTitle"]
-        this.buttonTitle = settings["display"]["buttonTitle"] || "{{friendly_name}}"
-        this.useCustomButtonLabels = settings["display"]["useCustomButtonLabels"]
-        this.buttonLabels = settings["display"]["buttonLabels"]
-        this.serviceShortPress = settings["button"]["serviceShortPress"]
-        this.serviceLongPress = settings["button"]["serviceLongPress"]
-      })
-    }
-  },
-
-  computed: {
-    serverUrlState: function () {
-      return this.serverUrl && this.serverUrl.length > 4
-    },
-
-    accessTokenState: function () {
-      return this.accessToken && this.accessToken.length > 4
-    },
-
-    isHaSettingsComplete: function () {
-      return !this.serverUrl || !this.accessToken
-    },
-
-    domainEntities: function () {
-      return this.availableEntities.filter((entity) => entity.domain === this.domain)
-    },
-
-    entityAttributes: function () {
-      let currentEntityState = this.currentStates.find((state) => state.entityId === this.entity)
-      if (currentEntityState && currentEntityState.attributes) {
-        let attributes = currentEntityState.attributes.map(attribute => `{{${attribute}}}`);
-        return ["{{state}}", ...attributes]
       }
-      return []
-    },
+    })
 
-  },
+    $SD.on("connected", (actionInfo) => {
+      $SD.requestGlobalSettings()
 
-  methods: {
-    connectHomeAssistant: function () {
-      if (this.$HA) {
-        this.$HA.close();
-      }
+      let settings = Settings.parse(actionInfo.payload.settings);
 
-      try {
-        this.$HA = new Homeassistant(this.serverUrl, this.accessToken, () => {
-              this.haConnected = true;
-              this.$HA.getStates((states) => {
-                this.availableEntityDomains = Array.from(states
-                    .map(state => state.entity_id.split('.')[0])
-                    .reduce((acc, curr) => acc.add(curr), new Set()))
-                    .sort();
-
-                this.availableEntities = states
-                    .map((state) => {
-                          let splittedId = state.entity_id.split('.');
-                          return new Entity(splittedId[0], splittedId[1], state.attributes.friendly_name || state.entity_id)
-                        }
-                    )
-                    .sort((a, b) => (a.title.toLowerCase() > b.title.toLowerCase()) ? 1 : ((b.title.toLowerCase() > a.title.toLowerCase()) ? -1 : 0))
-
-                this.currentStates = states
-                    .map((state) => {
-                      return {
-                        entityId: state.entity_id,
-                        attributes: ObjectUtils.paths(state.attributes)
-                      }
-                    })
-              });
-              this.$HA.getServices((services) => {
-                this.availableServices = Object.entries(services).flatMap(domainServices => {
-                  const domain = domainServices[0];
-                  return Object.entries(domainServices[1]).map(services => {
-                    let serviceName = services[0];
-                    let serviceData = services[1];
-                    return new Service(domain, serviceName, serviceData.name, serviceData.description, serviceData.fields, serviceData.target);
-                  })
-                })
-                this.availableServiceDomains = Object.keys(services).sort();
-              });
-            },
-            (message) => {
-              this.haConnected = false;
-              this.haError = message;
-            }
-        )
-      } catch (e) {
-        this.haError = e
-      }
-    },
-
-    saveGlobalSettings: function () {
-      this.haError = "";
-      this.$SD.saveGlobalSettings({"serverUrl": this.serverUrl, "accessToken": this.accessToken});
-      this.connectHomeAssistant()
-    },
-
-    saveSettings: function () {
-      let settings = {
-        version: 3,
-
-        display: {
-          domain: this.domain,
-          entityId: this.entity,
-          useCustomTitle: this.useCustomTitle,
-          buttonTitle: this.buttonTitle,
-          enableServiceIndicator: this.enableServiceIndicator,
-          hideIcon: this.hideIcon,
-          useCustomButtonLabels: this.useCustomButtonLabels,
-          buttonLabels: this.buttonLabels,
-          useStateImagesForOnOffStates: this.useStateImagesForOnOffStates // determined by action ID (manifest)
-        },
-
-        button: {
-          serviceShortPress: this.serviceShortPress,
-          serviceLongPress: this.serviceLongPress,
-        }
-
-      }
-
-      this.$SD.saveSettings(settings)
-    }
+      domain.value = settings["display"]["domain"]
+      entity.value = settings["display"]["entityId"]
+      enableServiceIndicator.value = settings["display"]["enableServiceIndicator"] || settings["display"]["enableServiceIndicator"] === undefined;
+      hideIcon.value = settings["display"]["hideIcon"];
+      useCustomTitle.value = settings["display"]["useCustomTitle"]
+      buttonTitle.value = settings["display"]["buttonTitle"] || "{{friendly_name}}"
+      useCustomButtonLabels.value = settings["display"]["useCustomButtonLabels"]
+      buttonLabels.value = settings["display"]["buttonLabels"]
+      serviceShortPress.value = settings["button"]["serviceShortPress"]
+      serviceLongPress.value = settings["button"]["serviceLongPress"]
+    })
   }
+})
+
+const isHaSettingsComplete = computed(() => {
+  return serverUrl.value && accessToken.value
+})
+
+
+const domainEntities = computed(() => {
+  return availableEntities.value.filter((entity) => entity.domain === domain.value)
+})
+
+
+const entityAttributes = computed(() => {
+  let currentEntityState = currentStates.value.find((state) => state.entityId === entity.value)
+  if (currentEntityState && currentEntityState.attributes) {
+    let attributes = currentEntityState.attributes.map(attribute => `{{${attribute}}}`);
+    return ["{{state}}", ...attributes]
+  }
+  return []
+})
+
+function connectHomeAssistant() {
+  if ($HA) {
+    $HA.close();
+  }
+
+  haConnectionState.value = 'connecting';
+
+  try {
+    $HA = new Homeassistant(serverUrl.value, accessToken.value, () => {
+          haConnectionState.value = 'connected';
+          $HA.getStates((states) => {
+            availableEntityDomains.value = Array.from(states
+                .map(state => state.entity_id.split('.')[0])
+                .reduce((acc, curr) => acc.add(curr), new Set()))
+                .sort();
+
+            availableEntities.value = states
+                .map((state) => {
+                      let splittedId = state.entity_id.split('.');
+                      return new Entity(splittedId[0], splittedId[1], state.attributes.friendly_name || state.entity_id)
+                    }
+                )
+                .sort((a, b) => (a.title.toLowerCase() > b.title.toLowerCase()) ? 1 : ((b.title.toLowerCase() > a.title.toLowerCase()) ? -1 : 0))
+
+            currentStates.value = states
+                .map((state) => {
+                  return {
+                    entityId: state.entity_id,
+                    attributes: ObjectUtils.paths(state.attributes)
+                  }
+                })
+          });
+          $HA.getServices((services) => {
+            availableServices.value = Object.entries(services).flatMap(domainServices => {
+              const domain = domainServices[0];
+              return Object.entries(domainServices[1]).map(services => {
+                let serviceName = services[0];
+                let serviceData = services[1];
+                return new Service(domain, serviceName, serviceData.name, serviceData.description, serviceData.fields, serviceData.target);
+              })
+            })
+            availableServiceDomains.value = Object.keys(services).sort();
+          });
+        },
+        (message) => {
+          haError.value = message;
+          haConnectionState.value = 'disconnected';
+        },
+        () => {
+          haConnectionState.value = 'disconnected';
+        }
+    )
+  } catch (e) {
+    haError.value = e
+    haConnectionState.value = 'disconnected';
+  }
+}
+
+
+function saveGlobalSettings() {
+  haError.value = "";
+  $SD.saveGlobalSettings({"serverUrl": serverUrl.value, "accessToken": accessToken.value});
+  connectHomeAssistant()
+}
+
+
+function saveSettings() {
+  let settings = {
+    version: 3,
+
+    display: {
+      domain: domain.value,
+      entityId: entity.value,
+      useCustomTitle: useCustomTitle.value,
+      buttonTitle: buttonTitle.value,
+      enableServiceIndicator: enableServiceIndicator.value,
+      hideIcon: hideIcon.value,
+      useCustomButtonLabels: useCustomButtonLabels.value,
+      buttonLabels: buttonLabels.value,
+      useStateImagesForOnOffStates: useStateImagesForOnOffStates.value // determined by action ID (manifest)
+    },
+
+    button: {
+      serviceShortPress: serviceShortPress.value,
+      serviceLongPress: serviceLongPress.value,
+    }
+
+  }
+
+  $SD.saveSettings(settings)
 }
 
 </script>

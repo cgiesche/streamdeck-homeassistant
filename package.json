@@ -3,49 +3,31 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build",
-    "build-dev": "vue-cli-service build --mode development",
-    "lint": "vue-cli-service lint"
+    "dev": "vite",
+    "build": "vite build",
+    "build_dev": "vite build --sourcemap inline --minify false",
+    "preview": "vite preview",
+    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore",
+    "format": "prettier --write src/"
   },
   "dependencies": {
     "@mdi/font": "^7.1.96",
     "@mdi/js": "^7.1.96",
-    "bootstrap": "^4.6.2",
-    "bootstrap-vue": "^2.23.1",
-    "bootswatch": "^4.6.2",
+    "@popperjs/core": "^2.11.8",
+    "bootstrap": "^5.3.2",
     "core-js": "^3.26.1",
     "nunjucks": "^3.2.3",
-    "snapsvg": "^0.5.1",
-    "vue": "^2.7.14"
+    "snapsvg-cjs": "^0.0.6",
+    "vue": "^3.3.4"
   },
   "devDependencies": {
-    "@babel/eslint-parser": "^7.19.1",
-    "@vue/cli-plugin-babel": "~5.0.8",
-    "@vue/cli-plugin-eslint": "~5.0.8",
-    "@vue/cli-service": "~5.0.8",
-    "eslint": "^8.31.0",
-    "eslint-plugin-vue": "^8.7.1",
-    "imports-loader": "^1.2.0",
-    "vue-template-compiler": "^2.7.14"
-  },
-  "eslintConfig": {
-    "root": true,
-    "env": {
-      "node": true
-    },
-    "extends": [
-      "plugin:vue/essential",
-      "eslint:recommended"
-    ],
-    "parserOptions": {
-      "parser": "@babel/eslint-parser"
-    },
-    "rules": {}
-  },
-  "browserslist": [
-    "> 1%",
-    "last 2 versions",
-    "not dead"
-  ]
+    "@rushstack/eslint-patch": "^1.3.3",
+    "@vitejs/plugin-vue": "^4.3.4",
+    "@vue/eslint-config-prettier": "^8.0.0",
+    "eslint": "^8.49.0",
+    "eslint-plugin-vue": "^9.17.0",
+    "prettier": "^3.0.3",
+    "sass": "^1.68.0",
+    "vite": "^4.4.9"
+  }
 }
