@@ -1,29 +1,17 @@
 export class Entity {
 
-    #domain
-    #name
-    #title
+    domain
+    name
+    title
+    entityId
 
     constructor(domain, name, title) {
-        this.#domain = domain
-        this.#name = name
-        this.#title = title
+        this.domain = domain
+        this.name = name
+        this.title = title
+        this.entityId = `${domain}.${name}`
     }
 
-    get entityId() {
-        return `${this.#domain}.${this.#name}`;
-    }
 
-    get domain() {
-        return this.#domain
-    }
-
-    get name() {
-        return this.#name
-    }
-
-    get title() {
-        return this.#title
-    }
 
 }

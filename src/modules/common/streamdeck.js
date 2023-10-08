@@ -1,4 +1,4 @@
-export default class StreamDeck {
+export class StreamDeck {
 
     constructor(inPort, inPropertyInspectorUUID, inRegisterEvent, inInfo, inActionInfo) {
         let actionInfo = JSON.parse(inActionInfo);
@@ -119,10 +119,7 @@ export default class StreamDeck {
 
         this.streamDeckWebsocket.send(JSON.stringify(message))
     }
-
-    /**
-     * @param number 0-based index of state to set.
-     */
+    
     setState(context, number) {
         let message = {
             "event": "setState",
