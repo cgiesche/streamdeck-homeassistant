@@ -175,8 +175,8 @@ import {Service} from "@/modules/pi/service";
 import {computed, onMounted, ref} from "vue";
 import ServiceCallConfiguration from "@/components/ServiceCallConfiguration.vue";
 import {ObjectUtils} from "@/modules/common/utils";
-import AccordeonComponent from "@/components/accordeon/Accordeon.vue";
-import AccordeonItem from "@/components/accordeon/AccordeonItem.vue";
+import AccordeonComponent from "@/components/accordeon/BootstrapAccordeon.vue";
+import AccordeonItem from "@/components/accordeon/BootstrapAccordeonItem.vue";
 
 let $HA = null;
 let $SD = null;
