@@ -12,7 +12,12 @@
         }
       ],
       "SupportedInMultiActions": true,
-      "UUID": "de.perdoctus.streamdeck.homeassistant.entity"
+      "UUID": "de.perdoctus.streamdeck.homeassistant.entity",
+      "Controllers": ["Keypad", "Encoder"],
+      "Encoder": {
+        "layout": "$A0",
+        "StackColor": "#AABBCC"
+      }
     },
 
     {

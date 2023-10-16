@@ -1,5 +1,5 @@
 <template>
-  <div class="mb-2">
+  <div>
 
     <div class="mb-3">
       <label class="form-label" for="domain">Domain</label>
@@ -50,7 +50,7 @@
       </div>
     </div>
 
-    <div v-if="props.modelValue.serviceId" class="mb-3">
+    <template v-if="props.modelValue.serviceId">
       <label class="form-label" for="serviceData">Service Data JSON (Optional)</label>
       <textarea
           id="serviceData"
@@ -78,22 +78,37 @@
           </template>
         </div>
       </details>
-    </div>
+    </template>
   </div>
 </template>
 
 <script setup>
 
 import {computed, onMounted, ref} from "vue";
+import nunjucks from "nunjucks";
 
 const titleSort = (s1, s2) => s1.title.toLowerCase() > s2.title.toLowerCase() ? 1 : -1;
 
 
-const props = defineProps([
-  'modelValue', // domainId.serviceId
-  'availableServices', // Service[]
-  'availableEntities', // Entity[]
-])
+const props = defineProps({
+  modelValue: {
+    required: true,
+    type: Object,
+    default: () => ({
+      serviceId: null,
+      entityId: null,
+      serviceData: null
+    })
+  },
+  availableServices: {
+    required: true,
+    type: [] // Service[]
+  },
+  availableEntities: {
+    required: true,
+    type: [] // Entity[]
+  }
+})
 
 const emit = defineEmits([
   'update:modelValue'
@@ -137,7 +152,7 @@ const domainServices = computed(() => {
 })
 
 const domainEntities = computed(() => {
-  if (!props.availableServices || !props.availableEntities || !props.modelValue.serviceId) {
+  if (!props.availableServices || !props.availableEntities || !props.modelValue || !props.modelValue.serviceId) {
     return [];
   }
   let selectedService = props.availableServices.filter(service => service.serviceId === props.modelValue.serviceId)[0]
@@ -153,11 +168,14 @@ const domainEntities = computed(() => {
 })
 
 const serviceDataInvalidFeedback = computed(() => {
-  if (!props.modelValue.serviceData) {
+  let serviceDataString = props.modelValue.serviceData;
+  if (!serviceDataString) {
     return "";
   }
   try {
-    const json = JSON.parse(props.modelValue.serviceData);
+    const renderedServiceData = nunjucks.renderString(serviceDataString, {ticks: 5});
+
+    const json = JSON.parse(renderedServiceData);
     return (typeof json === "object") ? "" : "Service data must be an JSON object."
   } catch (e) {
     return "Invalid JSON string: " + e;
@@ -165,7 +183,7 @@ const serviceDataInvalidFeedback = computed(() => {
 })
 
 const dataProperties = computed(() => {
-  if (!(props.availableServices.length && props.availableEntities && props.modelValue.serviceId)) {
+  if (!(props.availableServices.length && props.availableEntities && props.modelValue && props.modelValue.serviceId)) {
     return [];
   }
   let selectedService = props.availableServices.filter(service => service.serviceId === props.modelValue.serviceId)[0]

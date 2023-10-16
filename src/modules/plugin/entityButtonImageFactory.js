@@ -25,16 +25,11 @@ export class EntityConfigFactory {
         let stateAttributes = stateObject.attributes;
         let deviceClass = stateAttributes.device_class || "default";
 
-        console.log(`Finding entity-config for ${domain}.${deviceClass}(${state})`)
-
         if (this[domain] && this[domain][deviceClass]) {
-            console.log(`... sucess (device class)!`)
             return this[domain][deviceClass](state, stateAttributes, labelTemplates);
         } else if (this[domain] && this[domain]["default"]) {
-            console.log(`... sucess (domain)!`)
             return this[domain]["default"](state, stateAttributes, labelTemplates);
         } else {
-            console.log(`... sucess (generic default)!`)
             return this.default(state, stateAttributes, labelTemplates);
         }
     }

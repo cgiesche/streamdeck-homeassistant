@@ -17,9 +17,11 @@ const buttonImageFactory = new EntityButtonImageFactory()
 const $SD = ref(null)
 const $HA = ref(null)
 const $reconnectTimeout = ref({})
-// const useStateImagesForOnOffStates = ref(false)
-const actionSettings = ref({})
+const actionSettings = ref([])
 const buttonLongpressTimeouts = ref(new Map()) //context, timeout
+
+let rotationTimeout = [];
+let rotationAmount = [];
 
 onMounted(() => {
   window.connectElgatoStreamDeckSocket = (inPort, inPluginUUID, inRegisterEvent, inInfo) => {
@@ -31,7 +33,6 @@ onMounted(() => {
           connectHomeAssistant(globalSettings);
         }
     )
-
 
     const onHAConnected = () => {
       $HA.value.getStates(entitiyStatesChanged)
@@ -61,26 +62,16 @@ onMounted(() => {
     })
 
     $SD.value.on("keyDown", (message) => {
-      let context = message.context
-
-      const timeout = setTimeout(buttonLongPress, 300, context);
-      buttonLongpressTimeouts.value.set(context, timeout)
+      buttonDown(message.context);
     })
 
     $SD.value.on("keyUp", (message) => {
-      let context = message.context
-
-      // If "long press timeout" is still present, we perform a normal press
-      const lpTimeout = buttonLongpressTimeouts.value.get(context);
-      if (lpTimeout) {
-        clearTimeout(lpTimeout);
-        buttonLongpressTimeouts.value.delete(context)
-        buttonShortPress(context);
-      }
+      buttonUp(message.context);
     })
 
     $SD.value.on("willAppear", (message) => {
       let context = message.context;
+      rotationAmount[context] = 0;
       actionSettings.value[context] = Settings.parse(message.payload.settings)
       if ($HA.value) {
         $HA.value.getStates(entitiyStatesChanged)
@@ -92,14 +83,60 @@ onMounted(() => {
       delete actionSettings.value[context]
     })
 
+    $SD.value.on("dialRotate", (message) => {
+      let context = message.context;
+      let settings = actionSettings.value[context];
+
+      rotationAmount[context] += message.payload.ticks;
+
+      if (rotationTimeout[context])
+        return;
+
+      rotationTimeout[context] = setTimeout(() => {
+        callService(context, settings.button.serviceRotation, {ticks: rotationAmount[context]});
+        rotationAmount[context] = 0;
+        rotationTimeout[context] = null;
+      }, 300);
+
+    })
+
+    $SD.value.on("dialDown", (message) => {
+      buttonDown(message.context);
+    })
+
+    $SD.value.on("dialUp", (message) => {
+      buttonUp(message.context);
+    })
+
+    $SD.value.on("touchTap", (message) => {
+      let context = message.context;
+      let settings = actionSettings.value[context];
+      callService(context, settings.button.serviceTap);
+    })
+
     $SD.value.on("didReceiveSettings", (message) => {
       let context = message.context;
+      rotationAmount[context] = 0;
       actionSettings.value[context] = Settings.parse(message.payload.settings)
-
       if ($HA.value) {
         $HA.value.getStates(entitiyStatesChanged)
       }
     })
+
+    const buttonDown = (context) => {
+      const timeout = setTimeout(buttonLongPress, 300, context);
+      buttonLongpressTimeouts.value.set(context, timeout)
+    }
+
+    const buttonUp = (context) => {
+      // If "long press timeout" is still present, we perform a normal press
+      const lpTimeout = buttonLongpressTimeouts.value.get(context);
+      if (lpTimeout) {
+        clearTimeout(lpTimeout);
+        buttonLongpressTimeouts.value.delete(context)
+        buttonShortPress(context);
+      }
+    }
 
     const buttonShortPress = (context) => {
       let settings = actionSettings.value[context];
@@ -108,7 +145,7 @@ onMounted(() => {
 
     const buttonLongPress = (context) => {
       buttonLongpressTimeouts.value.delete(context);
-      let settings = actionSettings[context];
+      let settings = actionSettings.value[context];
       if (settings.button.serviceLongPress.serviceId) {
         callService(context, settings.button.serviceLongPress);
       } else {
@@ -116,12 +153,18 @@ onMounted(() => {
       }
     }
 
-    const callService = (context, serviceToCall) => {
+    const callService = (context, serviceToCall, serviceDataAttributes = {}) => {
       if ($HA.value) {
         if (serviceToCall["serviceId"]) {
           try {
             const serviceIdParts = serviceToCall.serviceId.split('.');
-            const serviceData = serviceToCall.serviceData ? JSON.parse(serviceToCall.serviceData) : null;
+
+            let serviceData = null;
+            if (serviceToCall.serviceData) {
+              let renderedServiceData = nunjucks.renderString(serviceToCall.serviceData, serviceDataAttributes)
+              serviceData = JSON.parse(renderedServiceData);
+            }
+
             $HA.value.callService(serviceIdParts[1], serviceIdParts[0], serviceToCall.entityId, serviceData)
           } catch (e) {
             console.error(e)
@@ -222,7 +265,11 @@ onMounted(() => {
 
   const setButtonSVG = (svg, changedContext) => {
     const image = "data:image/svg+xml;charset=utf8," + svg;
-    $SD.value.setImage(changedContext, image)
+    if (actionSettings.value[changedContext].controllerType === 'Encoder') {
+      $SD.value.setFeedback(changedContext, {"canvas": image, title: "Hallo"})
+    } else {
+      $SD.value.setImage(changedContext, image)
+    }
   }
 })
 

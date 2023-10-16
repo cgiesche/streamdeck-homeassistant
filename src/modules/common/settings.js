@@ -87,6 +87,25 @@ export class Settings {
         }
 
         if (settings.version === 3) {
+            let settingsV4 = {...settings};
+            settingsV4.version = 4
+
+            settingsV4.button.serviceRotation = {
+                serviceId: "",
+                entityId: "",
+                serviceData: "",
+            }
+            settingsV4.button.serviceTap = {
+                serviceId: "",
+                entityId: "",
+                serviceData: "",
+            }
+            settingsV4.controllerType = "Keypad"
+
+            return this.parse(settingsV4)
+        }
+
+        if (settings.version === 4) {
             return settings;
         }
     }
