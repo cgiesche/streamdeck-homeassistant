@@ -5,14 +5,16 @@
 <script setup>
 import {StreamDeck} from "@/modules/common/streamdeck";
 import {Homeassistant} from "@/modules/homeassistant/homeassistant";
-import {EntityButtonImageFactory, EntityConfigFactory} from "@/modules/plugin/entityButtonImageFactory";
+import {EntityButtonImageFactory} from "@/modules/plugin/entityButtonImageFactory";
 import nunjucks from "nunjucks"
 import {Settings} from "@/modules/common/settings";
 import {onMounted, ref} from "vue";
+import {EntityConfigFactory} from "@/modules/plugin/entityConfigFactory";
 
 
 const entityConfigFactory = new EntityConfigFactory()
 const buttonImageFactory = new EntityButtonImageFactory()
+const touchScreenImageFactory = new EntityButtonImageFactory({width: 200, height: 100})
 
 const $SD = ref(null)
 const $HA = ref(null)
@@ -249,8 +251,13 @@ onMounted(() => {
             $SD.value.setState(currentContext, 0);
         }
       } else {
-        const buttonImage = buttonImageFactory.createButton(entityConfig);
-        setButtonSVG(buttonImage, currentContext)
+        if (contextSettings.controllerType === 'Encoder') {
+          const buttonImage = touchScreenImageFactory.createButton(entityConfig);
+          setButtonSVG(buttonImage, currentContext)
+        } else {
+          const buttonImage = buttonImageFactory.createButton(entityConfig);
+          setButtonSVG(buttonImage, currentContext)
+        }
       }
 
       if (contextSettings.display.useCustomTitle) {
@@ -266,7 +273,7 @@ onMounted(() => {
   const setButtonSVG = (svg, changedContext) => {
     const image = "data:image/svg+xml;charset=utf8," + svg;
     if (actionSettings.value[changedContext].controllerType === 'Encoder') {
-      $SD.value.setFeedback(changedContext, {"canvas": image, title: "Hallo"})
+      $SD.value.setFeedback(changedContext, {"full-canvas": image, "canvas": null, "title": ""})
     } else {
       $SD.value.setImage(changedContext, image)
     }
