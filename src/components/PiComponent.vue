@@ -42,7 +42,7 @@
     </div>
 
     <div v-if="haConnectionState === 'connected'" class="clearfix mb-3">
-      <h1>Button appearance</h1>
+      <h1>{{ controllerType }} appearance</h1>
 
       <div class="mb-3">
         <label class="form-label" for="accessToken">Domain</label>
@@ -115,19 +115,54 @@
         <label class="form-check-label" for="chkHideIcon">Hide icon</label>
       </div>
 
-      <h1>Button actions</h1>
+      <h1>{{ controllerType }} actions</h1>
 
-      <h6>Short Press</h6>
-      <ServiceCallConfiguration v-model="serviceShortPress"
-                                :available-entities="availableEntities"
-                                :available-services="availableServices"
+      <AccordeonComponent id="presses" class="mb-2">
+        <AccordeonItem accordeon-id="presses" item-id="shortPress" title="Short Press">
+          <ServiceCallConfiguration v-model="serviceShortPress" :available-entities="availableEntities"
+                                    :available-services="availableServices"
+                                    class="mb-2"
 
-      ></ServiceCallConfiguration>
+          ></ServiceCallConfiguration>
+        </AccordeonItem>
 
-      <h6>Long Press</h6>
-      <ServiceCallConfiguration v-model="serviceLongPress"
-                                :available-entities="availableEntities"
-                                :available-services="availableServices"></ServiceCallConfiguration>
+        <AccordeonItem accordeon-id="presses" item-id="longPress" title="Long Press">
+          <ServiceCallConfiguration v-model="serviceLongPress" :available-entities="availableEntities"
+                                    :available-services="availableServices"
+                                    class="mb-2"></ServiceCallConfiguration>
+
+        </AccordeonItem>
+
+        <template v-if="controllerType === 'Encoder'">
+          <AccordeonItem accordeon-id="presses" item-id="touch" title="Screen tap">
+            <ServiceCallConfiguration v-model="serviceTap" :available-entities="availableEntities"
+                                      :available-services="availableServices"
+                                      class="mb-2"></ServiceCallConfiguration>
+          </AccordeonItem>
+
+          <AccordeonItem accordeon-id="presses" item-id="dialRotate" title="Rotation">
+            <ServiceCallConfiguration v-model="serviceRotation"
+                                      :available-entities="availableEntities"
+                                      :available-services="availableServices"></ServiceCallConfiguration>
+            <details class="mb-2">
+              <summary>Available variables</summary>
+              <div class="form-text">
+                <span v-pre class="text-info font-monospace">{{ ticks }}</span> - The number of ticks the dial was
+                rotated (negative value for left turn, positive value for right turn).
+              </div>
+              <div class="form-text">
+                <span v-pre class="text-info font-monospace">{{ rotationPercent }}</span> - A number between 0 and 100
+                that represents the rotation percentage value of the dial.
+              </div>
+              <div class="form-text">
+                <span v-pre class="text-info font-monospace">{{ rotationAbsolute }}</span> - A number between 0 and 255
+                that represents the absolute rotation value of the dial.
+              </div>
+            </details>
+          </AccordeonItem>
+        </template>
+
+      </AccordeonComponent>
 
       <button id="mybutton" :disabled="!domain" class="btn btn-sm btn-primary float-end"
               v-on:click="saveSettings">
@@ -148,6 +183,8 @@ import {Service} from "@/modules/pi/service";
 import {computed, onMounted, ref} from "vue";
 import ServiceCallConfiguration from "@/components/ServiceCallConfiguration.vue";
 import {ObjectUtils} from "@/modules/common/utils";
+import AccordeonComponent from "@/components/accordeon/BootstrapAccordeon.vue";
+import AccordeonItem from "@/components/accordeon/BootstrapAccordeonItem.vue";
 
 let $HA = null;
 let $SD = null;
@@ -156,8 +193,12 @@ const serverUrl = ref("")
 const accessToken = ref("")
 const domain = ref("")
 const entity = ref("")
+
 const serviceShortPress = ref({})
 const serviceLongPress = ref({})
+const serviceTap = ref({})
+const serviceRotation = ref({})
+
 const useCustomTitle = ref(false)
 const buttonTitle = ref("{{friendly_name}}")
 const useStateImagesForOnOffStates = ref(false) // determined by action ID (manifest)
@@ -173,6 +214,8 @@ const currentStates = ref([])
 const haConnectionState = ref("disconnected") // disconnected, connecting, connected
 const haError = ref("")
 
+const controllerType = ref("")
+
 
 onMounted(() => {
   window.connectElgatoStreamDeckSocket = (inPort, inPropertyInspectorUUID, inRegisterEvent, inInfo, inActionInfo) => {
@@ -180,9 +223,9 @@ onMounted(() => {
 
     // Dual State entity (custom icons for on/off)
     const inActionInfoObject = JSON.parse(inActionInfo);
-    if (inActionInfoObject["action"] === "de.perdoctus.streamdeck.homeassistant.dual-state-entity") {
-      useStateImagesForOnOffStates.value = true;
-    }
+
+    useStateImagesForOnOffStates.value = inActionInfoObject["action"] === "de.perdoctus.streamdeck.homeassistant.dual-state-entity";
+    controllerType.value = inActionInfoObject.payload.controller
 
     $SD.on("globalsettings", (globalSettings) => {
       if (globalSettings) {
@@ -210,6 +253,8 @@ onMounted(() => {
       buttonLabels.value = settings["display"]["buttonLabels"]
       serviceShortPress.value = settings["button"]["serviceShortPress"]
       serviceLongPress.value = settings["button"]["serviceLongPress"]
+      serviceTap.value = settings["button"]["serviceTap"]
+      serviceRotation.value = settings["button"]["serviceRotation"]
     })
   }
 })
@@ -301,7 +346,9 @@ function saveGlobalSettings() {
 
 function saveSettings() {
   let settings = {
-    version: 3,
+    version: 4,
+
+    controllerType: controllerType.value,
 
     display: {
       domain: domain.value,
@@ -318,6 +365,8 @@ function saveSettings() {
     button: {
       serviceShortPress: serviceShortPress.value,
       serviceLongPress: serviceLongPress.value,
+      serviceTap: serviceTap.value,
+      serviceRotation: serviceRotation.value
     }
 
   }

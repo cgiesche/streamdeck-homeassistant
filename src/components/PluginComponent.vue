@@ -5,21 +5,26 @@
 <script setup>
 import {StreamDeck} from "@/modules/common/streamdeck";
 import {Homeassistant} from "@/modules/homeassistant/homeassistant";
-import {EntityButtonImageFactory, EntityConfigFactory} from "@/modules/plugin/entityButtonImageFactory";
+import {EntityButtonImageFactory} from "@/modules/plugin/entityButtonImageFactory";
 import nunjucks from "nunjucks"
 import {Settings} from "@/modules/common/settings";
 import {onMounted, ref} from "vue";
+import {EntityConfigFactory} from "@/modules/plugin/entityConfigFactory";
 
 
 const entityConfigFactory = new EntityConfigFactory()
 const buttonImageFactory = new EntityButtonImageFactory()
+const touchScreenImageFactory = new EntityButtonImageFactory({width: 200, height: 100})
 
 const $SD = ref(null)
 const $HA = ref(null)
 const $reconnectTimeout = ref({})
-// const useStateImagesForOnOffStates = ref(false)
-const actionSettings = ref({})
+const actionSettings = ref([])
 const buttonLongpressTimeouts = ref(new Map()) //context, timeout
+
+let rotationTimeout = [];
+let rotationAmount = [];
+let rotationPercent = [];
 
 onMounted(() => {
   window.connectElgatoStreamDeckSocket = (inPort, inPluginUUID, inRegisterEvent, inInfo) => {
@@ -31,7 +36,6 @@ onMounted(() => {
           connectHomeAssistant(globalSettings);
         }
     )
-
 
     const onHAConnected = () => {
       $HA.value.getStates(entitiyStatesChanged)
@@ -61,26 +65,17 @@ onMounted(() => {
     })
 
     $SD.value.on("keyDown", (message) => {
-      let context = message.context
-
-      const timeout = setTimeout(buttonLongPress, 300, context);
-      buttonLongpressTimeouts.value.set(context, timeout)
+      buttonDown(message.context);
     })
 
     $SD.value.on("keyUp", (message) => {
-      let context = message.context
-
-      // If "long press timeout" is still present, we perform a normal press
-      const lpTimeout = buttonLongpressTimeouts.value.get(context);
-      if (lpTimeout) {
-        clearTimeout(lpTimeout);
-        buttonLongpressTimeouts.value.delete(context)
-        buttonShortPress(context);
-      }
+      buttonUp(message.context);
     })
 
     $SD.value.on("willAppear", (message) => {
       let context = message.context;
+      rotationAmount[context] = 0;
+      rotationPercent[context] = 0;
       actionSettings.value[context] = Settings.parse(message.payload.settings)
       if ($HA.value) {
         $HA.value.getStates(entitiyStatesChanged)
@@ -92,14 +87,66 @@ onMounted(() => {
       delete actionSettings.value[context]
     })
 
+    $SD.value.on("dialRotate", (message) => {
+      let context = message.context;
+      let settings = actionSettings.value[context];
+
+      rotationAmount[context] += message.payload.ticks;
+      rotationPercent[context] += (message.payload.ticks * 2);
+      if (rotationPercent[context] < 0) {
+        rotationPercent[context] = 0;
+      } else if (rotationPercent[context] > 100) {
+        rotationPercent[context] = 100;
+      }
+
+      if (rotationTimeout[context])
+        return;
+
+      rotationTimeout[context] = setTimeout(() => {
+        callService(context, settings.button.serviceRotation, {ticks: rotationAmount[context], rotationPercent: rotationPercent[context], rotationAbsolute: 2.55 * rotationPercent[context]});
+        rotationAmount[context] = 0;
+        rotationTimeout[context] = null;
+      }, 300);
+
+    })
+
+    $SD.value.on("dialDown", (message) => {
+      buttonDown(message.context);
+    })
+
+    $SD.value.on("dialUp", (message) => {
+      buttonUp(message.context);
+    })
+
+    $SD.value.on("touchTap", (message) => {
+      let context = message.context;
+      let settings = actionSettings.value[context];
+      callService(context, settings.button.serviceTap);
+    })
+
     $SD.value.on("didReceiveSettings", (message) => {
       let context = message.context;
+      rotationAmount[context] = 0;
       actionSettings.value[context] = Settings.parse(message.payload.settings)
-
       if ($HA.value) {
         $HA.value.getStates(entitiyStatesChanged)
       }
     })
+
+    const buttonDown = (context) => {
+      const timeout = setTimeout(buttonLongPress, 300, context);
+      buttonLongpressTimeouts.value.set(context, timeout)
+    }
+
+    const buttonUp = (context) => {
+      // If "long press timeout" is still present, we perform a normal press
+      const lpTimeout = buttonLongpressTimeouts.value.get(context);
+      if (lpTimeout) {
+        clearTimeout(lpTimeout);
+        buttonLongpressTimeouts.value.delete(context)
+        buttonShortPress(context);
+      }
+    }
 
     const buttonShortPress = (context) => {
       let settings = actionSettings.value[context];
@@ -108,7 +155,7 @@ onMounted(() => {
 
     const buttonLongPress = (context) => {
       buttonLongpressTimeouts.value.delete(context);
-      let settings = actionSettings[context];
+      let settings = actionSettings.value[context];
       if (settings.button.serviceLongPress.serviceId) {
         callService(context, settings.button.serviceLongPress);
       } else {
@@ -116,12 +163,18 @@ onMounted(() => {
       }
     }
 
-    const callService = (context, serviceToCall) => {
+    const callService = (context, serviceToCall, serviceDataAttributes = {}) => {
       if ($HA.value) {
         if (serviceToCall["serviceId"]) {
           try {
             const serviceIdParts = serviceToCall.serviceId.split('.');
-            const serviceData = serviceToCall.serviceData ? JSON.parse(serviceToCall.serviceData) : null;
+
+            let serviceData = null;
+            if (serviceToCall.serviceData) {
+              let renderedServiceData = nunjucks.renderString(serviceToCall.serviceData, serviceDataAttributes)
+              serviceData = JSON.parse(renderedServiceData);
+            }
+
             $HA.value.callService(serviceIdParts[1], serviceIdParts[0], serviceToCall.entityId, serviceData)
           } catch (e) {
             console.error(e)
@@ -206,8 +259,13 @@ onMounted(() => {
             $SD.value.setState(currentContext, 0);
         }
       } else {
-        const buttonImage = buttonImageFactory.createButton(entityConfig);
-        setButtonSVG(buttonImage, currentContext)
+        if (contextSettings.controllerType === 'Encoder') {
+          const buttonImage = touchScreenImageFactory.createButton(entityConfig);
+          setButtonSVG(buttonImage, currentContext)
+        } else {
+          const buttonImage = buttonImageFactory.createButton(entityConfig);
+          setButtonSVG(buttonImage, currentContext)
+        }
       }
 
       if (contextSettings.display.useCustomTitle) {
@@ -222,7 +280,11 @@ onMounted(() => {
 
   const setButtonSVG = (svg, changedContext) => {
     const image = "data:image/svg+xml;charset=utf8," + svg;
-    $SD.value.setImage(changedContext, image)
+    if (actionSettings.value[changedContext].controllerType === 'Encoder') {
+      $SD.value.setFeedback(changedContext, {"full-canvas": image, "canvas": null, "title": ""})
+    } else {
+      $SD.value.setImage(changedContext, image)
+    }
   }
 })
 

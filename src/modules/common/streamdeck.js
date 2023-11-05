@@ -30,6 +30,21 @@ export class StreamDeck {
                 case "keyUp":
                     this.events.emit("keyUp", incomingEvent)
                     break;
+                case "dialDown":
+                    this.events.emit("dialDown", incomingEvent)
+                    break;
+                case "dialUp":
+                    this.events.emit("dialUp", incomingEvent)
+                    break;
+                case "dialRotate":
+                    this.events.emit("dialRotate", incomingEvent)
+                    break;
+                case "touchTap":
+                    this.events.emit("touchTap", incomingEvent)
+                    break;
+                case "systemDidWakeUp":
+                    this.events.emit("systemDidWakeUp", incomingEvent)
+                    break;
                 case "willAppear":
                     this.events.emit("willAppear", incomingEvent)
                     break;
@@ -102,6 +117,16 @@ export class StreamDeck {
         this.streamDeckWebsocket.send(JSON.stringify(message))
     }
 
+    setFeedback(context, payload) {
+        let message = {
+            "event": "setFeedback",
+            "context": context,
+            "payload": payload
+        }
+
+        this.streamDeckWebsocket.send(JSON.stringify(message))
+    }
+
     showAlert(context) {
         let message = {
             "event": "showAlert",
@@ -119,7 +144,7 @@ export class StreamDeck {
 
         this.streamDeckWebsocket.send(JSON.stringify(message))
     }
-    
+
     setState(context, number) {
         let message = {
             "event": "setState",
