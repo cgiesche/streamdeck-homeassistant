@@ -24,6 +24,7 @@ const buttonLongpressTimeouts = ref(new Map()) //context, timeout
 
 let rotationTimeout = [];
 let rotationAmount = [];
+let rotationPercent = [];
 
 onMounted(() => {
   window.connectElgatoStreamDeckSocket = (inPort, inPluginUUID, inRegisterEvent, inInfo) => {
@@ -74,6 +75,7 @@ onMounted(() => {
     $SD.value.on("willAppear", (message) => {
       let context = message.context;
       rotationAmount[context] = 0;
+      rotationPercent[context] = 0;
       actionSettings.value[context] = Settings.parse(message.payload.settings)
       if ($HA.value) {
         $HA.value.getStates(entitiyStatesChanged)
@@ -90,12 +92,18 @@ onMounted(() => {
       let settings = actionSettings.value[context];
 
       rotationAmount[context] += message.payload.ticks;
+      rotationPercent[context] += (message.payload.ticks * 2);
+      if (rotationPercent[context] < 0) {
+        rotationPercent[context] = 0;
+      } else if (rotationPercent[context] > 100) {
+        rotationPercent[context] = 100;
+      }
 
       if (rotationTimeout[context])
         return;
 
       rotationTimeout[context] = setTimeout(() => {
-        callService(context, settings.button.serviceRotation, {ticks: rotationAmount[context]});
+        callService(context, settings.button.serviceRotation, {ticks: rotationAmount[context], rotationPercent: rotationPercent[context], rotationAbsolute: 2.55 * rotationPercent[context]});
         rotationAmount[context] = 0;
         rotationTimeout[context] = null;
       }, 300);

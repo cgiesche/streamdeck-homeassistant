@@ -148,7 +148,15 @@
               <summary>Available variables</summary>
               <div class="form-text">
                 <span v-pre class="text-info font-monospace">{{ ticks }}</span> - The number of ticks the dial was
-                rotated
+                rotated (negative value for left turn, positive value for right turn).
+              </div>
+              <div class="form-text">
+                <span v-pre class="text-info font-monospace">{{ rotationPercent }}</span> - A number between 0 and 100
+                that represents the rotation percentage value of the dial.
+              </div>
+              <div class="form-text">
+                <span v-pre class="text-info font-monospace">{{ rotationAbsolute }}</span> - A number between 0 and 255
+                that represents the absolute rotation value of the dial.
               </div>
             </details>
           </AccordeonItem>

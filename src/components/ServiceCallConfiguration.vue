@@ -173,7 +173,7 @@ const serviceDataInvalidFeedback = computed(() => {
     return "";
   }
   try {
-    const renderedServiceData = nunjucks.renderString(serviceDataString, {ticks: 5});
+    const renderedServiceData = nunjucks.renderString(serviceDataString, {ticks: 5, rotationPercent: 100, rotationAbsolute: 100});
 
     const json = JSON.parse(renderedServiceData);
     return (typeof json === "object") ? "" : "Service data must be an JSON object."
