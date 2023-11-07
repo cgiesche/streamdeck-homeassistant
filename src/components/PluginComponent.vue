@@ -90,9 +90,11 @@ onMounted(() => {
     $SD.value.on("dialRotate", (message) => {
       let context = message.context;
       let settings = actionSettings.value[context];
+      let scaledTicks = message.payload.ticks * (settings.rotationTickMultiplier || 1);
+      let tickBucketSizeMs = settings.rotationTickBucketSizeMs || 300;
 
-      rotationAmount[context] += message.payload.ticks;
-      rotationPercent[context] += (message.payload.ticks * 2);
+      rotationAmount[context] += scaledTicks;
+      rotationPercent[context] += scaledTicks;
       if (rotationPercent[context] < 0) {
         rotationPercent[context] = 0;
       } else if (rotationPercent[context] > 100) {
@@ -102,11 +104,21 @@ onMounted(() => {
       if (rotationTimeout[context])
         return;
 
-      rotationTimeout[context] = setTimeout(() => {
-        callService(context, settings.button.serviceRotation, {ticks: rotationAmount[context], rotationPercent: rotationPercent[context], rotationAbsolute: 2.55 * rotationPercent[context]});
+      let serviceCall = () => {
+        callService(context, settings.button.serviceRotation, {
+          ticks: rotationAmount[context],
+          rotationPercent: rotationPercent[context],
+          rotationAbsolute: 2.55 * rotationPercent[context]
+        });
         rotationAmount[context] = 0;
         rotationTimeout[context] = null;
-      }, 300);
+      };
+
+      if (tickBucketSizeMs > 0) {
+        rotationTimeout[context] = setTimeout(serviceCall, tickBucketSizeMs);
+      } else {
+        serviceCall();
+      }
 
     })
 

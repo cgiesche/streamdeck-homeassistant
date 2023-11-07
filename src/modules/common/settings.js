@@ -101,6 +101,8 @@ export class Settings {
                 serviceData: "",
             }
             settingsV4.controllerType = "Keypad"
+            settingsV4.rotationTickMultiplier = 1
+            settingsV4.rotationTickBucketSizeMs = 300
 
             return this.parse(settingsV4)
         }

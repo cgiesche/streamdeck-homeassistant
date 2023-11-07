@@ -144,6 +144,7 @@
             <ServiceCallConfiguration v-model="serviceRotation"
                                       :available-entities="availableEntities"
                                       :available-services="availableServices"></ServiceCallConfiguration>
+
             <details class="mb-2">
               <summary>Available variables</summary>
               <div class="form-text">
@@ -159,6 +160,25 @@
                 that represents the absolute rotation value of the dial.
               </div>
             </details>
+
+            <label class="form-label" for="rotationTickMultiplier">Dial rotation tick multiplier
+              (x{{ rotationTickMultiplier }})</label>
+            <input id="rotationTickMultiplier" v-model="rotationTickMultiplier" class="form-range" max="10"
+                   min="0.1" step="0.1" type="range">
+            <div class="form-text mb-2">
+              Each tick of the dial will be multiplied with this value. This results in faster or slower value changes.
+            </div>
+
+            <label class="form-label" for="rotationTickBucketSizeMs">Dial rotation tick bucket size
+              ({{ rotationTickBucketSizeMs }} ms)</label>
+            <input id="rotationTickBucketSizeMs" v-model="rotationTickBucketSizeMs" class="form-range" max="1000"
+                   min="0" step="50" type="range">
+            <div class="form-text mb-2">
+              If greater than zero, ticks are aggregated for the given amount of milliseconds and then passed to your
+              service call. This results in less service calls. A value of zero will result in a service call for each
+              tick, which may cause trouble with home assistant.
+            </div>
+
           </AccordeonItem>
         </template>
 
@@ -198,6 +218,9 @@ const serviceShortPress = ref({})
 const serviceLongPress = ref({})
 const serviceTap = ref({})
 const serviceRotation = ref({})
+
+const rotationTickMultiplier = ref(1)
+const rotationTickBucketSizeMs = ref(300)
 
 const useCustomTitle = ref(false)
 const buttonTitle = ref("{{friendly_name}}")
@@ -255,6 +278,8 @@ onMounted(() => {
       serviceLongPress.value = settings["button"]["serviceLongPress"]
       serviceTap.value = settings["button"]["serviceTap"]
       serviceRotation.value = settings["button"]["serviceRotation"]
+      rotationTickMultiplier.value = settings["rotationTickMultiplier"] || 1
+      rotationTickBucketSizeMs.value = settings["rotationTickBucketSizeMs"] || 300
     })
   }
 })
@@ -367,7 +392,10 @@ function saveSettings() {
       serviceLongPress: serviceLongPress.value,
       serviceTap: serviceTap.value,
       serviceRotation: serviceRotation.value
-    }
+    },
+
+    rotationTickMultiplier: rotationTickMultiplier.value,
+    rotationTickBucketSizeMs: rotationTickBucketSizeMs.value
 
   }
 
