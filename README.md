@@ -26,21 +26,21 @@ service that does not need any more information but the entity id.
 * Vacuum robots (experimental, tested with Roborock S5)
 
 # Installation
-## Prequisites
+## Prerequisites
 * Installed Stream-Deck application
 * Connected Stream-Deck
 
 ## Installation
-### Via official Stream Deck store
+### Via the official Stream Deck store
 You can find and install this plugin from the [official Stream Deck Store](https://apps.elgato.com/plugins/de.perdoctus.streamdeck.homeassistant)
 
 ### Manual installation (not recommended)
-* Download latest plugin release [here][https://github.com/cgiesche/streamdeck-homeassistant/releases]
-* Open downloaded .sdplugin file. It will be automatically installed into your Stream-Deck application
+* Download the latest plugin release [here][https://github.com/cgiesche/streamdeck-homeassistant/releases]
+* Open the downloaded .sdplugin file. It will be automatically installed into your Stream-Deck application
   * Note for MacOS users: [manual installation steps][https://www.reddit.com/r/homeassistant/comments/laq2g4/homeassistant_streamdeck_plugin_dynamic_not_just/glu0zep/?utm_source=share&utm_medium=web2x&context=3]
 
 # Configuration
-There are two sections on the plugin's cofiguration panel:
+There are two sections on the plugin's configuration panel:
  * Home Assistant Settings  
    Contains global settings for your Home Assistant installation. Once saved, the settings are used for all Stream-Deck buttons.
  * Entity Settings
@@ -51,7 +51,7 @@ There are two sections on the plugin's cofiguration panel:
  * Access Token: An long-lived access-token obtained from your Home Assistant.  
    _Long-lived access tokens can be created using the "Long-Lived Access Tokens" section at the bottom of a user's Home Assistant profile page._ (Quote from https://developers.home-assistant.io/docs/auth_api/#long-lived-access-token)
    
-After you saved your Home Assistant Settings, the plugin will automatically try to connect to your Home Assistant installation. If the connection was sucessful, the Entity Settings section should allow you to see and configure your entities.
+After you save your Home Assistant Settings, the plugin will automatically try to connect to your Home Assistant installation. If the connection was successful, the Entity Settings section should allow you to see and configure your entities.
 
 ![img_1.png](doc/ha_settings.png)
 
@@ -59,8 +59,8 @@ After you saved your Home Assistant Settings, the plugin will automatically try 
 ### Basic configuration
  * Domain: Home Assistant entities are grouped by domains. Select the domain (for example "switch") of an entity, you want to configure.
  * Entity: This is the actual entity you are going to configure (for example "Kitchen Light")
- * Service: The service that will be called when you press the StreamDeck button (green marker at top right corner).
- * Service (long press): The service that will be called every time you press and hold the StreamDeck button for more than about 300ms (blue marker at top right corner).
+ * Service: The service will be called when you press the StreamDeck button (green marker at the top right corner).
+ * Service (long press): The service that will be called every time you press and hold the StreamDeck button for more than 300ms (blue marker at the top right corner).
  * Service Data JSON: JSON formatted data that is sent with your service call when you press a button.
    Example:
    ```
@@ -98,7 +98,7 @@ After you hit the save button, the button should immediately show the new config
   
 ![img.png](doc/custom_labels.png)
 
-# Happy? Consider to donating me a coffee :)
+# Happy? Consider donating me a coffee :)
 [![buy me a coffee](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://www.paypal.com/donate?hosted_button_id=3UKRJEJVWV9H4)
 
 
