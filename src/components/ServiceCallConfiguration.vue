@@ -34,7 +34,7 @@
     </div>
 
     <div v-if="domainEntities.length > 0" class="mb-3">
-      <label class="form-label" for="entity">Entity (Optional)</label>
+      <label class="form-label" for="entity">Entity</label>
       <div class="input-group">
         <select id="entity"
                 :value="modelValue.entityId" class="form-select form-select-sm"
