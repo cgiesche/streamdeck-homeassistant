@@ -1,4 +1,6 @@
 name: Bug report
 description: Something is not working (for everyone)
 title: "Concise description of the issue"
-labels: ["bug", "unconfirmed"]
+labels: ["bug", "triage"]
+body:
+  - type: markdown
