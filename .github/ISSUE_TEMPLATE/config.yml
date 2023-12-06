@@ -6,3 +6,6 @@ contact_links:
   - name: 🚀 Feature Request
     url: https://github.com/cgiesche/streamdeck-homeassistant/discussions/new?category=feature-requests
     about: Remember to search for existing feature requests and "up-vote" any you like
+  - name: 🐛 Report a bug
+    url: https://github.com/cgiesche/streamdeck-homeassistant/issues/new
+    about: I you thing you found a bug that affects everyone, you can create an issue here.
