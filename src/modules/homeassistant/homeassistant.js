@@ -1,3 +1,9 @@
+import {ServiceAction} from "@/modules/homeassistant/actions/service-action";
+import {ExecuteScriptCommand} from "@/modules/homeassistant/commands/execute-script-command";
+import {SubscribeEventsCommand} from "@/modules/homeassistant/commands/subscribe-events-command";
+import {GetStatesCommand} from "@/modules/homeassistant/commands/get-states-command";
+import {GetServicesCommand} from "@/modules/homeassistant/commands/get-services-command";
+
 export class Homeassistant {
 
     constructor(url, accessToken, onReady, onError, onClose) {
@@ -9,7 +15,7 @@ export class Homeassistant {
         this.onError = onError;
 
         this.websocket.onmessage = (evt) => this.handleMessage(evt);
-        this.websocket.onerror = () => { this.onError("Failed to connect to " + url) };
+        this.websocket.onerror = () => {this.onError("Failed to connect to " + url)};
         this.websocket.onclose = onClose;
     }
 
@@ -78,13 +84,15 @@ export class Homeassistant {
     }
 
     subscribeEvents(callback) {
-        let subscribeEventCommand = new SubscribeEventCommand(this.nextRequestId());
+        let subscribeEventCommand = new SubscribeEventsCommand(this.nextRequestId());
         this.sendCommand(subscribeEventCommand, callback);
     }
 
     callService(service, domain, entity_id = null, serviceData = null, callback = null) {
-        let callServiceCommand = new CallServiceCommand(this.nextRequestId(), service, domain, entity_id, serviceData);
-        this.sendCommand(callServiceCommand, callback)
+        let executeScriptCmd = new ExecuteScriptCommand(this.nextRequestId(), [
+            new ServiceAction(domain, service, entity_id ? [entity_id] : [], serviceData || {})
+        ]);
+        this.sendCommand(executeScriptCmd, callback)
     }
 
     sendCommand(command, callback) {
@@ -100,45 +108,5 @@ export class Homeassistant {
         this.requestIdSequence = this.requestIdSequence + 1;
         return this.requestIdSequence;
     }
-
 }
 
-class Command {
-    constructor(requestId, type) {
-        this.id = requestId;
-        this.type = type;
-    }
-}
-
-class SubscribeEventCommand extends Command {
-    constructor(interactionCount) {
-        super(interactionCount, "subscribe_events");
-        this.event_type = "state_changed";
-    }
-}
-
-class GetStatesCommand extends Command {
-    constructor(iterationCount) {
-        super(iterationCount, "get_states");
-    }
-}
-
-class GetServicesCommand extends Command {
-    constructor(iterationCount) {
-        super(iterationCount, "get_services");
-    }
-}
-
-class CallServiceCommand extends Command {
-    constructor(iterationCount, service, domain, entity_id, serviceData) {
-        super(iterationCount, "call_service");
-        this.domain = domain;
-        this.service = service;
-        if (entity_id) {
-            this.target = {"entity_id": entity_id};
-        }
-        if (serviceData) {
-            this.service_data = serviceData;
-        }
-    }
-}
