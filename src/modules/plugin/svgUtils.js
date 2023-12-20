@@ -9,7 +9,6 @@ export class SvgUtils {
             width: this.buttonRes.width / 2,
             height: this.buttonRes.height / 2
         }
-        this.buttonBgColor = "#000000";
         this.fontSize = 24;
         this.lineAttr = {
             "fill": "#FFF",
@@ -24,9 +23,6 @@ export class SvgUtils {
     }
 
     generateButtonSVG(labels, iconSVG, iconColor, isAction = false, isMultiAction = false) {
-
-
-        this.snap.rect(0, 0, this.buttonRes.width, this.buttonRes.height).attr({fill: this.buttonBgColor})
 
         if (iconSVG) {
             const icon = this.snap.path(iconSVG)
