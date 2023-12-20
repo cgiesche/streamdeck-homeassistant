@@ -80,23 +80,38 @@ After you save your Home Assistant Settings, the plugin will automatically try t
      "rgb_color": [255, 0, 0]
    }
    ```
+    You can also use [Jinja2 templates](https://www.home-assistant.io/docs/configuration/templating/) to dynamically process data based on the states or attributes of your Home Assistant entities. See [Using Jinja2 Templates in Service Data JSON](#Advanced-configuration) for more information.
 
 ![img.png](doc/entity_settings.png)
 
 ### Advanced configuration
-* Custom Title: Enable to override the main Title of this button. **You have to clear the main Title field on top to make this work!**
+* **Custom Title:** Enable to override the main Title of this button. **You have to clear the main Title field on top to make this work!**
      * Title Template: A [nunjucks template](https://mozilla.github.io/nunjucks/templating.html) that will be used as the button's title. You can use any of the variables (depending on the selected entity) that are shown below the text-field. For example `{{temperature}}°C` or `{{friendly_name}}` or (this won't fit the button, but you get the idea) `The pressure is {{pressure}} and the wind speed is {{wind_speed}}.`  
        * The variable `{{state}}` always contains the "main state" of an entity (for example "on" and "off" for buttons or "12.4" for temperature sensors)
      * The variable `{{unit_of_measurement}}` often contains the ... unit of measurement ... of a sensor's state (for example "°C" for a temperature sensor)
 
-* Custom Labels: Every button can display up to 4 lines of information
+* **Custom Labels:** Every button can display up to 4 lines of information
   * Each line in the text-box represents one line on the button
   * Depending on if there is an icon or a title for the entity, you may need to leave blank lines in order to not mess up the layout :)
   * You can use [nunjucks template](https://mozilla.github.io/nunjucks/templating.html) for dynamic content (see above).
 
-After you hit the save button, the button should immediately show the new configuration.
-  
-![img.png](doc/custom_labels.png)
+    After you hit the save button, the button should immediately show the new configuration.
+      
+    ![img.png](doc/custom_labels.png)
+
+* **Using Jinja2 Templates in Service Data JSON**
+    * **Jinja2 Template Integration:** You can incorporate Jinja2 templates within the Service Data JSON to dynamically
+      process data based on the states or attributes of your Home Assistant entities.
+    * **Encapsulation with Raw Tags:** It's crucial to enclose Jinja2 templates within `{% raw %}` and `{% endraw %}`
+      tags. This encapsulation ensures that the StreamDeck plugin processes these templates as Jinja2, distinct from any
+      Nunjucks templates you might use elsewhere in your configurations.
+    * **Example of Jinja2 Template Usage:**
+
+      ```json
+        {
+        "temperature": "{% raw %}{{ state_attr('climate.ff_office_heating','temperature') + 0.5 }}{% endraw %}"
+        }
+      ```
 
 # Happy? Consider donating me a coffee :)
 [![buy me a coffee](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://www.paypal.com/donate?hosted_button_id=3UKRJEJVWV9H4)
