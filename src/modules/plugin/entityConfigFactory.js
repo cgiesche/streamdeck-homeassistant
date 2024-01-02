@@ -303,7 +303,7 @@ export class EntityConfigFactory {
                 if (customizableDefaultConfig.icon) {
                     customizableDefaultConfig.templates.push(" ", " ")
                 }
-                customizableDefaultConfig.templates.push("{{temperature}}{{unit_of_measurement | default('°C')}}", "{{humidity}}%")
+                customizableDefaultConfig.templates.push("{{temperature}}{{temperature_unit | default('°C')}}", "{{humidity}}%")
             }
 
             return customizableDefaultConfig;
