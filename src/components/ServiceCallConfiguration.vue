@@ -74,7 +74,7 @@
           <span class="text-info font-monospace">{{ item.name }}&nbsp;</span>{{ item.info.description }}
           <template v-if="item.info.example">
             <br>
-            <span  class="ml-2">Example: <i>{{ item.info.example }}</i></span>
+            <span class="ml-2">Example: <i>{{ item.info.example }}</i></span>
           </template>
         </div>
       </details>
@@ -152,18 +152,35 @@ const domainServices = computed(() => {
 })
 
 const domainEntities = computed(() => {
+  console.log("[DEBUG] List of domainEntities has been requested.")
   if (!props.availableServices || !props.availableEntities || !props.modelValue || !props.modelValue.serviceId) {
+    console.log(`Available services: ${JSON.stringify(props.availableServices)}`)
+    console.log(`Available entities: ${JSON.stringify(props.availableEntities)}`)
+    console.log(`Model: ${JSON.stringify(props.modelValue)}`)
+    console.log("[DEBUG] No entities available because preconditions are not met:")
     return [];
   }
+  console.log("[DEBUG] Filtering available entities")
   let selectedService = props.availableServices.filter(service => service.serviceId === props.modelValue.serviceId)[0]
+  console.log(`[DEBUG] Selected service ${JSON.stringify(selectedService)}`)
+
   if (selectedService && selectedService.target && Array.isArray(selectedService.target.entity)) {
+    console.log("[DEBUG] Finding service target domains")
     let targetDomains = selectedService.target.entity.filter(entity => entity.domain).flatMap(entity => entity.domain);
+    console.log(`[DEBUG] Service target domains: ${JSON.stringify(targetDomains)}`)
     if (targetDomains.length > 0) {
-      return props.availableEntities.filter(entity => targetDomains.includes(entity.domain)).sort(titleSort);
+      console.log(`[DEBUG] Finding matching entities for service domain(s).`)
+      let availableEntities = props.availableEntities.filter(entity => targetDomains.includes(entity.domain)).sort(titleSort);
+      console.log(`[DEBUG] Returning ${availableEntities.length} matching entities for service domain(s).`)
+      return availableEntities;
     } else {
+      console.log(`[DEBUG] Returning ALL (${props.availableEntities.length}) available entities.`)
       return props.availableEntities.filter(entity => entity).sort(titleSort);
     }
   }
+
+  console.log("[DEBUG] Selected service does not support target. So, no entities available :(")
+
   return [];
 })
 
@@ -173,7 +190,11 @@ const serviceDataInvalidFeedback = computed(() => {
     return "";
   }
   try {
-    const renderedServiceData = nunjucks.renderString(serviceDataString, {ticks: 5, rotationPercent: 100, rotationAbsolute: 100});
+    const renderedServiceData = nunjucks.renderString(serviceDataString, {
+      ticks: 5,
+      rotationPercent: 100,
+      rotationAbsolute: 100
+    });
 
     const json = JSON.parse(renderedServiceData);
     return (typeof json === "object") ? "" : "Service data must be an JSON object."
