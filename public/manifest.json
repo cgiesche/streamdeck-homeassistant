@@ -24,6 +24,7 @@
       "Icon": "images/actionImage",
       "Name": "Entity (custom icons)",
       "PropertyInspectorPath": "pi.html",
+      "DisableAutomaticStates": true,
       "States": [
         {
           "Image": "images/ha-button-off",
