@@ -91,7 +91,7 @@ export class Homeassistant {
 
   callService(service, domain, entity_id = null, serviceData = null, callback = null) {
     let executeScriptCmd = new ExecuteScriptCommand(this.nextRequestId(), [
-      new ServiceAction(domain, service, entity_id ? [entity_id] : [], serviceData || {})
+      new ServiceAction(domain, service, entity_id ? [entity_id]: null, serviceData || {})
     ])
     this.sendCommand(executeScriptCmd, callback)
   }
