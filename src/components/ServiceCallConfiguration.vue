@@ -71,10 +71,10 @@
       <details v-if="dataProperties && dataProperties.length > 0">
         <summary>Available options</summary>
         <div v-for="item in dataProperties" v-bind:key="item.name" class="form-text">
-          <span class="text-info font-monospace">{{ item.name }}&nbsp;</span>{{ item.info.description }}
+          <span class="text-info font-monospace">{{ item.name }}&nbsp;</span> <span class="text-warning font-monospace" v-if="item.info.required">(required) </span>{{ item.info.description }}
           <template v-if="item.info.example">
             <br>
-            <span  class="ml-2">Example: <i>{{ item.info.example }}</i></span>
+            <span class="ml-2">Example: <i>{{ item.info.example }}</i></span>
           </template>
         </div>
       </details>
