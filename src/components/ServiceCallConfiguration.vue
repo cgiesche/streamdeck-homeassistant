@@ -156,8 +156,10 @@ const domainEntities = computed(() => {
     return [];
   }
   let selectedService = props.availableServices.filter(service => service.serviceId === props.modelValue.serviceId)[0]
-  if (selectedService && selectedService.target && Array.isArray(selectedService.target.entity)) {
-    let targetDomains = selectedService.target.entity.filter(entity => entity.domain).flatMap(entity => entity.domain);
+  if (selectedService && selectedService.target && selectedService.target.entity) {
+    // target.entity may contain a single or an array of entities. Make sure we always work with array.
+    let targetEntities = ensureArray(selectedService.target.entity);
+    let targetDomains = targetEntities.filter(entity => entity.domain).flatMap(entity => ensureArray(entity.domain));
     if (targetDomains.length > 0) {
       return props.availableEntities.filter(entity => targetDomains.includes(entity.domain)).sort(titleSort);
     } else {
@@ -173,7 +175,11 @@ const serviceDataInvalidFeedback = computed(() => {
     return "";
   }
   try {
-    const renderedServiceData = nunjucks.renderString(serviceDataString, {ticks: 5, rotationPercent: 100, rotationAbsolute: 100});
+    const renderedServiceData = nunjucks.renderString(serviceDataString, {
+      ticks: 5,
+      rotationPercent: 100,
+      rotationAbsolute: 100
+    });
 
     const json = JSON.parse(renderedServiceData);
     return (typeof json === "object") ? "" : "Service data must be an JSON object."
@@ -198,5 +204,9 @@ const dataProperties = computed(() => {
   })
 
 })
+
+function ensureArray(input) {
+  return Array.isArray(input) ? input : [input];
+}
 
 </script>
