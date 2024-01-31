@@ -22,15 +22,17 @@ export class ServiceAction extends Action {
     if (typeof service !== 'string' || !service.trim()) {
       throw new Error('Service must be a non-empty string')
     }
-    if (!Array.isArray(entity_id)) {
+    if (entity_id && !Array.isArray(entity_id)) {
       throw new TypeError('entity_id must be an array')
     }
     if (typeof serviceData !== 'object' || serviceData === null) {
       throw new TypeError('serviceData must be an object')
     }
+    if (entity_id) {
+      this.target = {entity_id: entity_id}
+    }
 
     this.service = `${domain}.${service}`
     this.data = serviceData
-    this.target = { entity_id: entity_id }
   }
 }
