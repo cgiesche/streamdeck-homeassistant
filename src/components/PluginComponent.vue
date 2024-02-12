@@ -10,7 +10,8 @@ import nunjucks from "nunjucks"
 import {Settings} from "@/modules/common/settings";
 import {onMounted, ref} from "vue";
 import {EntityConfigFactory} from "@/modules/plugin/entityConfigFactory";
-
+import defaultActiveStates from '../../public/config/active-states.json'
+import axios from "axios";
 
 const entityConfigFactory = new EntityConfigFactory()
 const buttonImageFactory = new EntityButtonImageFactory()
@@ -23,11 +24,14 @@ const globalSettings = ref({})
 const actionSettings = ref([])
 const buttonLongpressTimeouts = ref(new Map()) //context, timeout
 
+const activeStates = ref(defaultActiveStates)
+
 let rotationTimeout = [];
 let rotationAmount = [];
 let rotationPercent = [];
 
-onMounted(() => {
+onMounted(async () => {
+
   window.connectElgatoStreamDeckSocket = (inPort, inPluginUUID, inRegisterEvent, inInfo) => {
     $SD.value = new StreamDeck(inPort, inPluginUUID, inRegisterEvent, inInfo, "{}");
 
@@ -123,7 +127,17 @@ onMounted(() => {
       }
     })
   }
+
+  await fetchActiveStates();
 })
+
+async function fetchActiveStates() {
+  try {
+    activeStates.value = (await axios.get('https://cdn.jsdelivr.net/gh/cgiesche/streamdeck-homeassistant@master/public/config/active-states.json')).data;
+  } catch (error) {
+    console.log(`Failed to download updated active-states.json: ${error}`)
+  }
+}
 
 function connectHomeAssistant() {
   console.log("Connecting to Home Assistant")
@@ -207,20 +221,12 @@ function updateContextState(currentContext, domain, stateObject) {
   entityConfig.hideIcon = contextSettings.display.hideIcon
 
   if (contextSettings.display.useStateImagesForOnOffStates) {
-    switch (stateObject.state) {
-      case "on":
-      case "playing":
-      case "open":
-      case "opening":
-      case "home":
-      case "locked":
-      case "active":
-        console.log("Setting state of " + currentContext + " to 1")
-        $SD.value.setState(currentContext, 1);
-        break;
-      default:
-        console.log("Setting state of " + currentContext + " to 0")
-        $SD.value.setState(currentContext, 0);
+    if (activeStates.value.indexOf(stateObject.state) !== -1) {
+      console.log("Setting state of " + currentContext + " to 1")
+      $SD.value.setState(currentContext, 1);
+    } else {
+      console.log("Setting state of " + currentContext + " to 0")
+      $SD.value.setState(currentContext, 0);
     }
   } else {
     if (contextSettings.controllerType === 'Encoder') {
