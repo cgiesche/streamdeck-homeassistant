@@ -14,9 +14,10 @@
     "@mdi/font": "^7.1.96",
     "@mdi/js": "^7.1.96",
     "@popperjs/core": "^2.11.8",
+    "axios": "^1.6.7",
     "bootstrap": "^5.3.2",
     "core-js": "^3.26.1",
-    "nunjucks": "^3.2.3",
+    "nunjucks": "3.2.4",
     "snapsvg-cjs": "^0.0.6",
     "vue": "^3.3.4"
   },
