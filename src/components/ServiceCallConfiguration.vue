@@ -34,20 +34,10 @@
     </div>
 
     <div v-if="domainEntities.length > 0" class="mb-3">
-      <label class="form-label" for="entity">Entity</label>
-      <div class="input-group">
-        <select id="entity"
-                :value="modelValue.entityId" class="form-select form-select-sm"
-                @change="update('entityId', $event.target.value)">
-          <option v-for="domainEntity in domainEntities" v-bind:key="domainEntity.entityId"
-                  :value="domainEntity.entityId">
-            {{ domainEntity.title }}
-          </option>
-        </select>
-        <button class="btn btn-sm btn-outline-secondary" type="button"
-                @click="clear('entityId')">Clear
-        </button>
-      </div>
+      <EntitySelection class="mb-3" :available-entities="domainEntities" @change="update('entityId', $event.target.value)" :model-value="props.modelValue.entityId"></EntitySelection>
+      <button class="btn btn-sm btn-outline-secondary" type="button"
+              @click="clear('entityId')">Clear
+      </button>
     </div>
 
     <template v-if="props.modelValue.serviceId">
@@ -71,7 +61,10 @@
       <details v-if="dataProperties && dataProperties.length > 0">
         <summary>Available options</summary>
         <div v-for="item in dataProperties" v-bind:key="item.name" class="form-text">
-          <span class="text-info font-monospace">{{ item.name }}&nbsp;</span> <span class="text-warning font-monospace" v-if="item.info.required">(required) </span>{{ item.info.description }}
+          <span class="text-info font-monospace">{{ item.name }}&nbsp;</span> <span class="text-warning font-monospace"
+                                                                                    v-if="item.info.required">(required) </span>{{
+            item.info.description
+          }}
           <template v-if="item.info.example">
             <br>
             <span class="ml-2">Example: <i>{{ item.info.example }}</i></span>
@@ -86,6 +79,7 @@
 
 import {computed, onMounted, ref} from "vue";
 import nunjucks from "nunjucks";
+import EntitySelection from "@/components/EntitySelection.vue";
 
 const titleSort = (s1, s2) => s1.title.toLowerCase() > s2.title.toLowerCase() ? 1 : -1;
 

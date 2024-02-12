@@ -44,28 +44,7 @@
     <div v-if="haConnectionState === 'connected'" class="clearfix mb-3">
       <h1>{{ controllerType }} appearance</h1>
 
-      <div class="mb-3">
-        <label class="form-label" for="accessToken">Domain</label>
-        <select id="domain" v-model="domain" class="form-select form-select-sm"
-                title="The domain of the entity you want to display"
-                v-on:change="entity = ''">
-          <option v-for="availableDomain in availableEntityDomains" v-bind:key="availableDomain">{{
-              availableDomain
-            }}
-          </option>
-        </select>
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label" for="entity">Entity</label>
-        <select id="entity" v-model="entity" class="form-select form-select-sm" title="The entity you want to display">
-          <option v-for="domainEntity in domainEntities" v-bind:key="domainEntity.entityId"
-                  :value="domainEntity.entityId">{{
-              domainEntity.title
-            }}
-          </option>
-        </select>
-      </div>
+      <EntitySelection class="mb-3" :available-entities="availableEntities" v-model="entity"></EntitySelection>
 
       <div class="form-check">
         <input id="chkButtonTitle" v-model="useCustomTitle" class="form-check-input" type="checkbox">
@@ -122,7 +101,6 @@
           <ServiceCallConfiguration v-model="serviceShortPress" :available-entities="availableEntities"
                                     :available-services="availableServices"
                                     class="mb-2"
-
           ></ServiceCallConfiguration>
         </AccordeonItem>
 
@@ -184,8 +162,7 @@
 
       </AccordeonComponent>
 
-      <button id="mybutton" :disabled="!domain" class="btn btn-sm btn-primary float-end"
-              v-on:click="saveSettings">
+      <button class="btn btn-sm btn-primary float-end" v-on:click="saveSettings">
         Save configuration
       </button>
 
@@ -205,13 +182,13 @@ import ServiceCallConfiguration from "@/components/ServiceCallConfiguration.vue"
 import {ObjectUtils} from "@/modules/common/utils";
 import AccordeonComponent from "@/components/accordeon/BootstrapAccordeon.vue";
 import AccordeonItem from "@/components/accordeon/BootstrapAccordeonItem.vue";
+import EntitySelection from "@/components/EntitySelection.vue";
 
 let $HA = null;
 let $SD = null;
 
 const serverUrl = ref("")
 const accessToken = ref("")
-const domain = ref("")
 const entity = ref("")
 
 const serviceShortPress = ref({})
@@ -239,7 +216,6 @@ const haError = ref("")
 
 const controllerType = ref("")
 
-
 onMounted(() => {
   window.connectElgatoStreamDeckSocket = (inPort, inPropertyInspectorUUID, inRegisterEvent, inInfo, inActionInfo) => {
     $SD = new StreamDeck(inPort, inPropertyInspectorUUID, inRegisterEvent, inInfo, inActionInfo);
@@ -266,7 +242,6 @@ onMounted(() => {
 
       let settings = Settings.parse(actionInfo.payload.settings);
 
-      domain.value = settings["display"]["domain"]
       entity.value = settings["display"]["entityId"]
       enableServiceIndicator.value = settings["display"]["enableServiceIndicator"] || settings["display"]["enableServiceIndicator"] === undefined;
       hideIcon.value = settings["display"]["hideIcon"];
@@ -287,12 +262,6 @@ onMounted(() => {
 const isHaSettingsComplete = computed(() => {
   return serverUrl.value && accessToken.value
 })
-
-
-const domainEntities = computed(() => {
-  return availableEntities.value.filter((entity) => entity.domain === domain.value)
-})
-
 
 const entityAttributes = computed(() => {
   let currentEntityState = currentStates.value.find((state) => state.entityId === entity.value)
@@ -376,7 +345,6 @@ function saveSettings() {
     controllerType: controllerType.value,
 
     display: {
-      domain: domain.value,
       entityId: entity.value,
       useCustomTitle: useCustomTitle.value,
       buttonTitle: buttonTitle.value,
