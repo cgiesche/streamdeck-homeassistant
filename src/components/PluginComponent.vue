@@ -10,8 +10,9 @@ import nunjucks from 'nunjucks'
 import { Settings } from '@/modules/common/settings'
 import { onMounted, ref } from 'vue'
 import { EntityConfigFactory } from '@/modules/plugin/entityConfigFactoryNg'
-import defaultActiveStates from '../../public/config/active-states.json'
+import defaultActiveStates from '../../public/config/active-states.yml'
 import axios from 'axios'
+import yaml from 'js-yaml'
 
 const entityConfigFactory = new EntityConfigFactory()
 const buttonImageFactory = new EntityButtonImageFactory()
@@ -133,7 +134,9 @@ onMounted(async () => {
 
 async function fetchActiveStates() {
   try {
-    activeStates.value = (await axios.get('https://cdn.jsdelivr.net/gh/cgiesche/streamdeck-homeassistant@master/public/config/active-states.json')).data
+    axios.get('https://cdn.jsdelivr.net/gh/cgiesche/streamdeck-homeassistant@master/public/config/active-states.json')
+      .then(response => activeStates.value = yaml.load(response.data))
+      .catch(error => console.log(`Failed to download updated active-states.json: ${error}`))
   } catch (error) {
     console.log(`Failed to download updated active-states.json: ${error}`)
   }

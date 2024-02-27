@@ -1,6 +1,7 @@
 import defaultIconMappings from '../../../public/config/default-display-config.yml'
 import axios from 'axios'
 import nunjucks from 'nunjucks'
+import yaml from 'js-yaml';
 
 export class EntityConfigFactory {
 
@@ -19,8 +20,8 @@ export class EntityConfigFactory {
 
   constructor() {
     axios.get('https://cdn.jsdelivr.net/gh/cgiesche/streamdeck-homeassistant@master/public/config/default-display-config.yml')
-      .then(response => this.iconMappings = response.data)
-      .catch(error => console.log(`Failed to download updated default-icon-mappings.yml: ${error}`))
+      .then(response => this.iconMappings = yaml.load(response.data))
+      .catch(error => console.log(`Failed to download updated default-display-config.yml: ${error}`))
   }
 
   /**
