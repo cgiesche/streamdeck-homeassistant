@@ -1,0 +1,201 @@
+#_states:
+#  unavailable:
+#    color: "#505050"
+#
+#[domain]:
+#  icon: mdi:lightbulb
+#  labelTemplates:
+#    -
+#    -
+#    - {state}
+#  classes:
+#    [class]:
+#      icon: mdi:lightbulb
+#      color: #FFFFFF
+#      labelTemplates:
+#      states:
+#        [state]:
+#          icon: mdi:mdi:lightbulb-on
+#          color: #FFFFFF
+#          labelTemplates:
+
+_color: "#a1a1a1"
+_labelTemplates:
+  -
+  -
+  -
+  - "{{state}}{{unit_of_measurement}}"
+_states:
+  unavailable:
+    color: "#505050"
+
+switch:
+  icon: mdi:toggle-switch-off
+  states:
+    on:
+      icon: mdi:toggle-switch
+
+light:
+  icon: mdi:lightbulb
+  color: "#888888"
+  states:
+    unavailable:
+      icon: mdi:lightbulb-alert
+    on:
+      color: "#ffd484"
+
+input_boolean:
+  icon: mdi:toggle-switch-off
+  states:
+    on:
+      icon: mdi:toggle-switch
+
+binary_sensor:
+  icon: mdi:radiobox-blank
+  states:
+    on:
+      icon: mdi:radiobox-marked
+  classes:
+    plug:
+      icon: mdi:power-plug-off-outline
+      states:
+        on: mdi:power-plug-outline
+    window:
+      icon: mdi:window-closed-variant
+      states:
+        on: mdi:window-open-variant
+
+cover:
+  icon: mdi:garage
+  states:
+    open:
+      icon: mdi:garage-open
+    closing:
+      icon: mdi:arrow-down-box
+    opening:
+      icon: mdi:arrow-up-box
+
+sensor:
+  classes:
+    humidity:
+      icon: mdi:water-percent
+      color: "#3f3fdb"
+    temperature:
+      icon: mdi:thermometer
+    battery:
+      icon: |
+        !nunjucks
+        {% set numState = state | int %}
+        {% if numState <= 10 %}
+          mdi:battery-outline
+        {% elif numState <= 20 %}
+          mdi:battery-10
+        {% elif numState <= 30 %}
+          mdi:battery-20
+        {% elif numState <= 40 %}
+          mdi:battery-30
+        {% elif numState <= 50 %}
+          mdi:battery-40
+        {% elif numState <= 60 %}
+          mdi:battery-50
+        {% elif numState <= 70 %}
+          mdi:battery-60
+        {% elif numState <= 80 %}
+          mdi:battery-70
+        {% elif numState <= 90 %}
+          mdi:battery-80
+        {% else %}
+          mdi:battery
+        {% endif %}
+      color: |
+        !nunjucks
+        {% set numState = state | int %}
+        {% if numState <= 10 %}
+          #ff0000
+        {% elif numState <= 20 %}
+          #e21c00
+        {% elif numState <= 30 %}
+          #c63800
+        {% elif numState <= 40 %}
+          #aa5500
+        {% elif numState <= 50 %}
+          #8d7100
+        {% elif numState <= 60 %}
+          #718d00
+        {% elif numState <= 70 %}
+          #55aa00
+        {% elif numState <= 80 %}
+          #38c600
+        {% elif numState <= 90 %}
+          #1ce200
+        {% elif numState <= 100 %}
+          #00ff00        
+        {% else %}
+          #505050
+        {% endif %}
+    power:
+      icon: mdi:flash
+
+weather:
+  labelTemplates:
+    - ""
+    - ""
+    - "{{temperature}}{{temperature_unit}}"
+    - "{{humidity}}%"
+  states:
+    clear-night:
+      icon: mdi:weather-night
+    cloudy:
+      icon: mdi:weather-cloudy
+    fog:
+      icon: mdi:weather-fog
+    hail:
+      icon: mdi:weather-hail
+    lightning:
+      icon: mdi:weather-lightning
+    lightning-rainy:
+      icon: mdi:weather-lightning-rainy
+    partlycloudy:
+      icon: mdi:weather-partly-cloudy
+    pouring:
+      icon: mdi:weather-puring
+    rainy:
+      icon: mdi:weather-rainy
+    snowy:
+      icon: mdi:weather-snowy
+    snowy-rainy:
+      icon: mdi:weather-snowy-rainy
+    sunny:
+      icon: mdi:weather-sunny
+    windy:
+      icon: mdi:weather-windy
+    windy-variant:
+      icon: mdi:weather-windy-variant
+
+lock:
+  icon: mdi:lock
+  states:
+    unlocked:
+      icon: mdi:lock-open
+    locking:
+      icon: mdi:lock-clock
+    unlocking:
+      icon: mdi:lock-clock
+    locked:
+      icon: mdi:lock
+    jammed:
+      icon: mdi:lock-open-alert
+
+vacuum:
+  icon: mdi:robot-vacuum
+  states:
+    cleaning:
+      color: "#e9b200"
+    returning:
+      color: "#e9b200"
+    idle:
+      color: "#a1a1a1"
+    docked:
+      color: "#a1a1a1"
+    error:
+      color: "#a10000"
