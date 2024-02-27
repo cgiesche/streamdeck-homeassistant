@@ -134,7 +134,7 @@ onMounted(async () => {
 
 async function fetchActiveStates() {
   try {
-    axios.get('https://cdn.jsdelivr.net/gh/cgiesche/streamdeck-homeassistant@master/public/config/active-states.json')
+    axios.get('https://cdn.jsdelivr.net/gh/cgiesche/streamdeck-homeassistant@master/public/config/active-states.yml')
       .then(response => activeStates.value = yaml.load(response.data))
       .catch(error => console.log(`Failed to download updated active-states.json: ${error}`))
   } catch (error) {
