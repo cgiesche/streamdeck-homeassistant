@@ -21,9 +21,8 @@
 
 _color: "#a1a1a1"
 _labelTemplates:
-  -
-  -
-  -
+  - ""
+  - ""
   - "{{state}}{{unit_of_measurement}}"
 _states:
   unavailable:
@@ -59,11 +58,13 @@ binary_sensor:
     plug:
       icon: mdi:power-plug-off-outline
       states:
-        on: mdi:power-plug-outline
+        on:
+          icon: mdi:power-plug-outline
     window:
       icon: mdi:window-closed-variant
       states:
-        on: mdi:window-open-variant
+        on:
+          icon: mdi:window-open-variant
 
 cover:
   icon: mdi:garage

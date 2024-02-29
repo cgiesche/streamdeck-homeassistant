@@ -1,0 +1,89 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "patternProperties": {
+    "^_icon$": {
+      "type": "string"
+    },
+    "^_color$": {
+      "type": "string"
+    },
+    "^_labelTemplates$": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "^_states$": {
+      "$ref": "#/definitions/nestedObjects"
+    },
+    "^[a-zA-Z0-9][a-zA-Z0-9_]+$": {
+      "type": "object",
+      "properties": {
+        "icon": {
+          "type": "string"
+        },
+        "color": {
+          "type": "string"
+        },
+        "labelTemplates": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "states": {
+          "$ref": "#/definitions/nestedObjects"
+        },
+        "classes": {
+          "$ref": "#/definitions/nestedObjects"
+        }
+      },
+      "additionalProperties": false,
+      "required": [],
+      "optional": [
+        "icon",
+        "color",
+        "labelTemplates",
+        "states",
+        "classes"
+      ]
+    }
+  },
+  "additionalProperties": false,
+  "definitions": {
+    "nestedObjects": {
+      "type": "object",
+      "patternProperties": {
+        "^[a-zA-Z0-9_]+$": {
+          "type": "object",
+          "properties": {
+            "icon": {
+              "type": "string"
+            },
+            "color": {
+              "type": "string"
+            },
+            "labelTemplates": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "states": {
+              "$ref": "#/definitions/nestedObjects"
+            }
+          },
+          "additionalProperties": false,
+          "required": [],
+          "optional": [
+            "icon",
+            "color",
+            "labelTemplates",
+            "states"
+          ]
+        }
+      }
+    }
+  }
+}
