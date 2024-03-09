@@ -33,23 +33,16 @@ export class EntityConfigFactory {
     }
 
     default(state, attributes, templates) {
-        const iconString = this.#tryGetIconFromAttributes(attributes);
-        let icon = null;
+        const icon = Mdi[this.#tryGetIconFromAttributes(attributes)] || null;
         let color = this.colors.unavailable;
 
         if (state) {
             color = this.colors.neutral;
         }
 
-        if (iconString) {
-            icon = Mdi[iconString]
-        }
         if (!templates) {
             templates = []
-            if (icon) {
-                templates.push(" ", " ")
-            }
-            templates.push("{{state}}")
+            templates.push("\n\n{{friendly_name}}", "{{state}}")
         }
 
         return {
@@ -63,319 +56,254 @@ export class EntityConfigFactory {
 
     "switch" = {
         "default": (state, attributes, templates) => {
-            let icon = Mdi.mdiToggleSwitchOff;
-            let color = this.colors.unavailable;
+            const defaultConfig = this.default(state, attributes, templates);
 
             if (state === 'on') {
-                icon = Mdi.mdiToggleSwitch
-                color = this.colors.active
+                defaultConfig.icon = defaultConfig.icon || Mdi.mdiToggleSwitch
+                defaultConfig.color = this.colors.active
             } else if (state === 'off') {
-                color = this.colors.passive;
+                defaultConfig.icon = defaultConfig.icon || Mdi.mdiToggleSwitchOff
+                defaultConfig.color = this.colors.neutral;
             }
 
-            return {
-                state,
-                attributes,
-                templates,
-                icon,
-                color
-            }
+            return defaultConfig;
         }
     }
 
-    light = this.switch
-
     input_boolean = this.switch
+
+    "light" = {
+        "default": (state, attributes, templates) => {
+            const defaultConfig = this.default(state, attributes, templates);
+
+            if (state === 'on') {
+                defaultConfig.icon = defaultConfig.icon || Mdi.mdiLightbulb;
+                defaultConfig.color = this.colors.active;
+            } else if (state === 'off') {
+                defaultConfig.icon = defaultConfig.icon || Mdi.mdiLightbulbOff;
+                defaultConfig.color = this.colors.neutral;
+            }
+
+            return defaultConfig;
+        }
+    }
 
     "binary_sensor" = {
         "default": (state, attributes, templates) => {
-            let icon;
-            let color = this.colors.unavailable;
+            const defaultConfig = this.default(state, attributes, templates);
 
             if (state === 'on') {
-                icon = Mdi.mdiCircleSlice8
-                color = this.colors.active
+                defaultConfig.icon = Mdi.mdiCircleSlice8
+                defaultConfig.color = this.colors.active
             } else if (state === 'off') {
-                icon = Mdi.mdiCircleOutline
-                color = this.colors.passive
+                defaultConfig.icon = Mdi.mdiCircleOutline
+                defaultConfig.color = this.colors.neutral
             }
 
-            return {
-                state,
-                attributes,
-                templates,
-                icon,
-                color
-            }
+            return defaultConfig;
         },
 
         "plug": (state, attributes, templates) => {
-            const customizableDefaultConfig = this.binary_sensor.default(state, attributes, templates);
+            const defaultConfig = this.binary_sensor.default(state, attributes, templates);
 
             if (state === 'on') {
-                customizableDefaultConfig.icon = Mdi.mdiPowerPlugOutline
+                defaultConfig.icon = Mdi.mdiPowerPlugOutline
             } else if (state === 'off') {
-                customizableDefaultConfig.icon = Mdi.mdiPowerPlugOffOutline
+                defaultConfig.icon = Mdi.mdiPowerPlugOffOutline
             }
 
-            return customizableDefaultConfig;
+            return defaultConfig;
         },
 
         "window": (state, attributes, templates) => {
-            const customizableDefaultConfig = this.binary_sensor.default(state, attributes, templates);
+            const defaultConfig = this.binary_sensor.default(state, attributes, templates);
 
             if (state === 'on') {
-                customizableDefaultConfig.icon = Mdi.mdiWindowOpenVariant
+                defaultConfig.icon = Mdi.mdiWindowOpenVariant
             } else if (state === 'off') {
-                customizableDefaultConfig.icon = Mdi.mdiWindowClosedVariant
+                defaultConfig.icon = Mdi.mdiWindowClosedVariant
             }
 
-            return customizableDefaultConfig;
+            return defaultConfig;
         }
     }
     "cover" = {
         "garage": (state, attributes, templates) => {
-            let icon;
-            let color = this.colors.unavailable;
+            const defaultConfig = this.default(state, attributes, templates);
 
             if (state === 'open') {
-                icon = Mdi.mdiGarageOpen
-                color = this.colors.active
+                defaultConfig.icon = Mdi.mdiGarageOpen
+                defaultConfig.color = this.colors.active
             } else if (state === 'closed') {
-                icon = Mdi.mdiGarage
-                color = this.colors.passive
+                defaultConfig.icon = Mdi.mdiGarage
+                defaultConfig.color = this.colors.neutral
             } else if (state === 'closing') {
-                icon = Mdi.mdiArrowDownBox
-                color = this.colors.active
+                defaultConfig.icon = Mdi.mdiArrowDownBox
+                defaultConfig.color = this.colors.active
             } else if (state === 'opening') {
-                icon = Mdi.mdiArrowUpBox
-                color = this.colors.active
+                defaultConfig.icon = Mdi.mdiArrowUpBox
+                defaultConfig.color = this.colors.active
             }
 
-            return {
-                state,
-                attributes,
-                templates,
-                icon,
-                color
-            }
+            return defaultConfig;
         }
     }
     sensor = {
         "humidity": (state, attributes, templates) => {
-            const icon = Mdi.mdiWaterPercent;
-            let color = "#3f3fdb";
-
-            if (!templates) {
-                templates = [" ", " ", "{{state}}{{unit_of_measurement}}"]
-            }
-
-            return {
-                state,
-                attributes,
-                templates,
-                icon,
-                color
-            }
+            const defaultConfig = this.default(state, attributes, templates);
+            defaultConfig.icon = defaultConfig.icon || Mdi.mdiWaterPercent
+            defaultConfig.color = "#3f3fdb";
+            defaultConfig.templates = ["\n\n{{state}}{{unit_of_measurement}}"]
+            return defaultConfig;
         },
 
         "temperature": (state, attributes, templates) => {
-            const icon = Mdi.mdiThermometer;
+            const defaultConfig = this.default(state, attributes, templates);
+            defaultConfig.icon = defaultConfig.icon || Mdi.mdiThermometer;
+            defaultConfig.color = "#00a400";
+            defaultConfig.templates = ["\n\n{{state}}{{unit_of_measurement}}"]
 
             let temperature = 0 + state;
             if (attributes.unit_of_measurement === "°F") {
                 temperature = (temperature - 32) * 5 / 9;
             }
 
-            let color = "#00a400";
             if (temperature < 5) {
-                color = "#3838f8";
+                defaultConfig.color = "#3838f8";
             } else if (temperature > 25) {
-                color = "#fa4848";
+                defaultConfig.color = "#fa4848";
             }
 
-            if (!templates) {
-                templates = [" ", " ", "{{state}}{{unit_of_measurement}}"]
-            }
-
-            return {
-                state,
-                attributes,
-                templates,
-                icon,
-                color
-            }
+            return defaultConfig;
         },
 
         "battery": (state, attributes, templates) => {
-            const customizableDefaultConfig = this.default(state, attributes, templates);
+            const defaultConfig = this.default(state, attributes, templates);
+            defaultConfig.templates = ["\n\n{{state}}{{unit_of_measurement}}"]
 
-            let levelColor;
             if (state < 15) {
-                levelColor = "#FF0000"
+                defaultConfig.color = "#FF0000"
             } else if (state < 30) {
-                levelColor = "#ff8600"
+                defaultConfig.color = "#ff8600"
             } else {
-                levelColor = "#00a400"
-            }
-            customizableDefaultConfig.color = levelColor;
-
-            if (!templates) {
-                customizableDefaultConfig.templates = []
-                if (customizableDefaultConfig.icon) {
-                    customizableDefaultConfig.templates.push(" ", " ")
-                }
-                customizableDefaultConfig.templates.push("{{state}}{{unit_of_measurement}}")
+                defaultConfig.color = "#00a400"
             }
 
-            return customizableDefaultConfig;
+            return defaultConfig;
         },
 
         "power": (state, attributes, templates) => {
-            const customizableDefaultConfig = this.default(state, attributes, templates);
+            const defaultConfig = this.default(state, attributes, templates);
+            defaultConfig.icon = Mdi.mdiFlash
+            defaultConfig.templates = ["\n\n{{state}}W"]
 
-            customizableDefaultConfig.icon = Mdi.mdiFlash
-
-            if (!templates) {
-                customizableDefaultConfig.templates = [" ", " ", "{{state}}W"]
-            }
-
-            return customizableDefaultConfig;
+            return defaultConfig;
         },
 
     }
 
     weather = {
         "default": (state, attributes, templates) => {
-            const customizableDefaultConfig = this.default(state, attributes, templates);
-
-            customizableDefaultConfig.color = this.colors.neutral;
+            const defaultConfig = this.default(state, attributes, templates);
+            defaultConfig.color = this.colors.neutral;
+            defaultConfig.templates = ["\n\n {{temperature}}{{temperature_unit | default('°C')}}", "{{humidity}}%"]
 
             switch (state) {
                 case 'clear-night':
-                    customizableDefaultConfig.icon = Mdi.mdiWeatherNight;
+                    defaultConfig.icon = Mdi.mdiWeatherNight;
                     break;
                 case 'cloudy':
-                    customizableDefaultConfig.icon = Mdi.mdiWeatherCloudy;
+                    defaultConfig.icon = Mdi.mdiWeatherCloudy;
                     break;
                 case 'fog':
-                    customizableDefaultConfig.icon = Mdi.mdiWeatherFog;
+                    defaultConfig.icon = Mdi.mdiWeatherFog;
                     break;
                 case 'hail':
-                    customizableDefaultConfig.icon = Mdi.mdiWeatherHail;
+                    defaultConfig.icon = Mdi.mdiWeatherHail;
                     break;
                 case 'lightning':
-                    customizableDefaultConfig.icon = Mdi.mdiWeatherLightning;
+                    defaultConfig.icon = Mdi.mdiWeatherLightning;
                     break;
                 case 'lightning-rainy':
-                    customizableDefaultConfig.icon = Mdi.mdiWeatherLightningRainy;
+                    defaultConfig.icon = Mdi.mdiWeatherLightningRainy;
                     break;
                 case 'partlycloudy':
-                    customizableDefaultConfig.icon = Mdi.mdiWeatherPartlyCloudy
+                    defaultConfig.icon = Mdi.mdiWeatherPartlyCloudy
                     break;
                 case 'pouring':
-                    customizableDefaultConfig.icon = Mdi.mdiWeatherPouring
+                    defaultConfig.icon = Mdi.mdiWeatherPouring
                     break;
                 case 'rainy':
-                    customizableDefaultConfig.icon = Mdi.mdiWeatherRainy
+                    defaultConfig.icon = Mdi.mdiWeatherRainy
                     break;
                 case 'snowy':
-                    customizableDefaultConfig.icon = Mdi.mdiWeatherSnowy
+                    defaultConfig.icon = Mdi.mdiWeatherSnowy
                     break;
                 case 'snowy-rainy':
-                    customizableDefaultConfig.icon = Mdi.mdiWeatherSnowyRainy
+                    defaultConfig.icon = Mdi.mdiWeatherSnowyRainy
                     break;
                 case 'sunny':
-                    customizableDefaultConfig.icon = Mdi.mdiWeatherSunny
+                    defaultConfig.icon = Mdi.mdiWeatherSunny
                     break;
                 case 'windy':
-                    customizableDefaultConfig.icon = Mdi.mdiWeatherWindy
+                    defaultConfig.icon = Mdi.mdiWeatherWindy
                     break;
                 case 'windy-variant':
-                    customizableDefaultConfig.icon = Mdi.mdiWeatherWindyVariant
+                    defaultConfig.icon = Mdi.mdiWeatherWindyVariant
                     break;
                 default:
                     break;
             }
 
-            if (!templates) {
-                customizableDefaultConfig.templates = []
-                if (customizableDefaultConfig.icon) {
-                    customizableDefaultConfig.templates.push(" ", " ")
-                }
-                customizableDefaultConfig.templates.push("{{temperature}}{{temperature_unit | default('°C')}}", "{{humidity}}%")
-            }
-
-            return customizableDefaultConfig;
+            return defaultConfig;
         }
     }
 
     lock = {
         "default": (state, attributes, templates) => {
-            let icon = Mdi.mdiLockQuestion;
-            let color = this.colors.unavailable;
+            const defaultConfig = this.default(state, attributes, templates);
 
             if (state === 'locked') {
-                icon = Mdi.mdiLock;
-                color = this.colors.ok;
+                defaultConfig.icon = Mdi.mdiLock;
+                defaultConfig.color = this.colors.ok;
             } else if (state === 'locking') {
-                icon = Mdi.mdiLockClock;
-                color = this.colors.active;
+                defaultConfig.icon = Mdi.mdiLockClock;
+                defaultConfig.color = this.colors.active;
             } else if (state === 'unlocked') {
-                icon = Mdi.mdiLockOpen;
-                color = this.colors.warn;
+                defaultConfig.icon = Mdi.mdiLockOpen;
+                defaultConfig.color = this.colors.warn;
+            } else {
+                defaultConfig.icon = Mdi.mdiLockQuestion;
             }
 
-            return {
-                state,
-                attributes,
-                templates,
-                icon,
-                color
-            }
+            return defaultConfig;
         }
     }
 
     vacuum = {
         "default": (state, attributes, templates) => {
-            const icon = Mdi.mdiRobotVacuum;
-            let color = this.colors.unavailable;
+            const defaultConfig = this.default(state, attributes, templates);
+            defaultConfig.icon = defaultConfig.icon || Mdi.mdiRobotVacuum;
+            defaultConfig.templates = ["\n\n{{state}}"]
 
             if (state === "cleaning") {
-                color = this.colors.active;
+                defaultConfig.color = this.colors.active;
             } else if (state === "returning") {
-                color = this.colors.ok;
+                defaultConfig.color = this.colors.ok;
             } else if (state === "idle" || state === 'docked') {
-                color = this.colors.passive;
+                defaultConfig.color = this.colors.neutral;
             }
 
-            if (!templates) {
-                templates = [" ", " ", "{{state}}"]
-            }
-
-            return {
-                state,
-                attributes,
-                templates,
-                icon,
-                color
-            }
+            return defaultConfig;
         }
     }
 
     #tryGetIconFromAttributes = (attributes) => {
-        const mdiIcon = attributes.icon;
-        return mdiIcon ? this.#toPascalCase(mdiIcon) : null;
+        if (!attributes.icon)
+            return;
+        const input = attributes.icon
+        const parts = input.split(':');
+        const camelCaseParts = parts[1].split('-').map(part => part.charAt(0).toUpperCase() + part.slice(1));
+        return parts[0] + camelCaseParts.join('');
     }
-
-    #toPascalCase = (iconName) => {
-        const iconNameRaw = iconName.substring(4)
-        const iconNamePascalCase = iconNameRaw.replace(/(^\w|-\w)/g, this.#clearAndUpper)
-        return "mdi" + iconNamePascalCase;
-    }
-
-    #clearAndUpper = (text) => {
-        return text.replace(/-/, "").toUpperCase();
-    }
-
 }
