@@ -14,7 +14,7 @@ import defaultActiveStates from '../../public/config/active-states.yml'
 import axios from 'axios'
 import yaml from 'js-yaml'
 
-const entityConfigFactory = new EntityConfigFactory()
+let entityConfigFactory
 const buttonImageFactory = new EntityButtonImageFactory()
 const touchScreenImageFactory = new EntityButtonImageFactory({ width: 200, height: 100 })
 
@@ -39,6 +39,7 @@ onMounted(async () => {
     $SD.value.on('globalsettings', (inGlobalSettings) => {
         console.log('Got global settings.')
         globalSettings.value = inGlobalSettings
+        entityConfigFactory = new EntityConfigFactory(inGlobalSettings.customDisplayConfigFile)
         connectHomeAssistant()
       }
     )

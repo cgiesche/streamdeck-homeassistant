@@ -19,14 +19,32 @@
 #          color: #FFFFFF
 #          labelTemplates:
 
-_color: "#a1a1a1"
+_color: "#a1FFa1"
 _labelTemplates:
   - ""
   - ""
   - "{{state}}{{unit_of_measurement}}"
 _states:
   unavailable:
-    color: "#505050"
+    color: "#FF5630"
+  # ======================== On-States ======================
+  on:
+    color: "#ffd484"
+  playing:
+    color: "#ffd484"
+  open:
+    color: "#ffd484"
+  opening:
+    color: "#ffd484"
+  home:
+    color: "#ffd484"
+  locked:
+    color: "#ffd484"
+  heat:
+    color: "#ffd484"
+  active:
+    color: "#ffd484"
+  # =========================================================
 
 switch:
   icon: mdi:toggle-switch-off
@@ -83,6 +101,36 @@ sensor:
       color: "#3f3fdb"
     temperature:
       icon: mdi:thermometer
+      color: |
+        !nunjucks
+        {% set numState = state | int %}
+        {% if attributes.unit_of_measurement == '°F' %}
+          {% set numState = (numState - 32) * 5 / 9  %}
+        {% endif %}
+        {% if numState <= -20 %}
+          #0000FF
+        {% elif numState <= -15 %}
+          #0040FF
+        {% elif numState <= -10 %}
+          #0080FF
+        {% elif numState <= -5 %}
+          #00BFFF
+        {% elif numState <= 0 %}
+          #87CEFA
+        {% elif numState <= 5 %}
+          #B0E0E6
+        {% elif numState <= 10 %}
+          #90EE90
+        {% elif numState <= 15 %}
+          #ADFF2F
+        {% elif numState <= 20 %}
+          #FFFF00
+        {% elif numState <= 25 %}
+          #FFA500        
+        {% else %}
+          #FF0000
+        {% endif %}
+
     battery:
       icon: |
         !nunjucks

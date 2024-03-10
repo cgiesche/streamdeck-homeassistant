@@ -1,8 +1,8 @@
 <template>
   <div class="container-fluid">
 
-    <h1>Server Settings</h1>
-    <div class="clearfix">
+    <h1>Global Settings</h1>
+    <div class="clearfix mb-3">
 
       <div class="mb-3">
         <label class="form-label" for="serverUrl">Server URL</label>
@@ -26,18 +26,23 @@
             documentation</a></div>
       </div>
 
+      <div class="mb-3">
+      <label for="formFileSm" class="form-label">Custom display configuration</label>
+        <input v-model="customDisplayConfigFile" class="form-control form-control-sm" type="url" placeholder="file://c:/custom.yml">
+        <div class="form-text">Specify path or URL to customized display configuration. Unsupported!</div>
+      </div>
 
       <div v-if="haError" class="alert alert-danger alert-dismissible" role="alert">
         {{ haError }}
         <button class="btn-close" type="button" @click="haError = ''"></button>
       </div>
 
-      <button id="mybutton" :disabled="!isHaSettingsComplete || haConnectionState === 'connecting'"
+      <button :disabled="!isHaSettingsComplete || haConnectionState === 'connecting'"
               class="btn btn-sm btn-primary float-end"
               v-on:click="saveGlobalSettings">
         <span v-if="haConnectionState === 'connecting'" aria-hidden="true" class="spinner-border spinner-border-sm"
               role="status"></span>
-        <span>{{ haConnectionState === 'connected' ? 'Reconnect' : 'Connect' }}</span>
+        <span>{{ haConnectionState === 'connected' ? 'Save and reconnect' : 'Save and connect' }}</span>
       </button>
     </div>
 
@@ -90,19 +95,19 @@
       </div>
 
       <div class="mb-3">
-        <div class="form-check ">
+        <div class="form-check">
           <input class="form-check-input" type="radio" id="radioPlugin" value="PREFER_PLUGIN" v-model="iconSettings">
           <label class="form-check-label" for="radioPlugin">
-            Prefer plugin icon (HA icon as fallback)
+            Prefer icon from plugin (recommended)
           </label>
         </div>
         <div class="form-check">
           <input class="form-check-input" type="radio" id="radioHomeAssistant" value="PREFER_HA" v-model="iconSettings">
           <label class="form-check-label" for="radioHomeAssistant">
-            Prefer HA icon (plugin icon as fallback)
+            Prefer icon from HA
           </label>
         </div>
-        <div class="form-check disabled">
+        <div class="form-check">
           <input class="form-check-input" type="radio" id="radioHide" value="HIDE" v-model="iconSettings">
           <label class="form-check-label" for="radioHide">
             Hide icon
@@ -199,12 +204,15 @@ import { ObjectUtils } from '@/modules/common/utils'
 import AccordeonComponent from '@/components/accordeon/BootstrapAccordeon.vue'
 import AccordeonItem from '@/components/accordeon/BootstrapAccordeonItem.vue'
 import EntitySelection from '@/components/EntitySelection.vue'
+import axios from 'axios'
 
 let $HA = null
 let $SD = null
 
 const serverUrl = ref('')
 const accessToken = ref('')
+const customDisplayConfigFile = ref()
+
 const entity = ref('')
 
 const serviceShortPress = ref({})
@@ -221,7 +229,7 @@ const useStateImagesForOnOffStates = ref(false) // determined by action ID (mani
 const useCustomButtonLabels = ref(false)
 const buttonLabels = ref('')
 const enableServiceIndicator = ref(true)
-const iconSettings = ref("PREFER_PLUGIN")
+const iconSettings = ref('PREFER_PLUGIN')
 const availableEntityDomains = ref([])
 const availableEntities = ref([])
 const availableServiceDomains = ref([])
@@ -246,6 +254,7 @@ onMounted(() => {
       if (globalSettings) {
         serverUrl.value = globalSettings.serverUrl
         accessToken.value = globalSettings.accessToken
+        customDisplayConfigFile.value = globalSettings.customDisplayConfigFile
 
         if (serverUrl.value && accessToken.value) {
           connectHomeAssistant()
@@ -349,7 +358,19 @@ function connectHomeAssistant() {
 
 function saveGlobalSettings() {
   haError.value = ''
-  $SD.saveGlobalSettings({ 'serverUrl': serverUrl.value, 'accessToken': accessToken.value })
+
+  // validate custom config
+  if (customDisplayConfigFile.value) {
+    axios.get(customDisplayConfigFile.value)
+      .then()
+      .catch(error => haError.value = `Could not read custom display configuration: ${error}`)
+  }
+
+  $SD.saveGlobalSettings({
+    'serverUrl': serverUrl.value,
+    'accessToken': accessToken.value,
+    'customDisplayConfigFile': customDisplayConfigFile.value
+  })
   connectHomeAssistant()
 }
 
