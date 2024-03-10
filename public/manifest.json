@@ -1,12 +1,12 @@
 {
   "Actions": [
     {
-      "Icon": "images/actionImage",
+      "Icon": "images/actions/actionImage",
       "Name": "Entity (generic)",
       "PropertyInspectorPath": "pi.html",
       "States": [
         {
-          "Image": "images/ha-button",
+          "Image": "images/actions/ha-button",
           "TitleAlignment": "bottom",
           "FontSize": "9"
         }
@@ -21,18 +21,18 @@
     },
 
     {
-      "Icon": "images/actionImage",
+      "Icon": "images/actions/actionImage",
       "Name": "Entity (custom icons)",
       "PropertyInspectorPath": "pi.html",
       "DisableAutomaticStates": true,
       "States": [
         {
-          "Image": "images/ha-button-off",
+          "Image": "images/actions/ha-button-off",
           "TitleAlignment": "bottom",
           "FontSize": "9"
         },
         {
-          "Image": "images/ha-button-on",
+          "Image": "images/actions/ha-button-on",
           "TitleAlignment": "bottom",
           "FontSize": "9"
         }
@@ -48,7 +48,7 @@
   "CodePath": "plugin.html",
   "Description": "Control your Home Assistant entities with stream deck.",
   "Name": "Home Assistant",
-  "Icon": "images/plugin/plugin",
+  "Icon": "images/plugin",
   "URL": "https://github.com/cgiesche/streamdeck-homeassistant",
   "Version": "100.2.1",
   "OS": [
