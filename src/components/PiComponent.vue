@@ -6,7 +6,7 @@
 
       <div class="mb-3">
         <label class="form-label" for="serverUrl">Server URL</label>
-        <input id="serverUrl" v-model="serverUrl" class="form-control form-control-sm" type="email">
+        <input id="serverUrl" v-model="serverUrl" class="form-control form-control-sm" type="url">
         <div class="form-text"><strong>Without SSL</strong> ws://localhost:8123/api/websocket
         </div>
         <div class="form-text"><strong>With SSL</strong> wss://ha.mydomain.net:8123/api/websocket (requires a trusted
