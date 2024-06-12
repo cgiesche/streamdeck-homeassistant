@@ -108,6 +108,15 @@ export class Settings {
         }
 
         if (settings.version === 4) {
+            let settingsV5 = {...settings};
+            settingsV5.version = 5
+            
+            settingsV5.display.useEncoderLayout = false;
+
+            return this.parse(settingsV5)
+        }
+
+        if (settings.version === 5) {
             return settings;
         }
     }

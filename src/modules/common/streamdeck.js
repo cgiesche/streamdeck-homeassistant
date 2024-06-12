@@ -127,6 +127,16 @@ export class StreamDeck {
         this.streamDeckWebsocket.send(JSON.stringify(message))
     }
 
+    setFeedbackLayout(context, payload) {
+        let message = {
+            "event": "setFeedbackLayout",
+            "context": context,
+            "payload": payload
+        }
+
+        this.streamDeckWebsocket.send(JSON.stringify(message))
+    }
+
     showAlert(context) {
         let message = {
             "event": "showAlert",

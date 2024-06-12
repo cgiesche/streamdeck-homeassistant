@@ -5,6 +5,7 @@
 <script setup>
 import {StreamDeck} from "@/modules/common/streamdeck";
 import {Homeassistant} from "@/modules/homeassistant/homeassistant";
+import {SvgUtils} from "@/modules/plugin/svgUtils";
 import {EntityButtonImageFactory} from "@/modules/plugin/entityButtonImageFactory";
 import nunjucks from "nunjucks"
 import {Settings} from "@/modules/common/settings";
@@ -16,6 +17,7 @@ import axios from "axios";
 const entityConfigFactory = new EntityConfigFactory()
 const buttonImageFactory = new EntityButtonImageFactory()
 const touchScreenImageFactory = new EntityButtonImageFactory({width: 200, height: 100})
+const svgUtils = new SvgUtils();
 
 const $SD = ref(null)
 const $HA = ref(null)
@@ -220,7 +222,35 @@ function updateContextState(currentContext, domain, stateObject) {
   entityConfig.isMultiAction = contextSettings.button.serviceLongPress.serviceId && (contextSettings.display.enableServiceIndicator === undefined || contextSettings.display.enableServiceIndicator) // undefined = on by default
   entityConfig.hideIcon = contextSettings.display.hideIcon
 
-  if (contextSettings.display.useStateImagesForOnOffStates) {
+  if (entityConfig.rotationPercent !== undefined) {
+    rotationPercent[currentContext] = entityConfig.rotationPercent
+  }
+
+  if (contextSettings.display.useCustomTitle) {
+    let state = stateObject.state;
+    let stateAttributes = stateObject.attributes;
+
+    entityConfig.customTitle = nunjucks.renderString(contextSettings.display.buttonTitle, {...{state}, ...stateAttributes})
+
+    $SD.value.setTitle(currentContext, entityConfig.customTitle);
+  }
+
+  if (contextSettings.display.useEncoderLayout) {
+    if (!entityConfig.feedbackLayout) {
+      entityConfig.feedbackLayout = {layout: "$A1"};
+    }
+    $SD.value.setFeedbackLayout(currentContext, entityConfig.feedbackLayout);
+    
+    if (!entityConfig.feedback) {
+      entityConfig.feedback = {}
+    }
+    entityConfig.feedback.title = entityConfig.customTitle !== undefined ? entityConfig.customTitle : "";
+    entityConfig.feedback.icon = "data:image/svg+xml;charset=utf8," + svgUtils.generateIconSVG(entityConfig.icon, entityConfig.color);
+    if (entityConfig.feedback.value === undefined) {
+      entityConfig.feedback.value = entityConfig.state;
+    }
+    $SD.value.setFeedback(currentContext, entityConfig.feedback);
+  } else if (contextSettings.display.useStateImagesForOnOffStates) {
     if (activeStates.value.indexOf(stateObject.state) !== -1) {
       console.log("Setting state of " + currentContext + " to 1")
       $SD.value.setState(currentContext, 1);
@@ -237,19 +267,12 @@ function updateContextState(currentContext, domain, stateObject) {
       setButtonSVG(buttonImage, currentContext)
     }
   }
-
-  if (contextSettings.display.useCustomTitle) {
-    let state = stateObject.state;
-    let stateAttributes = stateObject.attributes;
-
-    const customTitle = nunjucks.renderString(contextSettings.display.buttonTitle, {...{state}, ...stateAttributes})
-    $SD.value.setTitle(currentContext, customTitle);
-  }
 }
 
 function setButtonSVG(svg, changedContext) {
   const image = "data:image/svg+xml;charset=utf8," + svg;
   if (actionSettings.value[changedContext].controllerType === 'Encoder') {
+    $SD.value.setFeedbackLayout(changedContext, {"layout": "$A0"});
     $SD.value.setFeedback(changedContext, {"full-canvas": image, "canvas": null, "title": ""})
   } else {
     $SD.value.setImage(changedContext, image)
