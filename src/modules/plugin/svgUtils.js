@@ -22,6 +22,22 @@ export class SvgUtils {
         this.snap = Snap(this.buttonRes.width, this.buttonRes.height);
     }
 
+    generateIconSVG(iconSVG, iconColor) {
+        const icon = this.snap.path(iconSVG)
+        icon.attr("fill", iconColor);
+        const iconBBox = icon.getBBox();
+        const iconHeight = iconBBox.height;
+        const iconWidth = iconBBox.width;
+        const targetHeight = this.buttonRes.height / 1.3;
+        const targetWidth = this.buttonRes.width / 1.3;
+        const scaleFactor = Math.min(targetHeight / iconHeight, targetWidth / iconWidth);
+        icon.transform(`scale(${scaleFactor})`)
+
+        let outerSVG = this.snap.outerSVG();
+        this.snap.clear();
+        return outerSVG
+    }
+
     generateButtonSVG(labels, iconSVG, iconColor, isAction = false, isMultiAction = false) {
 
         if (iconSVG) {

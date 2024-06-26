@@ -83,7 +83,47 @@ export class EntityConfigFactory {
         }
     }
 
-    light = this.switch
+    light = {
+        "default": (state, attributes, templates) => {
+            let entityConfig = this.switch.default(state, attributes, templates);
+
+            if (attributes.supported_color_modes && attributes.supported_color_modes.includes("brightness")) {
+                entityConfig.rotationPercent = (attributes.brightness / 255.0) * 100;
+                entityConfig.icon = Mdi.mdiLightbulbOff;
+                if (state == 'on') {
+                    if (entityConfig.rotationPercent > 90) {
+                        entityConfig.icon = Mdi.mdiLightbulbOn;
+                    } else if (entityConfig.rotationPercent > 80) {
+                        entityConfig.icon = Mdi.mdiLightbulbOn90;
+                    } else if (entityConfig.rotationPercent > 70) {
+                        entityConfig.icon = Mdi.mdiLightbulbOn80;
+                    } else if (entityConfig.rotationPercent > 60) {
+                        entityConfig.icon = Mdi.mdiLightbulbOn70;
+                    } else if (entityConfig.rotationPercent > 50) {
+                        entityConfig.icon = Mdi.mdiLightbulbOn60;
+                    } else if (entityConfig.rotationPercent > 40) {
+                        entityConfig.icon = Mdi.mdiLightbulbOn50;
+                    } else if (entityConfig.rotationPercent > 30) {
+                        entityConfig.icon = Mdi.mdiLightbulbOn40;
+                    } else if (entityConfig.rotationPercent > 20) {
+                        entityConfig.icon = Mdi.mdiLightbulbOn30;
+                    } else if (entityConfig.rotationPercent > 10) {
+                        entityConfig.icon = Mdi.mdiLightbulbOn20;
+                    } else {
+                        entityConfig.icon = Mdi.mdiLightbulbOn10;
+                    }
+                }
+                
+                entityConfig.feedbackLayout = { layout: "$B1" };
+                entityConfig.feedback = {
+                    value: Math.ceil(entityConfig.rotationPercent) + "%",
+                    indicator: Math.ceil(entityConfig.rotationPercent)
+                };
+            }
+
+            return entityConfig;
+        }
+    }
 
     input_boolean = this.switch
 
@@ -332,6 +372,47 @@ export class EntityConfigFactory {
                 templates,
                 icon,
                 color
+            }
+        }
+    }
+
+    "media_player" = {
+        "default": (state, attributes, templates) => {
+            let icon = Mdi.mdiVolumeOff;
+            let color = this.colors.passive;
+            let rotationPercent = 0;
+
+            if (state !== "off") {
+                if (attributes.is_volume_muted) {
+                    icon = Mdi.mdiVolumeMute;
+                } else {
+                    color = this.colors.active;
+                    rotationPercent = attributes.volume_level * 100;
+                    if (rotationPercent > 66) {
+                        icon = Mdi.mdiVolumeHigh;
+                    } else if (rotationPercent > 33) {
+                        icon = Mdi.mdiVolumeMedium;
+                    } else {
+                        icon = Mdi.mdiVolumeLow;
+                    }
+                }
+            }
+
+            let feedbackLayout = { layout: "$B1" };
+            let feedback = {
+                value: Math.ceil(rotationPercent) + "%",
+                indicator: Math.ceil(rotationPercent)
+            };
+
+            return {
+                state,
+                attributes,
+                templates,
+                icon,
+                color,
+                feedbackLayout,
+                feedback,
+                rotationPercent
             }
         }
     }
