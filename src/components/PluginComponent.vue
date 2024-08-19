@@ -236,9 +236,9 @@ function updateContextState(currentContext, domain, stateObject) {
 
   if (contextSettings.display.useEncoderLayout) {
     if (!buttonRenderingConfig.feedbackLayout) {
-      buttonRenderingConfig.feedbackLayout = { layout: '$A1' }
+      buttonRenderingConfig.feedbackLayout = '$A1'
     }
-    $SD.value.setFeedbackLayout(currentContext, buttonRenderingConfig.feedbackLayout)
+    $SD.value.setFeedbackLayout(currentContext, { layout: buttonRenderingConfig.feedbackLayout })
 
     if (!buttonRenderingConfig.feedback) {
       buttonRenderingConfig.feedback = {}

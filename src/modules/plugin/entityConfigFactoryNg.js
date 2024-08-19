@@ -2,6 +2,7 @@ import defaultDisplayConfiguration from '../../../public/config/default-display-
 import axios from 'axios'
 import nunjucks from 'nunjucks'
 import yaml from 'js-yaml'
+import { number } from 'nunjucks/src/tests'
 
 export class EntityConfigFactory {
 
@@ -65,14 +66,21 @@ export class EntityConfigFactory {
     this.addResolverConfig(resolvers, stateObject.state, domain, deviceClass)
     resolvers.reverse()
 
+    const feedbackLayoutString = this.resolve('feedbackLayout', resolvers)
+    const feedbackValueString = this.resolve('feedbackLayout', resolvers)
     const iconString = this.resolve('icon', resolvers)
     const colorString = this.resolve('color', resolvers)
     const labelTemplates = this.resolve('labelTemplates', resolvers)
+
+    const feedbackLayout= this.render(feedbackLayoutString, stateObject)
+    const feedbackValue= this.render(feedbackValueString, stateObject)
 
     const icon = this.render(iconString, stateObject)
     const color = this.render(colorString, stateObject)
 
     return {
+      feedbackLayout: feedbackLayout,
+      feedback: { value: feedbackValue},
       icon: icon,
       color: color,
       labelTemplates: labelTemplates

@@ -156,6 +156,10 @@ sensor:
         {% endif %}
 
     battery:
+      indicatorLayout: $B1
+      indicatorValue: |
+        !nunjucks
+        {{ state | int }}
       icon: |
         !nunjucks
         {% set numState = state | int %}
