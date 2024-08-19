@@ -6,7 +6,7 @@
 
       <div class="mb-3">
         <label class="form-label" for="serverUrl">Server URL</label>
-        <input id="serverUrl" v-model="serverUrl" class="form-control form-control-sm" type="email">
+        <input id="serverUrl" v-model="serverUrl" class="form-control form-control-sm" type="url">
         <div class="form-text"><strong>Without SSL</strong> ws://localhost:8123/api/websocket
         </div>
         <div class="form-text"><strong>With SSL</strong> wss://ha.mydomain.net:8123/api/websocket (requires a trusted
@@ -65,6 +65,13 @@
 
       <EntitySelection class="mb-3" :available-entities="availableEntities" v-model="entity"></EntitySelection>
 
+      <template v-if="controllerType === 'Encoder'">
+        <div class="form-check">
+          <input id="chkUseEncoderLayout" v-model="useEncoderLayout" class="form-check-input" type="checkbox">
+          <label class="form-check-label" for="chkUseEncoderLayout">Use encoder layout</label>
+        </div>
+      </template>
+
       <div class="form-check form-switch">
         <input id="chkButtonTitle" v-model="useCustomTitle" class="form-check-input" type="checkbox">
         <label class="form-check-label" for="chkButtonTitle">Use custom title</label>
@@ -86,27 +93,28 @@
         </div>
       </div>
 
-      <div class="form-check form-switch">
-        <input id="chkCustomLabels" v-model="useCustomButtonLabels" class="form-check-input" type="checkbox">
-        <label class="form-check-label" for="chkCustomLabels">Custom labels</label>
-      </div>
-
-      <div v-if="useCustomButtonLabels">
-        <div class="mb-3">
-          <textarea id="buttonLabels" v-model="buttonLabels" class="form-control font-monospace"
-                    placeholder="Line 1 (may overlap with icon)"
-                    rows="4"></textarea>
-          <details>
-            <summary>Available variables</summary>
-            <div v-for="attr in entityAttributes" v-bind:key="attr" class="form-text font-monospace">{{ attr }}</div>
-          </details>
+      <template v-if="!useEncoderLayout">
+        <div class="form-check form-switch">
+          <input id="chkCustomLabels" v-model="useCustomButtonLabels" class="form-check-input" type="checkbox">
+          <label class="form-check-label" for="chkCustomLabels">Custom labels</label>
         </div>
-      </div>
+
+        <div v-if="useCustomButtonLabels">
+          <div class="mb-3">
+            <textarea id="buttonLabels" v-model="buttonLabels" class="form-control font-monospace"
+                      placeholder="Line 1 (may overlap with icon)"
+                      rows="4"></textarea>
+            <details>
+              <summary>Available variables</summary>
+              <div v-for="attr in entityAttributes" v-bind:key="attr" class="form-text font-monospace">{{ attr }}</div>
+            </details>
+          </div>
+        </div>
 
       <div class="form-check form-switch mb-3">
-        <input id="chkEnableServiceIndicator" v-model="enableServiceIndicator" class="form-check-input" type="checkbox">
-        <label class="form-check-label" for="chkEnableServiceIndicator">Show visual service indicators</label>
-      </div>
+          <input id="chkEnableServiceIndicator" v-model="enableServiceIndicator" class="form-check-input" type="checkbox">
+          <label class="form-check-label" for="chkEnableServiceIndicator">Show visual service indicators</label>
+        </div>
 
       <div class="mb-3">
         <div class="form-check">
@@ -127,7 +135,8 @@
             Hide icon
           </label>
         </div>
-      </div>
+        </div>
+      </template>
 
       <h1>{{ controllerType }} actions</h1>
 
@@ -244,6 +253,7 @@ const rotationTickBucketSizeMs = ref(300)
 
 const useCustomTitle = ref(false)
 const buttonTitle = ref('{{friendly_name}}')
+const useEncoderLayout = ref(false)
 const useStateImagesForOnOffStates = ref(false) // determined by action ID (manifest)
 const useCustomButtonLabels = ref(false)
 const buttonLabels = ref('')
@@ -300,6 +310,7 @@ onMounted(() => {
       iconSettings.value = settings['display']['iconSettings']
       useCustomTitle.value = settings['display']['useCustomTitle']
       buttonTitle.value = settings['display']['buttonTitle'] || '{{friendly_name}}'
+      useEncoderLayout.value = settings["display"]["useEncoderLayout"]
       useCustomButtonLabels.value = settings['display']['useCustomButtonLabels']
       buttonLabels.value = settings['display']['buttonLabels']
       serviceShortPress.value = settings['button']['serviceShortPress']
@@ -424,6 +435,7 @@ function saveSettings() {
     display: {
       entityId: entity.value,
       useCustomTitle: useCustomTitle.value,
+      useEncoderLayout: useEncoderLayout.value,
       buttonTitle: buttonTitle.value,
       enableServiceIndicator: enableServiceIndicator.value,
       iconSettings: iconSettings.value,

@@ -108,13 +108,14 @@ export class Settings {
         }
 
         if (settings.version === 4) {
-            const settingsV5 = {...settings};
+            let settingsV5 = {...settings};
             settingsV5.version = 5
-            settingsV5.display.iconSettings = settingsV5.display.hideIcon ? "HIDE" : "PREFER_PLUGIN"
 
+            settingsV5.display.useEncoderLayout = false;
+            settingsV5.display.iconSettings = settingsV5.display.hideIcon ? "HIDE" : "PREFER_PLUGIN"
             delete settingsV5.display.hideIcon
 
-            return this.parse(settingsV5);
+            return this.parse(settingsV5)
         }
 
         if (settings.version === 5) {
