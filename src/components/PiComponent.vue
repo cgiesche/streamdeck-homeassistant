@@ -27,9 +27,21 @@
       </div>
 
       <div class="mb-3">
-      <label for="formFileSm" class="form-label">Custom display configuration</label>
-        <input v-model="customDisplayConfigFile" class="form-control form-control-sm" type="url" placeholder="file://c:/custom.yml">
-        <div class="form-text">Specify path or URL to customized display configuration. Unsupported!</div>
+        <label class="form-label" for="displayConfig">Display configuration ("Theme")</label>
+        <div class="input-group">
+          <select :disabled="displayConfigurationUrlOverride.length > 0" id="displayConfig" v-model="displayConfiguration" class="form-select form-select-sm">
+            <option v-for="availableConfiguration in manifest['display-configs']" :key="availableConfiguration"
+                    :value="availableConfiguration">
+              {{ availableConfiguration.title }}
+            </option>
+          </select>
+        </div>
+
+        <div class="mt-3">
+          <label for="formFileSm" class="form-label">Custom display configuration URL</label>
+          <input v-model="displayConfigurationUrlOverride" class="form-control form-control-sm" type="url" placeholder="file://c:/custom.yml">
+          <div class="form-text">Specify path or URL to customized display configuration. Unsupported! <a target="_blank" href="https://raw.githubusercontent.com/cgiesche/streamdeck-homeassistant/master/public/config/default-display-config.yml">Example</a>.</div>
+        </div>
       </div>
 
       <div v-if="haError" class="alert alert-danger alert-dismissible" role="alert">
@@ -45,6 +57,8 @@
         <span>{{ haConnectionState === 'connected' ? 'Save and reconnect' : 'Save and connect' }}</span>
       </button>
     </div>
+
+    <!-- ======================================================================================================= -->
 
     <div v-if="haConnectionState === 'connected'" class="clearfix mb-3">
       <h1>{{ controllerType }} appearance</h1>
@@ -193,6 +207,7 @@
 
 <script setup>
 
+import defaultManifest from '../../public/config/manifest.yml'
 import { StreamDeck } from '@/modules/common/streamdeck'
 import { Settings } from '@/modules/common/settings'
 import { Homeassistant } from '@/modules/homeassistant/homeassistant'
@@ -205,13 +220,17 @@ import AccordeonComponent from '@/components/accordeon/BootstrapAccordeon.vue'
 import AccordeonItem from '@/components/accordeon/BootstrapAccordeonItem.vue'
 import EntitySelection from '@/components/EntitySelection.vue'
 import axios from 'axios'
+import yaml from 'js-yaml'
+
+let manifest = ref(defaultManifest)
 
 let $HA = null
 let $SD = null
 
 const serverUrl = ref('')
 const accessToken = ref('')
-const customDisplayConfigFile = ref()
+const displayConfiguration = ref()
+const displayConfigurationUrlOverride = ref('')
 
 const entity = ref('')
 
@@ -241,6 +260,8 @@ const haError = ref('')
 const controllerType = ref('')
 
 onMounted(() => {
+  updateManifest()
+
   window.connectElgatoStreamDeckSocket = (inPort, inPropertyInspectorUUID, inRegisterEvent, inInfo, inActionInfo) => {
     $SD = new StreamDeck(inPort, inPropertyInspectorUUID, inRegisterEvent, inInfo, inActionInfo)
 
@@ -254,7 +275,14 @@ onMounted(() => {
       if (globalSettings) {
         serverUrl.value = globalSettings.serverUrl
         accessToken.value = globalSettings.accessToken
-        customDisplayConfigFile.value = globalSettings.customDisplayConfigFile
+
+        let displayConfigurationFromSettings = globalSettings.displayConfiguration
+        if (displayConfigurationFromSettings) {
+          displayConfiguration.value = displayConfigurationFromSettings
+          if (displayConfigurationFromSettings.urlOverride) {
+            displayConfigurationUrlOverride.value = displayConfigurationFromSettings.urlOverride
+          }
+        }
 
         if (serverUrl.value && accessToken.value) {
           connectHomeAssistant()
@@ -283,6 +311,13 @@ onMounted(() => {
     })
   }
 })
+
+function updateManifest() {
+  console.log("Updating manifest.")
+  axios.get('https://cdn.jsdelivr.net/gh/cgiesche/streamdeck-homeassistant@master/public/config/manifest.yml')
+    .then(response => this.manifest = yaml.load(response.data))
+    .catch(error => console.log(`Failed to download updated manifest.yml: ${error}`))
+}
 
 const isHaSettingsComplete = computed(() => {
   return serverUrl.value && accessToken.value
@@ -359,18 +394,23 @@ function connectHomeAssistant() {
 function saveGlobalSettings() {
   haError.value = ''
 
+  let displayConfigurationsSettings = displayConfiguration.value
+
   // validate custom config
-  if (customDisplayConfigFile.value) {
-    axios.get(customDisplayConfigFile.value)
+  if (displayConfigurationUrlOverride.value) {
+    axios.get(displayConfigurationUrlOverride.value)
       .then()
       .catch(error => haError.value = `Could not read custom display configuration: ${error}`)
+
+    displayConfigurationsSettings.urlOverride = displayConfigurationUrlOverride.value
   }
 
   $SD.saveGlobalSettings({
     'serverUrl': serverUrl.value,
     'accessToken': accessToken.value,
-    'customDisplayConfigFile': customDisplayConfigFile.value
+    'displayConfiguration': displayConfiguration.value
   })
+
   connectHomeAssistant()
 }
 

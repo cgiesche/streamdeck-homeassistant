@@ -1,12 +1,11 @@
-import defaultIconMappings from '../../../public/config/default-display-config.yml'
+import defaultDisplayConfiguration from '../../../public/config/default-display-config.yml'
 import axios from 'axios'
 import nunjucks from 'nunjucks'
 import yaml from 'js-yaml'
 
 export class EntityConfigFactory {
 
-  defaultDisplayConfig = defaultIconMappings
-  customDisplayConfig = null
+  displayConfiguration = defaultDisplayConfiguration
 
   colors = {
     unavailable: '#505050',
@@ -21,20 +20,15 @@ export class EntityConfigFactory {
   }
 
   /**
-   *
-   * @param customConfigLocation : String
+   * @param displayConfigurationURL : String
    */
-  constructor(customConfigLocation) {
-    if (customConfigLocation) {
-      console.log(`Trying to load custom display-config from ${customConfigLocation}`)
-      axios.get(customConfigLocation)
-        .then(response => this.customDisplayConfig = yaml.load(response.data))
-        .catch(error => console.log(`Failed to load custom config: ${error}`))
+  constructor(displayConfigurationURL) {
+    if (displayConfigurationURL) {
+      console.log(`Loading display configuration from ${displayConfigurationURL}`)
+      axios.get(displayConfigurationURL)
+        .then(response => this.displayConfiguration = yaml.load(response.data))
+        .catch(error => console.log(`Failed to download display configuration from ${displayConfigurationURL}: ${error}`))
     }
-
-    axios.get('https://cdn.jsdelivr.net/gh/cgiesche/streamdeck-homeassistant@master/public/config/default-display-config.yml')
-      .then(response => this.defaultDisplayConfig = yaml.load(response.data))
-      .catch(error => console.log(`Failed to download updated default-display-config.yml: ${error}`))
   }
 
   /**
@@ -68,8 +62,7 @@ export class EntityConfigFactory {
 
   getConfig(domain, stateObject, deviceClass) {
     const resolvers = []
-    this.addResolverConfig(resolvers, this.defaultDisplayConfig, stateObject.state, domain, deviceClass)
-    this.addResolverConfig(resolvers, this.customDisplayConfig, stateObject.state, domain, deviceClass)
+    this.addResolverConfig(resolvers, stateObject.state, domain, deviceClass)
     resolvers.reverse()
 
     const iconString = this.resolve('icon', resolvers)
@@ -86,10 +79,8 @@ export class EntityConfigFactory {
     }
   }
 
-  addResolverConfig(resolvers, config, state, domain, deviceClass) {
-    if (!config) {
-      return
-    }
+  addResolverConfig(resolvers, state, domain, deviceClass) {
+    let config = this.displayConfiguration
 
     const defaultConfig = {}
     if (config._icon) defaultConfig.icon = config._icon

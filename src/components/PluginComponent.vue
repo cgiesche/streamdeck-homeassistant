@@ -39,7 +39,7 @@ onMounted(async () => {
     $SD.value.on('globalsettings', (inGlobalSettings) => {
         console.log('Got global settings.')
         globalSettings.value = inGlobalSettings
-        entityConfigFactory = new EntityConfigFactory(inGlobalSettings.customDisplayConfigFile)
+        entityConfigFactory = new EntityConfigFactory(inGlobalSettings.displayConfiguration?.urlOverride || inGlobalSettings.displayConfiguration?.url)
         connectHomeAssistant()
       }
     )

@@ -1,3 +1,4 @@
+# https://mycolor.space/?hex=%23845EC2&sub=1
 #_states:
 #  unavailable:
 #    color: "#505050"
@@ -19,14 +20,16 @@
 #          color: #FFFFFF
 #          labelTemplates:
 
-_color: "#a1FFa1"
+_color: "#AAAAAA"
 _labelTemplates:
   - ""
   - ""
   - "{{state}}{{unit_of_measurement}}"
 _states:
   unavailable:
-    color: "#FF5630"
+    color: "#FF6F91"
+  unknown:
+    color: "#FF6F91"
   # ======================== On-States ======================
   on:
     color: "#ffd484"
@@ -67,6 +70,19 @@ input_boolean:
     on:
       icon: mdi:toggle-switch
 
+update:
+  icon: mdi:package
+  states:
+    on:
+      icon: mdi:package
+      color: "#FF8066"
+
+person:
+  icon: mdi:account
+  states:
+    not_home:
+      icon: mdi:account-arrow-right
+
 binary_sensor:
   icon: mdi:radiobox-blank
   states:
@@ -83,6 +99,11 @@ binary_sensor:
       states:
         on:
           icon: mdi:window-open-variant
+    motion:
+      icon: mdi:motion-sensor
+      states:
+        off:
+          icon: mdi:motion-sensor-off
 
 cover:
   icon: mdi:garage
@@ -98,7 +119,10 @@ sensor:
   classes:
     humidity:
       icon: mdi:water-percent
-      color: "#3f3fdb"
+      color: "#2C73D2"
+    atmospheric_pressure:
+      icon: mdi:thermometer-lines
+      color: "#2C73D2"
     temperature:
       icon: mdi:thermometer
       color: |
@@ -184,6 +208,18 @@ sensor:
         {% endif %}
     power:
       icon: mdi:flash
+      color: "#F9F871"
+    power_factor:
+      icon: mdi:angle-acute
+    voltage:
+      icon: mdi:flash
+      color: "#F9F871"
+    energy:
+      icon: mdi:lightning-bolt
+      color: "#F9F871"
+    current:
+      icon: mdi:current-ac
+      color: "#2C73D2"
 
 weather:
   labelTemplates:
@@ -239,12 +275,8 @@ vacuum:
   icon: mdi:robot-vacuum
   states:
     cleaning:
-      color: "#e9b200"
+      color: "#00C9A7"
     returning:
-      color: "#e9b200"
-    idle:
-      color: "#a1a1a1"
-    docked:
-      color: "#a1a1a1"
+      color: "#F9F871"
     error:
-      color: "#a10000"
+      color: "#FF6F91"
