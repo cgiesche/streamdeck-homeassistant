@@ -105,6 +105,11 @@ binary_sensor:
       states:
         on:
           icon: mdi:window-open-variant
+    door:
+      icon: mdi:door-closed
+      states:
+        on:
+          icon: mdi:door-open
     motion:
       icon: mdi:motion-sensor
       states:
