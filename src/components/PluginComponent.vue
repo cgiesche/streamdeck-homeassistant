@@ -15,8 +15,7 @@ import axios from 'axios'
 import yaml from 'js-yaml'
 
 let entityConfigFactory
-const buttonSvgUtils = new SvgUtils()
-const touchScreenSvgUtils = new SvgUtils({ width: 200, height: 100 })
+const svgUtils = new SvgUtils()
 
 const $SD = ref(null)
 const $HA = ref(null)
@@ -246,9 +245,9 @@ function updateContextState(currentContext, domain, stateObject) {
       renderingConfig.feedback = {}
     }
     renderingConfig.feedback.title = renderingConfig.customTitle ? renderingConfig.customTitle : ''
-    renderingConfig.feedback.icon = 'data:image/svg+xml;charset=utf8,' + buttonSvgUtils.renderIconSVG(renderingConfig.icon, renderingConfig.color)
+    renderingConfig.feedback.icon = 'data:image/svg+xml;charset=utf8,' + svgUtils.renderIconSVG(renderingConfig.icon, renderingConfig.color)
     if (renderingConfig.feedback.value === undefined) {
-      renderingConfig.feedback.value = buttonSvgUtils.renderTemplates(renderingConfig.labelTemplates, { ...stateObject.attributes, ...{ state: stateObject.state } }).join(' ')
+      renderingConfig.feedback.value = svgUtils.renderTemplates(renderingConfig.labelTemplates, { ...stateObject.attributes, ...{ state: stateObject.state } }).join(' ')
     }
     $SD.value.setFeedback(currentContext, renderingConfig.feedback)
 
@@ -276,7 +275,7 @@ function updateContextState(currentContext, domain, stateObject) {
       renderingConfig.color = activeStates.value.indexOf(stateObject.state) !== -1 ? entityConfigFactory.colors.active : entityConfigFactory.colors.neutral
     }
 
-    const buttonSVG = buttonSvgUtils.renderButtonSVG(renderingConfig, stateObject)
+    const buttonSVG = svgUtils.renderButtonSVG(renderingConfig, stateObject)
     setButtonSVG(buttonSVG, currentContext)
   }
 }
