@@ -29,7 +29,8 @@
       <div class="mb-3">
         <label class="form-label" for="displayConfig">Display configuration ("Theme")</label>
         <div class="input-group">
-          <select :disabled="displayConfigurationUrlOverride.length > 0" id="displayConfig" v-model="displayConfiguration" class="form-select form-select-sm">
+          <select :disabled="displayConfigurationUrlOverride.length > 0" id="displayConfig"
+                  v-model="displayConfiguration" class="form-select form-select-sm">
             <option v-for="availableConfiguration in manifest['display-configs']" :key="availableConfiguration"
                     :value="availableConfiguration">
               {{ availableConfiguration.title }}
@@ -39,8 +40,12 @@
 
         <div class="mt-3">
           <label for="formFileSm" class="form-label">Custom display configuration URL</label>
-          <input v-model="displayConfigurationUrlOverride" class="form-control form-control-sm" type="url" placeholder="file://c:/custom.yml">
-          <div class="form-text">Specify path or URL to customized display configuration. Unsupported! <a target="_blank" href="https://raw.githubusercontent.com/cgiesche/streamdeck-homeassistant/master/public/config/default-display-config.yml">Example</a>.</div>
+          <input v-model="displayConfigurationUrlOverride" class="form-control form-control-sm" type="url"
+                 placeholder="file://c:/custom.yml">
+          <div class="form-text">Specify path or URL to customized display configuration. Unsupported! <a
+            target="_blank"
+            href="https://raw.githubusercontent.com/cgiesche/streamdeck-homeassistant/master/public/config/default-display-config.yml">Example</a>.
+          </div>
         </div>
       </div>
 
@@ -87,51 +92,53 @@
       </div>
 
 
-        <div class="form-check form-switch">
-          <input id="chkCustomLabels" v-model="useCustomButtonLabels" class="form-check-input" type="checkbox">
-          <label class="form-check-label" for="chkCustomLabels">Custom labels</label>
-        </div>
+      <div class="form-check form-switch">
+        <input id="chkCustomLabels" v-model="useCustomButtonLabels" class="form-check-input" type="checkbox">
+        <label class="form-check-label" for="chkCustomLabels">Custom labels</label>
+      </div>
 
-        <div v-if="useCustomButtonLabels">
-          <div class="mb-3">
+      <div v-if="useCustomButtonLabels">
+        <div class="mb-3">
             <textarea id="buttonLabels" v-model="buttonLabels" class="form-control font-monospace"
                       placeholder="Line 1 (may overlap with icon)"
                       rows="4"></textarea>
-            <details>
-              <summary>Available variables</summary>
-              <div v-for="attr in entityAttributes" v-bind:key="attr" class="form-text font-monospace">{{ attr }}</div>
-            </details>
-          </div>
+          <details>
+            <summary>Available variables</summary>
+            <div v-for="attr in entityAttributes" v-bind:key="attr" class="form-text font-monospace">{{ attr }}</div>
+          </details>
         </div>
+      </div>
 
-      <template v-if="!controllerType === 'Encoder'">
-        <div class="form-check form-switch mb-3">
-          <input id="chkEnableServiceIndicator" v-model="enableServiceIndicator" class="form-check-input" type="checkbox">
+      <template v-if="controllerType !== 'Encoder'">
+        <div class="form-check form-switch">
+          <input id="chkEnableServiceIndicator" v-model="enableServiceIndicator" class="form-check-input"
+                 type="checkbox">
           <label class="form-check-label" for="chkEnableServiceIndicator">Show visual service indicators</label>
         </div>
-
-        <div class="mb-3">
-          <div class="form-check">
-            <input class="form-check-input" type="radio" id="radioPlugin" value="PREFER_PLUGIN" v-model="iconSettings">
-            <label class="form-check-label" for="radioPlugin">
-              Prefer icon from plugin (recommended)
-            </label>
-          </div>
-          <div class="form-check">
-            <input class="form-check-input" type="radio" id="radioHomeAssistant" value="PREFER_HA"
-                   v-model="iconSettings">
-            <label class="form-check-label" for="radioHomeAssistant">
-              Prefer icon from HA
-            </label>
-          </div>
-          <div class="form-check">
-            <input class="form-check-input" type="radio" id="radioHide" value="HIDE" v-model="iconSettings">
-            <label class="form-check-label" for="radioHide">
-              Hide icon
-            </label>
-          </div>
-        </div>
       </template>
+
+      <div class="mt-3 mb-3">
+        <div class="form-check">
+          <input class="form-check-input" type="radio" id="radioPlugin" value="PREFER_PLUGIN" v-model="iconSettings">
+          <label class="form-check-label" for="radioPlugin">
+            Prefer icon from plugin (recommended)
+          </label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" id="radioHomeAssistant" value="PREFER_HA"
+                 v-model="iconSettings">
+          <label class="form-check-label" for="radioHomeAssistant">
+            Prefer icon from HA
+          </label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" id="radioHide" value="HIDE" v-model="iconSettings">
+          <label class="form-check-label" for="radioHide">
+            Hide icon
+          </label>
+        </div>
+      </div>
+
 
       <h1>{{ controllerType }} actions</h1>
 
@@ -317,7 +324,7 @@ onMounted(() => {
 })
 
 function updateManifest() {
-  console.log("Updating manifest.")
+  console.log('Updating manifest.')
   axios.get('https://cdn.jsdelivr.net/gh/cgiesche/streamdeck-homeassistant@master/public/config/manifest.yml')
     .then(response => this.manifest = yaml.load(response.data))
     .catch(error => console.log(`Failed to download updated manifest.yml: ${error}`))
