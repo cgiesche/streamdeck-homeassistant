@@ -2,7 +2,6 @@ import defaultDisplayConfiguration from '../../../public/config/default-display-
 import axios from 'axios'
 import nunjucks from 'nunjucks'
 import yaml from 'js-yaml'
-import { number } from 'nunjucks/src/tests'
 
 export class EntityConfigFactory {
 
@@ -67,20 +66,21 @@ export class EntityConfigFactory {
     resolvers.reverse()
 
     const feedbackLayoutString = this.resolve('feedbackLayout', resolvers)
-    const feedbackValueString = this.resolve('feedbackLayout', resolvers)
+    const feedbackValueString = this.resolve('feedback', resolvers)
     const iconString = this.resolve('icon', resolvers)
     const colorString = this.resolve('color', resolvers)
     const labelTemplates = this.resolve('labelTemplates', resolvers)
 
     const feedbackLayout= this.render(feedbackLayoutString, stateObject)
-    const feedbackValue= this.render(feedbackValueString, stateObject)
+    const renderedFeedback = this.render(feedbackValueString, stateObject)
+    const feedback = feedbackValueString ? JSON.parse(renderedFeedback) : {}
 
     const icon = this.render(iconString, stateObject)
     const color = this.render(colorString, stateObject)
 
     return {
       feedbackLayout: feedbackLayout,
-      feedback: { value: feedbackValue},
+      feedback: feedback,
       icon: icon,
       color: color,
       labelTemplates: labelTemplates
@@ -116,8 +116,8 @@ export class EntityConfigFactory {
    * @returns String
    */
   render(string, stateObject) {
-    if (string && string.startsWith('!nunjucks')) {
-      let renderedString = nunjucks.renderString(string.slice(10), stateObject)
+    if (string) {
+      let renderedString = nunjucks.renderString(string, stateObject)
       if (renderedString) {
         return renderedString.trim()
       }

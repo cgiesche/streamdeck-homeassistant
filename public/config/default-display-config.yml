@@ -58,6 +58,12 @@ switch:
 light:
   icon: mdi:lightbulb
   color: "#888888"
+  feedbackLayout: "$B1"
+  feedback: |
+    {
+      "indicator": {{ attributes.brightness / 255 * 100 }},
+      "value": "{{ (attributes.brightness / 255 * 100) | int }}%"
+    }
   states:
     unavailable:
       icon: mdi:lightbulb-alert
@@ -126,7 +132,6 @@ sensor:
     temperature:
       icon: mdi:thermometer
       color: |
-        !nunjucks
         {% set numState = state | int %}
         {% if attributes.unit_of_measurement == '°F' %}
           {% set numState = (numState - 32) * 5 / 9  %}
@@ -156,12 +161,13 @@ sensor:
         {% endif %}
 
     battery:
-      indicatorLayout: $B1
-      indicatorValue: |
-        !nunjucks
-        {{ state | int }}
+      feedbackLayout: "$B1"
+      feedback: |
+        {
+          "indicator": {{ state | int }},
+          "value": "{{ state | int }}%"
+        }
       icon: |
-        !nunjucks
         {% set numState = state | int %}
         {% if numState <= 10 %}
           mdi:battery-outline
@@ -185,7 +191,6 @@ sensor:
           mdi:battery
         {% endif %}
       color: |
-        !nunjucks
         {% set numState = state | int %}
         {% if numState <= 10 %}
           #ff0000

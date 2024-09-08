@@ -6,7 +6,6 @@
 import { StreamDeck } from '@/modules/common/streamdeck'
 import { Homeassistant } from '@/modules/homeassistant/homeassistant'
 import { SvgUtils } from '@/modules/plugin/svgUtils'
-import { EntityButtonImageFactory } from '@/modules/plugin/entityButtonImageFactory'
 import nunjucks from 'nunjucks'
 import { Settings } from '@/modules/common/settings'
 import { onMounted, ref } from 'vue'
@@ -16,9 +15,8 @@ import axios from 'axios'
 import yaml from 'js-yaml'
 
 let entityConfigFactory
-const buttonImageFactory = new EntityButtonImageFactory()
-const touchScreenImageFactory = new EntityButtonImageFactory({ width: 200, height: 100 })
-const svgUtils = new SvgUtils()
+const buttonSvgUtils = new SvgUtils()
+const touchScreenSvgUtils = new SvgUtils({ width: 200, height: 100 })
 
 const $SD = ref(null)
 const $HA = ref(null)
@@ -64,7 +62,7 @@ onMounted(async () => {
       rotationPercent[context] = 0
       actionSettings.value[context] = Settings.parse(message.payload.settings)
       if ($HA.value) {
-        $HA.value.getStates(entityStatesChanged)
+        $HA.value.getStatesDebounced(entityStatesChanged)
       }
     })
 
@@ -127,7 +125,7 @@ onMounted(async () => {
       rotationAmount[context] = 0
       actionSettings.value[context] = Settings.parse(message.payload.settings)
       if ($HA.value) {
-        $HA.value.getStates(entityStatesChanged)
+        $HA.value.getStatesDebounced(entityStatesChanged)
       }
     })
   }
@@ -157,7 +155,7 @@ function connectHomeAssistant() {
 }
 
 const onHAConnected = () => {
-  $HA.value.getStates(entityStatesChanged)
+  $HA.value.getStatesDebounced(entityStatesChanged)
   $HA.value.subscribeEvents(entityStateChanged)
 }
 
@@ -228,10 +226,11 @@ function updateContextState(currentContext, domain, stateObject) {
   if (contextSettings.display.useCustomTitle) {
     let state = stateObject.state
     let stateAttributes = stateObject.attributes
-
     buttonRenderingConfig.customTitle = nunjucks.renderString(contextSettings.display.buttonTitle, { ...{ state }, ...stateAttributes })
+  }
 
-    $SD.value.setTitle(currentContext, buttonRenderingConfig.customTitle)
+  if (contextSettings.display.useCustomButtonLabels) {
+    buttonRenderingConfig.labelTemplates = contextSettings.display.buttonLabels.split('\n')
   }
 
   if (contextSettings.display.useEncoderLayout) {
@@ -243,14 +242,17 @@ function updateContextState(currentContext, domain, stateObject) {
     if (!buttonRenderingConfig.feedback) {
       buttonRenderingConfig.feedback = {}
     }
-    buttonRenderingConfig.feedback.title = buttonRenderingConfig.customTitle !== undefined ? buttonRenderingConfig.customTitle : ''
-    buttonRenderingConfig.feedback.icon = 'data:image/svg+xml;charset=utf8,' + svgUtils.generateIconSVG(buttonRenderingConfig.icon, buttonRenderingConfig.color)
+    buttonRenderingConfig.feedback.title = buttonRenderingConfig.customTitle ? buttonRenderingConfig.customTitle : ''
+    buttonRenderingConfig.feedback.icon = 'data:image/svg+xml;charset=utf8,' + buttonSvgUtils.renderIconSVG(buttonRenderingConfig.icon, buttonRenderingConfig.color)
     if (buttonRenderingConfig.feedback.value === undefined) {
-      buttonRenderingConfig.feedback.value = buttonRenderingConfig.state
+      buttonRenderingConfig.feedback.value = buttonSvgUtils.renderTemplates(buttonRenderingConfig.labelTemplates, { ...stateObject.attributes, ...{ state: stateObject.state } }).join(' ')
     }
     $SD.value.setFeedback(currentContext, buttonRenderingConfig.feedback)
 
   } else if (contextSettings.display.useStateImagesForOnOffStates) {
+    if (buttonRenderingConfig.customTitle) {
+      $SD.value.setTitle(currentContext, buttonRenderingConfig.customTitle)
+    }
     if (activeStates.value.indexOf(stateObject.state) !== -1) {
       console.log('Setting state of ' + currentContext + ' to 1')
       $SD.value.setState(currentContext, 1)
@@ -259,9 +261,8 @@ function updateContextState(currentContext, domain, stateObject) {
       $SD.value.setState(currentContext, 0)
     }
   } else {
-    // override default labels
-    if (contextSettings.display.useCustomButtonLabels) {
-      buttonRenderingConfig.labelTemplates = contextSettings.display.buttonLabels.split('\n')
+    if (buttonRenderingConfig.customTitle) {
+      $SD.value.setTitle(currentContext, buttonRenderingConfig.customTitle)
     }
 
     buttonRenderingConfig.isAction = contextSettings.button.serviceShortPress.serviceId && (contextSettings.display.enableServiceIndicator === undefined || contextSettings.display.enableServiceIndicator) // undefined = on by default
@@ -272,17 +273,17 @@ function updateContextState(currentContext, domain, stateObject) {
     }
 
     if (contextSettings.controllerType === 'Encoder') {
-      const buttonSVG = touchScreenImageFactory.renderButtonSVG(buttonRenderingConfig, stateObject)
+      const buttonSVG = touchScreenSvgUtils.renderButtonSVG(buttonRenderingConfig, stateObject)
       setButtonSVG(buttonSVG, currentContext)
     } else {
-      const buttonSVG = buttonImageFactory.renderButtonSVG(buttonRenderingConfig, stateObject)
+      const buttonSVG = buttonSvgUtils.renderButtonSVG(buttonRenderingConfig, stateObject)
       setButtonSVG(buttonSVG, currentContext)
     }
   }
 }
 
 function setButtonSVG(svg, changedContext) {
-  const image = 'data:image/svg+xml,' + svg
+  const image = 'data:image/svg+xml;,' + svg
   if (actionSettings.value[changedContext].controllerType === 'Encoder') {
     $SD.value.setFeedbackLayout(changedContext, { 'layout': '$A0' })
     $SD.value.setFeedback(changedContext, { 'full-canvas': image, 'canvas': null, 'title': '' })

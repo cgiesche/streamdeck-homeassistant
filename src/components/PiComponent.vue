@@ -419,7 +419,7 @@ function saveGlobalSettings() {
   $SD.saveGlobalSettings({
     'serverUrl': serverUrl.value,
     'accessToken': accessToken.value,
-    'displayConfiguration': displayConfiguration.value
+    'displayConfiguration': displayConfigurationsSettings
   })
 
   connectHomeAssistant()

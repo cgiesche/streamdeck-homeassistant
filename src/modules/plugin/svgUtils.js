@@ -1,5 +1,7 @@
 import Snap from "snapsvg-cjs"
 import {urlencode} from "nunjucks/src/filters";
+import * as Mdi from '@mdi/js'
+import nunjucks from 'nunjucks'
 
 export class SvgUtils {
 
@@ -22,28 +24,60 @@ export class SvgUtils {
         this.snap = Snap(this.buttonRes.width, this.buttonRes.height);
     }
 
-    generateIconSVG(iconSVG, iconColor) {
-        const icon = this.snap.path(iconSVG)
-        icon.attr("fill", iconColor);
-        const iconBBox = icon.getBBox();
+    /**
+     * Renders a complete button image based on the given rendering-config.
+     * @return string
+     */
+    renderButtonSVG(renderingConfig, stateObject) {
+        const buttonLabels = this.renderTemplates(renderingConfig.labelTemplates, { ...stateObject.attributes, ...{ state: stateObject.state } })
+        return this.#generateButtonSVG(buttonLabels, renderingConfig.icon, renderingConfig.color, renderingConfig.isAction, renderingConfig.isMultiAction)
+    }
+
+    /**
+     * Renders the given MDI as SVG.
+     * @return string
+     */
+    renderIconSVG(mdiIconName, iconColor) {
+        return this.#generateIconSVG(mdiIconName, iconColor)
+    }
+
+    renderTemplates(templates, values) {
+        return templates ? templates
+          .map(template => template ? template : '')
+          .map(template => nunjucks.renderString(template, values)) : []
+    }
+
+    #generateIconSVG(mdiIconName, color) {
+        let iconData = null
+        if (mdiIconName) {
+            iconData = Mdi[this.#toPascalCase(mdiIconName)]
+        }
+
+        const iconSVG = this.snap.path(iconData)
+        iconSVG.attr("fill", color);
+        const iconBBox = iconSVG.getBBox();
         const iconHeight = iconBBox.height;
         const iconWidth = iconBBox.width;
         const targetHeight = this.buttonRes.height / 1.3;
         const targetWidth = this.buttonRes.width / 1.3;
         const scaleFactor = Math.min(targetHeight / iconHeight, targetWidth / iconWidth);
-        icon.transform(`scale(${scaleFactor})`)
+        iconSVG.transform(`scale(${scaleFactor})`)
 
         let outerSVG = this.snap.outerSVG();
         this.snap.clear();
         return outerSVG
     }
 
-    generateButtonSVG(labels, iconSVG, iconColor, isAction = false, isMultiAction = false) {
+    #generateButtonSVG(labels, mdiIconName, iconColor, isAction = false, isMultiAction = false) {
+        let iconData = null
+        if (mdiIconName) {
+            iconData = Mdi[this.#toPascalCase(mdiIconName)]
+        }
 
-        if (iconSVG) {
-            const icon = this.snap.path(iconSVG)
-            icon.attr("fill", iconColor);
-            const iconBBox = icon.getBBox();
+        if (iconData) {
+            const iconSVG = this.snap.path(iconData)
+            iconSVG.attr("fill", iconColor);
+            const iconBBox = iconSVG.getBBox();
             const iconHeight = iconBBox.height;
             const iconWidth = iconBBox.width;
             const targetHeight = this.halfRes.height / 1.2;
@@ -51,7 +85,7 @@ export class SvgUtils {
             const scaleFactor = Math.min(targetHeight / iconHeight, targetWidth / iconWidth);
             const xPos = (this.buttonRes.width - iconWidth * scaleFactor) / 2 - (iconBBox.x * scaleFactor);
             const yPos = (this.halfRes.height - iconHeight * scaleFactor) / 2 - (iconBBox.y * scaleFactor);
-            icon.transform(`translate(${xPos} ${yPos}) scale(${scaleFactor})`)
+            iconSVG.transform(`translate(${xPos} ${yPos}) scale(${scaleFactor})`)
         }
 
         if (isAction) {
@@ -63,7 +97,7 @@ export class SvgUtils {
         for (let i = 0; i < labels.length; i++) {
             let lines = labels[i].split("\n");
             for (let i = currentLineNumber; i < (lines.length + currentLineNumber); i++) {
-                this.drawText(lines[i - currentLineNumber], i);
+                this.#drawText(lines[i - currentLineNumber], i);
             }
             currentLineNumber += lines.length;
         }
@@ -81,7 +115,7 @@ export class SvgUtils {
         return outerSVG
     }
 
-    drawText(text, lineNr) {
+    #drawText(text, lineNr) {
         const escapedText = urlencode(text);
         const quarterHeight = this.buttonRes.height / 4
         this.snap.text(0, (quarterHeight - ((quarterHeight * 1.2 - this.fontSize) / 2)) + lineNr * quarterHeight, escapedText)
@@ -89,4 +123,13 @@ export class SvgUtils {
             .transform(`translateX(${this.halfRes.width})`);
     }
 
+    #toPascalCase = (iconName) => {
+        const iconNameRaw = iconName.substring(4)
+        const iconNamePascalCase = iconNameRaw.replace(/(^\w|-\w)/g, this.#clearAndUpper)
+        return 'mdi' + iconNamePascalCase
+    }
+
+    #clearAndUpper = (text) => {
+        return text.replace(/-/, '').toUpperCase()
+    }
 }
