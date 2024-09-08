@@ -211,47 +211,50 @@ function updateState(stateMessage) {
   })
 }
 
+function isEncoder(contextSettings) {
+  return contextSettings.controllerType === 'Encoder'
+}
+
 function updateContextState(currentContext, domain, stateObject) {
   let contextSettings = actionSettings.value[currentContext]
-  let buttonRenderingConfig = entityConfigFactory.determineConfig(domain, stateObject, contextSettings.display)
+  let renderingConfig = entityConfigFactory.determineConfig(domain, stateObject, contextSettings.display)
 
-  buttonRenderingConfig.isAction = contextSettings.button.serviceShortPress.serviceId && (contextSettings.display.enableServiceIndicator === undefined || contextSettings.display.enableServiceIndicator) // undefined = on by default
-  buttonRenderingConfig.isMultiAction = contextSettings.button.serviceLongPress.serviceId && (contextSettings.display.enableServiceIndicator === undefined || contextSettings.display.enableServiceIndicator) // undefined = on by default
-  buttonRenderingConfig.hideIcon = contextSettings.display.hideIcon
+  renderingConfig.isAction = contextSettings.button.serviceShortPress.serviceId && (contextSettings.display.enableServiceIndicator === undefined || contextSettings.display.enableServiceIndicator) // undefined = on by default
+  renderingConfig.isMultiAction = contextSettings.button.serviceLongPress.serviceId && (contextSettings.display.enableServiceIndicator === undefined || contextSettings.display.enableServiceIndicator) // undefined = on by default
 
-  if (buttonRenderingConfig.rotationPercent !== undefined) {
-    rotationPercent[currentContext] = buttonRenderingConfig.rotationPercent
+  if (renderingConfig.rotationPercent !== undefined) {
+    rotationPercent[currentContext] = renderingConfig.rotationPercent
   }
 
   if (contextSettings.display.useCustomTitle) {
     let state = stateObject.state
     let stateAttributes = stateObject.attributes
-    buttonRenderingConfig.customTitle = nunjucks.renderString(contextSettings.display.buttonTitle, { ...{ state }, ...stateAttributes })
+    renderingConfig.customTitle = nunjucks.renderString(contextSettings.display.buttonTitle, { ...{ state }, ...stateAttributes })
   }
 
   if (contextSettings.display.useCustomButtonLabels) {
-    buttonRenderingConfig.labelTemplates = contextSettings.display.buttonLabels.split('\n')
+    renderingConfig.labelTemplates = contextSettings.display.buttonLabels.split('\n')
   }
 
-  if (contextSettings.display.useEncoderLayout) {
-    if (!buttonRenderingConfig.feedbackLayout) {
-      buttonRenderingConfig.feedbackLayout = '$A1'
+  if (isEncoder(contextSettings)) {
+    if (!renderingConfig.feedbackLayout) {
+      renderingConfig.feedbackLayout = '$A1'
     }
-    $SD.value.setFeedbackLayout(currentContext, { layout: buttonRenderingConfig.feedbackLayout })
+    $SD.value.setFeedbackLayout(currentContext, { layout: renderingConfig.feedbackLayout })
 
-    if (!buttonRenderingConfig.feedback) {
-      buttonRenderingConfig.feedback = {}
+    if (!renderingConfig.feedback) {
+      renderingConfig.feedback = {}
     }
-    buttonRenderingConfig.feedback.title = buttonRenderingConfig.customTitle ? buttonRenderingConfig.customTitle : ''
-    buttonRenderingConfig.feedback.icon = 'data:image/svg+xml;charset=utf8,' + buttonSvgUtils.renderIconSVG(buttonRenderingConfig.icon, buttonRenderingConfig.color)
-    if (buttonRenderingConfig.feedback.value === undefined) {
-      buttonRenderingConfig.feedback.value = buttonSvgUtils.renderTemplates(buttonRenderingConfig.labelTemplates, { ...stateObject.attributes, ...{ state: stateObject.state } }).join(' ')
+    renderingConfig.feedback.title = renderingConfig.customTitle ? renderingConfig.customTitle : ''
+    renderingConfig.feedback.icon = 'data:image/svg+xml;charset=utf8,' + buttonSvgUtils.renderIconSVG(renderingConfig.icon, renderingConfig.color)
+    if (renderingConfig.feedback.value === undefined) {
+      renderingConfig.feedback.value = buttonSvgUtils.renderTemplates(renderingConfig.labelTemplates, { ...stateObject.attributes, ...{ state: stateObject.state } }).join(' ')
     }
-    $SD.value.setFeedback(currentContext, buttonRenderingConfig.feedback)
+    $SD.value.setFeedback(currentContext, renderingConfig.feedback)
 
   } else if (contextSettings.display.useStateImagesForOnOffStates) {
-    if (buttonRenderingConfig.customTitle) {
-      $SD.value.setTitle(currentContext, buttonRenderingConfig.customTitle)
+    if (renderingConfig.customTitle) {
+      $SD.value.setTitle(currentContext, renderingConfig.customTitle)
     }
     if (activeStates.value.indexOf(stateObject.state) !== -1) {
       console.log('Setting state of ' + currentContext + ' to 1')
@@ -260,25 +263,21 @@ function updateContextState(currentContext, domain, stateObject) {
       console.log('Setting state of ' + currentContext + ' to 0')
       $SD.value.setState(currentContext, 0)
     }
+
   } else {
-    if (buttonRenderingConfig.customTitle) {
-      $SD.value.setTitle(currentContext, buttonRenderingConfig.customTitle)
+    if (renderingConfig.customTitle) {
+      $SD.value.setTitle(currentContext, renderingConfig.customTitle)
     }
 
-    buttonRenderingConfig.isAction = contextSettings.button.serviceShortPress.serviceId && (contextSettings.display.enableServiceIndicator === undefined || contextSettings.display.enableServiceIndicator) // undefined = on by default
-    buttonRenderingConfig.isMultiAction = contextSettings.button.serviceLongPress.serviceId && (contextSettings.display.enableServiceIndicator === undefined || contextSettings.display.enableServiceIndicator) // undefined = on by default
+    renderingConfig.isAction = contextSettings.button.serviceShortPress.serviceId && (contextSettings.display.enableServiceIndicator === undefined || contextSettings.display.enableServiceIndicator) // undefined = on by default
+    renderingConfig.isMultiAction = contextSettings.button.serviceLongPress.serviceId && (contextSettings.display.enableServiceIndicator === undefined || contextSettings.display.enableServiceIndicator) // undefined = on by default
 
-    if (!buttonRenderingConfig.color) {
-      buttonRenderingConfig.color = activeStates.value.indexOf(stateObject.state) !== -1 ? entityConfigFactory.colors.active : entityConfigFactory.colors.neutral
+    if (!renderingConfig.color) {
+      renderingConfig.color = activeStates.value.indexOf(stateObject.state) !== -1 ? entityConfigFactory.colors.active : entityConfigFactory.colors.neutral
     }
 
-    if (contextSettings.controllerType === 'Encoder') {
-      const buttonSVG = touchScreenSvgUtils.renderButtonSVG(buttonRenderingConfig, stateObject)
-      setButtonSVG(buttonSVG, currentContext)
-    } else {
-      const buttonSVG = buttonSvgUtils.renderButtonSVG(buttonRenderingConfig, stateObject)
-      setButtonSVG(buttonSVG, currentContext)
-    }
+    const buttonSVG = buttonSvgUtils.renderButtonSVG(renderingConfig, stateObject)
+    setButtonSVG(buttonSVG, currentContext)
   }
 }
 

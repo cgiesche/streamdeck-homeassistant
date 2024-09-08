@@ -111,7 +111,6 @@ export class Settings {
             let settingsV5 = {...settings};
             settingsV5.version = 5
 
-            settingsV5.display.useEncoderLayout = false;
             settingsV5.display.iconSettings = settingsV5.display.hideIcon ? "HIDE" : "PREFER_PLUGIN"
             delete settingsV5.display.hideIcon
 
