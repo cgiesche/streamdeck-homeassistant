@@ -8,7 +8,7 @@ export class Settings {
         console.log(`Parsing version ${settings.version} settings: ${JSON.stringify(settings)}`)
 
         if (settings.version === 1) {
-            let settingsV2 = {
+            const settingsV2 = {
                 version: 2,
                 display: {
                     domain: settings["domain"],
@@ -50,7 +50,7 @@ export class Settings {
         }
 
         if (settings.version === 2) {
-            let settingsV3 = {...settings};
+            const settingsV3 = {...settings};
             settingsV3.version = 3
 
             if (settings.button.service.name) {
@@ -87,7 +87,7 @@ export class Settings {
         }
 
         if (settings.version === 3) {
-            let settingsV4 = {...settings};
+            const settingsV4 = {...settings};
             settingsV4.version = 4
 
             settingsV4.button.serviceRotation = {
@@ -110,8 +110,9 @@ export class Settings {
         if (settings.version === 4) {
             let settingsV5 = {...settings};
             settingsV5.version = 5
-            
-            settingsV5.display.useEncoderLayout = false;
+
+            settingsV5.display.iconSettings = settingsV5.display.hideIcon ? "HIDE" : "PREFER_PLUGIN"
+            delete settingsV5.display.hideIcon
 
             return this.parse(settingsV5)
         }

@@ -2,8 +2,8 @@
   <div>
     <label class="form-label" for="entity">Entity</label>
     <select size="5" id="entity" @change="emit('update:modelValue', $event.target.value)" :value="modelValue"
-            class="form-select form-select-sm mb-1" title="The entity you want to display">
-      <option v-for="entity in filteredEntities" v-bind:key="entity" :value="entity.entityId">{{
+            class="form-select form-select-sm mb-1">
+      <option v-for="entity in filteredEntities" v-bind:key="entity" :value="entity.entityId" :title="entity?.entityId">{{
           entity.title
         }}
       </option>

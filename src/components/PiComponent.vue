@@ -1,8 +1,8 @@
 <template>
   <div class="container-fluid">
 
-    <h1>Server Settings</h1>
-    <div class="clearfix">
+    <h1>Global Settings</h1>
+    <div class="clearfix mb-3">
 
       <div class="mb-3">
         <label class="form-label" for="serverUrl">Server URL</label>
@@ -26,34 +26,46 @@
             documentation</a></div>
       </div>
 
+      <div class="mb-3">
+        <label class="form-label" for="displayConfig">Display configuration ("Theme")</label>
+        <div class="input-group">
+          <select :disabled="displayConfigurationUrlOverride.length > 0" id="displayConfig" v-model="displayConfiguration" class="form-select form-select-sm">
+            <option v-for="availableConfiguration in manifest['display-configs']" :key="availableConfiguration"
+                    :value="availableConfiguration">
+              {{ availableConfiguration.title }}
+            </option>
+          </select>
+        </div>
+
+        <div class="mt-3">
+          <label for="formFileSm" class="form-label">Custom display configuration URL</label>
+          <input v-model="displayConfigurationUrlOverride" class="form-control form-control-sm" type="url" placeholder="file://c:/custom.yml">
+          <div class="form-text">Specify path or URL to customized display configuration. Unsupported! <a target="_blank" href="https://raw.githubusercontent.com/cgiesche/streamdeck-homeassistant/master/public/config/default-display-config.yml">Example</a>.</div>
+        </div>
+      </div>
 
       <div v-if="haError" class="alert alert-danger alert-dismissible" role="alert">
         {{ haError }}
         <button class="btn-close" type="button" @click="haError = ''"></button>
       </div>
 
-      <button id="mybutton" :disabled="!isHaSettingsComplete || haConnectionState === 'connecting'"
+      <button :disabled="!isHaSettingsComplete || haConnectionState === 'connecting'"
               class="btn btn-sm btn-primary float-end"
               v-on:click="saveGlobalSettings">
         <span v-if="haConnectionState === 'connecting'" aria-hidden="true" class="spinner-border spinner-border-sm"
               role="status"></span>
-        <span>{{ haConnectionState === 'connected' ? "Reconnect" : "Connect" }}</span>
+        <span>{{ haConnectionState === 'connected' ? 'Save and reconnect' : 'Save and connect' }}</span>
       </button>
     </div>
+
+    <!-- ======================================================================================================= -->
 
     <div v-if="haConnectionState === 'connected'" class="clearfix mb-3">
       <h1>{{ controllerType }} appearance</h1>
 
       <EntitySelection class="mb-3" :available-entities="availableEntities" v-model="entity"></EntitySelection>
 
-      <template v-if="controllerType === 'Encoder'">
-        <div class="form-check">
-          <input id="chkUseEncoderLayout" v-model="useEncoderLayout" class="form-check-input" type="checkbox">
-          <label class="form-check-label" for="chkUseEncoderLayout">Use encoder layout</label>
-        </div>
-      </template>
-
-      <div class="form-check">
+      <div class="form-check form-switch">
         <input id="chkButtonTitle" v-model="useCustomTitle" class="form-check-input" type="checkbox">
         <label class="form-check-label" for="chkButtonTitle">Use custom title</label>
       </div>
@@ -74,8 +86,8 @@
         </div>
       </div>
 
-      <template v-if="!useEncoderLayout">
-        <div class="form-check">
+
+        <div class="form-check form-switch">
           <input id="chkCustomLabels" v-model="useCustomButtonLabels" class="form-check-input" type="checkbox">
           <label class="form-check-label" for="chkCustomLabels">Custom labels</label>
         </div>
@@ -92,14 +104,32 @@
           </div>
         </div>
 
-        <div class="form-check">
+      <template v-if="!controllerType === 'Encoder'">
+        <div class="form-check form-switch mb-3">
           <input id="chkEnableServiceIndicator" v-model="enableServiceIndicator" class="form-check-input" type="checkbox">
           <label class="form-check-label" for="chkEnableServiceIndicator">Show visual service indicators</label>
         </div>
 
-        <div class="form-check mb-3">
-          <input id="chkHideIcon" v-model="hideIcon" class="form-check-input" type="checkbox">
-          <label class="form-check-label" for="chkHideIcon">Hide icon</label>
+        <div class="mb-3">
+          <div class="form-check">
+            <input class="form-check-input" type="radio" id="radioPlugin" value="PREFER_PLUGIN" v-model="iconSettings">
+            <label class="form-check-label" for="radioPlugin">
+              Prefer icon from plugin (recommended)
+            </label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" id="radioHomeAssistant" value="PREFER_HA"
+                   v-model="iconSettings">
+            <label class="form-check-label" for="radioHomeAssistant">
+              Prefer icon from HA
+            </label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" id="radioHide" value="HIDE" v-model="iconSettings">
+            <label class="form-check-label" for="radioHide">
+              Hide icon
+            </label>
+          </div>
         </div>
       </template>
 
@@ -181,24 +211,32 @@
 
 <script setup>
 
-import {StreamDeck} from "@/modules/common/streamdeck";
-import {Settings} from "@/modules/common/settings";
-import {Homeassistant} from "@/modules/homeassistant/homeassistant";
-import {Entity} from "@/modules/pi/entity";
-import {Service} from "@/modules/pi/service";
-import {computed, onMounted, ref} from "vue";
-import ServiceCallConfiguration from "@/components/ServiceCallConfiguration.vue";
-import {ObjectUtils} from "@/modules/common/utils";
-import AccordeonComponent from "@/components/accordeon/BootstrapAccordeon.vue";
-import AccordeonItem from "@/components/accordeon/BootstrapAccordeonItem.vue";
-import EntitySelection from "@/components/EntitySelection.vue";
+import defaultManifest from '../../public/config/manifest.yml'
+import { StreamDeck } from '@/modules/common/streamdeck'
+import { Settings } from '@/modules/common/settings'
+import { Homeassistant } from '@/modules/homeassistant/homeassistant'
+import { Entity } from '@/modules/pi/entity'
+import { Service } from '@/modules/pi/service'
+import { computed, onMounted, ref } from 'vue'
+import ServiceCallConfiguration from '@/components/ServiceCallConfiguration.vue'
+import { ObjectUtils } from '@/modules/common/utils'
+import AccordeonComponent from '@/components/accordeon/BootstrapAccordeon.vue'
+import AccordeonItem from '@/components/accordeon/BootstrapAccordeonItem.vue'
+import EntitySelection from '@/components/EntitySelection.vue'
+import axios from 'axios'
+import yaml from 'js-yaml'
 
-let $HA = null;
-let $SD = null;
+let manifest = ref(defaultManifest)
 
-const serverUrl = ref("")
-const accessToken = ref("")
-const entity = ref("")
+let $HA = null
+let $SD = null
+
+const serverUrl = ref('')
+const accessToken = ref('')
+const displayConfiguration = ref()
+const displayConfigurationUrlOverride = ref('')
+
+const entity = ref('')
 
 const serviceShortPress = ref({})
 const serviceLongPress = ref({})
@@ -209,37 +247,46 @@ const rotationTickMultiplier = ref(1)
 const rotationTickBucketSizeMs = ref(300)
 
 const useCustomTitle = ref(false)
-const buttonTitle = ref("{{friendly_name}}")
-const useEncoderLayout = ref(false)
+const buttonTitle = ref('{{friendly_name}}')
 const useStateImagesForOnOffStates = ref(false) // determined by action ID (manifest)
 const useCustomButtonLabels = ref(false)
-const buttonLabels = ref("")
+const buttonLabels = ref('')
 const enableServiceIndicator = ref(true)
-const hideIcon = ref(false)
+const iconSettings = ref('PREFER_PLUGIN')
 const availableEntityDomains = ref([])
 const availableEntities = ref([])
 const availableServiceDomains = ref([])
 const availableServices = ref([])
 const currentStates = ref([])
-const haConnectionState = ref("disconnected") // disconnected, connecting, connected
-const haError = ref("")
+const haConnectionState = ref('disconnected') // disconnected, connecting, connected
+const haError = ref('')
 
-const controllerType = ref("")
+const controllerType = ref('')
 
 onMounted(() => {
+  updateManifest()
+
   window.connectElgatoStreamDeckSocket = (inPort, inPropertyInspectorUUID, inRegisterEvent, inInfo, inActionInfo) => {
-    $SD = new StreamDeck(inPort, inPropertyInspectorUUID, inRegisterEvent, inInfo, inActionInfo);
+    $SD = new StreamDeck(inPort, inPropertyInspectorUUID, inRegisterEvent, inInfo, inActionInfo)
 
     // Dual State entity (custom icons for on/off)
-    const inActionInfoObject = JSON.parse(inActionInfo);
+    const inActionInfoObject = JSON.parse(inActionInfo)
 
-    useStateImagesForOnOffStates.value = inActionInfoObject["action"] === "de.perdoctus.streamdeck.homeassistant.dual-state-entity";
+    useStateImagesForOnOffStates.value = inActionInfoObject['action'] === 'de.perdoctus.streamdeck.homeassistant.dual-state-entity'
     controllerType.value = inActionInfoObject.payload.controller
 
-    $SD.on("globalsettings", (globalSettings) => {
+    $SD.on('globalsettings', (globalSettings) => {
       if (globalSettings) {
-        serverUrl.value = globalSettings.serverUrl;
-        accessToken.value = globalSettings.accessToken;
+        serverUrl.value = globalSettings.serverUrl
+        accessToken.value = globalSettings.accessToken
+
+        let displayConfigurationFromSettings = globalSettings.displayConfiguration
+        if (displayConfigurationFromSettings) {
+          displayConfiguration.value = displayConfigurationFromSettings
+          if (displayConfigurationFromSettings.urlOverride) {
+            displayConfigurationUrlOverride.value = displayConfigurationFromSettings.urlOverride
+          }
+        }
 
         if (serverUrl.value && accessToken.value) {
           connectHomeAssistant()
@@ -247,28 +294,34 @@ onMounted(() => {
       }
     })
 
-    $SD.on("connected", (actionInfo) => {
+    $SD.on('connected', (actionInfo) => {
       $SD.requestGlobalSettings()
 
-      let settings = Settings.parse(actionInfo.payload.settings);
+      let settings = Settings.parse(actionInfo.payload.settings)
 
-      entity.value = settings["display"]["entityId"]
-      enableServiceIndicator.value = settings["display"]["enableServiceIndicator"] || settings["display"]["enableServiceIndicator"] === undefined;
-      hideIcon.value = settings["display"]["hideIcon"];
-      useCustomTitle.value = settings["display"]["useCustomTitle"]
-      buttonTitle.value = settings["display"]["buttonTitle"] || "{{friendly_name}}"
-      useEncoderLayout.value = settings["display"]["useEncoderLayout"]
-      useCustomButtonLabels.value = settings["display"]["useCustomButtonLabels"]
-      buttonLabels.value = settings["display"]["buttonLabels"]
-      serviceShortPress.value = settings["button"]["serviceShortPress"]
-      serviceLongPress.value = settings["button"]["serviceLongPress"]
-      serviceTap.value = settings["button"]["serviceTap"]
-      serviceRotation.value = settings["button"]["serviceRotation"]
-      rotationTickMultiplier.value = settings["rotationTickMultiplier"] || 1
-      rotationTickBucketSizeMs.value = settings["rotationTickBucketSizeMs"] || 300
+      entity.value = settings['display']['entityId']
+      enableServiceIndicator.value = settings['display']['enableServiceIndicator'] || settings['display']['enableServiceIndicator'] === undefined
+      iconSettings.value = settings['display']['iconSettings']
+      useCustomTitle.value = settings['display']['useCustomTitle']
+      buttonTitle.value = settings['display']['buttonTitle'] || '{{friendly_name}}'
+      useCustomButtonLabels.value = settings['display']['useCustomButtonLabels']
+      buttonLabels.value = settings['display']['buttonLabels']
+      serviceShortPress.value = settings['button']['serviceShortPress']
+      serviceLongPress.value = settings['button']['serviceLongPress']
+      serviceTap.value = settings['button']['serviceTap']
+      serviceRotation.value = settings['button']['serviceRotation']
+      rotationTickMultiplier.value = settings['rotationTickMultiplier'] || 1
+      rotationTickBucketSizeMs.value = settings['rotationTickBucketSizeMs'] || 300
     })
   }
 })
+
+function updateManifest() {
+  console.log("Updating manifest.")
+  axios.get('https://cdn.jsdelivr.net/gh/cgiesche/streamdeck-homeassistant@master/public/config/manifest.yml')
+    .then(response => this.manifest = yaml.load(response.data))
+    .catch(error => console.log(`Failed to download updated manifest.yml: ${error}`))
+}
 
 const isHaSettingsComplete = computed(() => {
   return serverUrl.value && accessToken.value
@@ -277,74 +330,91 @@ const isHaSettingsComplete = computed(() => {
 const entityAttributes = computed(() => {
   let currentEntityState = currentStates.value.find((state) => state.entityId === entity.value)
   if (currentEntityState && currentEntityState.attributes) {
-    let attributes = currentEntityState.attributes.map(attribute => `{{${attribute}}}`);
-    return ["{{state}}", ...attributes]
+    let attributes = currentEntityState.attributes.map(attribute => `{{${attribute}}}`)
+    return ['{{state}}', ...attributes]
   }
   return []
 })
 
 function connectHomeAssistant() {
   if ($HA) {
-    $HA.close();
+    $HA.close()
   }
 
-  haConnectionState.value = 'connecting';
+  haConnectionState.value = 'connecting'
 
   try {
     $HA = new Homeassistant(serverUrl.value, accessToken.value, () => {
-          haConnectionState.value = 'connected';
-          $HA.getStates((states) => {
-            availableEntityDomains.value = Array.from(states
-                .map(state => state.entity_id.split('.')[0])
-                .reduce((acc, curr) => acc.add(curr), new Set()))
-                .sort();
+        haConnectionState.value = 'connected'
+        $HA.getStates((states) => {
+          availableEntityDomains.value = Array.from(states
+            .map(state => state.entity_id.split('.')[0])
+            .reduce((acc, curr) => acc.add(curr), new Set()))
+            .sort()
 
-            availableEntities.value = states
-                .map((state) => {
-                      let splittedId = state.entity_id.split('.');
-                      return new Entity(splittedId[0], splittedId[1], state.attributes.friendly_name || state.entity_id)
-                    }
-                )
-                .sort((a, b) => (a.title.toLowerCase() > b.title.toLowerCase()) ? 1 : ((b.title.toLowerCase() > a.title.toLowerCase()) ? -1 : 0))
+          availableEntities.value = states
+            .map((state) => {
+                let splittedId = state.entity_id.split('.')
+                return new Entity(splittedId[0], splittedId[1], state.attributes.friendly_name || state.entity_id)
+              }
+            )
+            .sort((a, b) => (a.title.toLowerCase() > b.title.toLowerCase()) ? 1 : ((b.title.toLowerCase() > a.title.toLowerCase()) ? -1 : 0))
 
-            currentStates.value = states
-                .map((state) => {
-                  return {
-                    entityId: state.entity_id,
-                    attributes: ObjectUtils.paths(state.attributes)
-                  }
-                })
-          });
-          $HA.getServices((services) => {
-            availableServices.value = Object.entries(services).flatMap(domainServices => {
-              const domain = domainServices[0];
-              return Object.entries(domainServices[1]).map(services => {
-                let serviceName = services[0];
-                let serviceData = services[1];
-                return new Service(domain, serviceName, serviceData.name, serviceData.description, serviceData.fields, serviceData.target);
-              })
+          currentStates.value = states
+            .map((state) => {
+              return {
+                entityId: state.entity_id,
+                attributes: ObjectUtils.paths(state.attributes)
+              }
             })
-            availableServiceDomains.value = Object.keys(services).sort();
-          });
-        },
-        (message) => {
-          haError.value = message;
-          haConnectionState.value = 'disconnected';
-        },
-        () => {
-          haConnectionState.value = 'disconnected';
-        }
+        })
+        $HA.getServices((services) => {
+          availableServices.value = Object.entries(services).flatMap(domainServices => {
+            const domain = domainServices[0]
+            return Object.entries(domainServices[1]).map(services => {
+              let serviceName = services[0]
+              let serviceData = services[1]
+              return new Service(domain, serviceName, serviceData.name, serviceData.description, serviceData.fields, serviceData.target)
+            })
+          })
+          availableServiceDomains.value = Object.keys(services).sort()
+        })
+      },
+      (message) => {
+        haError.value = message
+        haConnectionState.value = 'disconnected'
+      },
+      () => {
+        haConnectionState.value = 'disconnected'
+      }
     )
   } catch (e) {
     haError.value = e
-    haConnectionState.value = 'disconnected';
+    haConnectionState.value = 'disconnected'
   }
 }
 
 
 function saveGlobalSettings() {
-  haError.value = "";
-  $SD.saveGlobalSettings({"serverUrl": serverUrl.value, "accessToken": accessToken.value});
+  haError.value = ''
+
+  let displayConfigurationsSettings = displayConfiguration.value
+
+  // validate custom config
+  if (displayConfigurationUrlOverride.value) {
+    axios.get(displayConfigurationUrlOverride.value)
+      .then()
+      .catch(error => haError.value = `Could not read custom display configuration: ${error}`)
+
+    displayConfigurationsSettings.urlOverride = displayConfigurationUrlOverride.value
+  }
+
+  $SD.saveGlobalSettings({
+    'serverUrl': serverUrl.value,
+    'accessToken': accessToken.value,
+    'displayConfiguration': displayConfigurationsSettings
+  })
+
   connectHomeAssistant()
 }
 
@@ -358,10 +428,9 @@ function saveSettings() {
     display: {
       entityId: entity.value,
       useCustomTitle: useCustomTitle.value,
-      useEncoderLayout: useEncoderLayout.value,
       buttonTitle: buttonTitle.value,
       enableServiceIndicator: enableServiceIndicator.value,
-      hideIcon: hideIcon.value,
+      iconSettings: iconSettings.value,
       useCustomButtonLabels: useCustomButtonLabels.value,
       buttonLabels: buttonLabels.value,
       useStateImagesForOnOffStates: useStateImagesForOnOffStates.value // determined by action ID (manifest)

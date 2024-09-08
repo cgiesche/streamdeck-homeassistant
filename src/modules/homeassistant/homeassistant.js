@@ -74,6 +74,13 @@ export class Homeassistant {
     this.websocket.send(JSON.stringify(authMessage))
   }
 
+  getStatesDebounced(callback) {
+    if (!this.lastFullSync || Date.now() - this.lastFullSync > 2000) {
+      this.lastFullSync = Date.now()
+      this.getStates(callback)
+    }
+  }
+
   getStates(callback) {
     let getStatesCommand = new GetStatesCommand(this.nextRequestId())
     this.sendCommand(getStatesCommand, callback)
@@ -91,7 +98,7 @@ export class Homeassistant {
 
   callService(service, domain, entity_id = null, serviceData = null, callback = null) {
     let executeScriptCmd = new ExecuteScriptCommand(this.nextRequestId(), [
-      new ServiceAction(domain, service, entity_id ? [entity_id]: null, serviceData || {})
+      new ServiceAction(domain, service, entity_id ? [entity_id] : null, serviceData || {})
     ])
     this.sendCommand(executeScriptCmd, callback)
   }

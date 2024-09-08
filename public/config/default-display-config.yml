@@ -1,3 +1,4 @@
+# https://mycolor.space/?hex=%23845EC2&sub=1
 #_states:
 #  unavailable:
 #    color: "#505050"
@@ -19,14 +20,34 @@
 #          color: #FFFFFF
 #          labelTemplates:
 
-_color: "#a1a1a1"
+_color: "#AAAAAA"
 _labelTemplates:
   - ""
   - ""
   - "{{state}}{{unit_of_measurement}}"
 _states:
   unavailable:
-    color: "#505050"
+    color: "#FF6F91"
+  unknown:
+    color: "#FF6F91"
+  # ======================== On-States ======================
+  on:
+    color: "#ffd484"
+  playing:
+    color: "#ffd484"
+  open:
+    color: "#ffd484"
+  opening:
+    color: "#ffd484"
+  home:
+    color: "#ffd484"
+  locked:
+    color: "#ffd484"
+  heat:
+    color: "#ffd484"
+  active:
+    color: "#ffd484"
+  # =========================================================
 
 switch:
   icon: mdi:toggle-switch-off
@@ -37,6 +58,12 @@ switch:
 light:
   icon: mdi:lightbulb
   color: "#888888"
+  feedbackLayout: "$B1"
+  feedback: |
+    {
+      "indicator": {{ attributes.brightness / 255 * 100 }},
+      "value": "{{ (attributes.brightness / 255 * 100) | int }}%"
+    }
   states:
     unavailable:
       icon: mdi:lightbulb-alert
@@ -48,6 +75,19 @@ input_boolean:
   states:
     on:
       icon: mdi:toggle-switch
+
+update:
+  icon: mdi:package
+  states:
+    on:
+      icon: mdi:package
+      color: "#FF8066"
+
+person:
+  icon: mdi:account
+  states:
+    not_home:
+      icon: mdi:account-arrow-right
 
 binary_sensor:
   icon: mdi:radiobox-blank
@@ -65,6 +105,16 @@ binary_sensor:
       states:
         on:
           icon: mdi:window-open-variant
+    door:
+      icon: mdi:door-closed
+      states:
+        on:
+          icon: mdi:door-open
+    motion:
+      icon: mdi:motion-sensor
+      states:
+        off:
+          icon: mdi:motion-sensor-off
 
 cover:
   icon: mdi:garage
@@ -80,12 +130,49 @@ sensor:
   classes:
     humidity:
       icon: mdi:water-percent
-      color: "#3f3fdb"
+      color: "#2C73D2"
+    atmospheric_pressure:
+      icon: mdi:thermometer-lines
+      color: "#2C73D2"
     temperature:
       icon: mdi:thermometer
+      color: |
+        {% set numState = state | int %}
+        {% if attributes.unit_of_measurement == '°F' %}
+          {% set numState = (numState - 32) * 5 / 9  %}
+        {% endif %}
+        {% if numState <= -20 %}
+          #0000FF
+        {% elif numState <= -15 %}
+          #0040FF
+        {% elif numState <= -10 %}
+          #0080FF
+        {% elif numState <= -5 %}
+          #00BFFF
+        {% elif numState <= 0 %}
+          #87CEFA
+        {% elif numState <= 5 %}
+          #B0E0E6
+        {% elif numState <= 10 %}
+          #90EE90
+        {% elif numState <= 15 %}
+          #ADFF2F
+        {% elif numState <= 20 %}
+          #FFFF00
+        {% elif numState <= 25 %}
+          #FFA500        
+        {% else %}
+          #FF0000
+        {% endif %}
+
     battery:
+      feedbackLayout: "$B1"
+      feedback: |
+        {
+          "indicator": {{ state | int }},
+          "value": "{{ state | int }}%"
+        }
       icon: |
-        !nunjucks
         {% set numState = state | int %}
         {% if numState <= 10 %}
           mdi:battery-outline
@@ -109,7 +196,6 @@ sensor:
           mdi:battery
         {% endif %}
       color: |
-        !nunjucks
         {% set numState = state | int %}
         {% if numState <= 10 %}
           #ff0000
@@ -136,6 +222,18 @@ sensor:
         {% endif %}
     power:
       icon: mdi:flash
+      color: "#F9F871"
+    power_factor:
+      icon: mdi:angle-acute
+    voltage:
+      icon: mdi:flash
+      color: "#F9F871"
+    energy:
+      icon: mdi:lightning-bolt
+      color: "#F9F871"
+    current:
+      icon: mdi:current-ac
+      color: "#2C73D2"
 
 weather:
   labelTemplates:
@@ -191,12 +289,8 @@ vacuum:
   icon: mdi:robot-vacuum
   states:
     cleaning:
-      color: "#e9b200"
+      color: "#00C9A7"
     returning:
-      color: "#e9b200"
-    idle:
-      color: "#a1a1a1"
-    docked:
-      color: "#a1a1a1"
+      color: "#F9F871"
     error:
-      color: "#a10000"
+      color: "#FF6F91"
