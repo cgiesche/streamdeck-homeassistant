@@ -60,9 +60,10 @@ light:
   color: "#888888"
   feedbackLayout: "$B1"
   feedback: |
+    {% set brightness = attributes.brightness | default(255, true) %}
     {
-      "indicator": {{ attributes.brightness / 255 * 100 }},
-      "value": "{{ (attributes.brightness / 255 * 100) | int }}%"
+      "indicator": {{ brightness / 255 * 100 }},
+      "value": "{{ (brightness / 255 * 100) | int }}%"
     }
   states:
     unavailable:
