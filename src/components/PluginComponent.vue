@@ -14,6 +14,10 @@ import defaultActiveStates from '../../public/config/active-states.yml'
 import axios from 'axios'
 import yaml from 'js-yaml'
 
+axios.defaults.headers = {
+  'Cache-Control': 'public, max-age=86400'
+}
+
 let entityConfigFactory
 const svgUtils = new SvgUtils()
 

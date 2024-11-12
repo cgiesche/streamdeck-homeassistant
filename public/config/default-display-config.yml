@@ -50,17 +50,20 @@ _states:
   # =========================================================
 
 switch:
+  labelTemplates:
   icon: mdi:toggle-switch-off
   states:
     on:
       icon: mdi:toggle-switch
 
 light:
+  labelTemplates:
   icon: mdi:lightbulb
   color: "#888888"
   feedbackLayout: "$B1"
   feedback: |
-    {% set brightness = attributes.brightness | default(255, true) %}
+    {% set defaultBrightness = (255 if state === 'on' else 0) %}
+    {% set brightness = attributes.brightness | default(defaultBrightness, true) %}
     {
       "indicator": {{ brightness / 255 * 100 }},
       "value": "{{ (brightness / 255 * 100) | int }}%"
@@ -72,6 +75,7 @@ light:
       color: "#ffd484"
 
 input_boolean:
+  labelTemplates:
   icon: mdi:toggle-switch-off
   states:
     on:
@@ -91,6 +95,7 @@ person:
       icon: mdi:account-arrow-right
 
 binary_sensor:
+  labelTemplates:
   icon: mdi:radiobox-blank
   states:
     on:
