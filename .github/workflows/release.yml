@@ -23,19 +23,14 @@ jobs:
         with:
           file: public/manifest.json
           field: Version
-          value: ${{ steps.tagName.outputs.tag }}
+          value: ${{ steps.tagName.outputs.tag }}.${{ github.run_number }}
 
       - name: NPM Install
         run: npm install
-
       - name: VUE Build
         run: npm run build
-
-      - name: Create plugin folder structure
-        run: cp -r ./dist de.perdoctus.streamdeck.homeassistant.sdPlugin
-
-      - name: Zip Dist
-        run: zip -r release.zip ./de.perdoctus.streamdeck.homeassistant.sdPlugin
+      - name: Streamdeck Bundle
+        run: npm run bundle
 
       - name: Upload Release Asset
         id: upload-release-asset
@@ -44,6 +39,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./release.zip
+          asset_path: ./de.perdoctus.streamdeck.homeassistant.streamDeckPlugin
           asset_name: de.perdoctus.streamdeck.homeassistant.streamDeckPlugin
           asset_content_type: application/zip
