@@ -8,7 +8,7 @@
         {
           "Image": "images/ha-button",
           "TitleAlignment": "bottom",
-          "FontSize": "9"
+          "FontSize": 9
         }
       ],
       "SupportedInMultiActions": true,
@@ -29,18 +29,19 @@
         {
           "Image": "images/ha-button-off",
           "TitleAlignment": "bottom",
-          "FontSize": "9"
+          "FontSize": 9
         },
         {
           "Image": "images/ha-button-on",
           "TitleAlignment": "bottom",
-          "FontSize": "9"
+          "FontSize": 9
         }
       ],
       "SupportedInMultiActions": true,
       "UUID": "de.perdoctus.streamdeck.homeassistant.dual-state-entity"
     }
   ],
+  "UUID": "de.perdoctus.streamdeck.homeassistant",
   "Category": "Home Assistant",
   "CategoryIcon": "images/category",
   "SDKVersion": 2,
@@ -63,6 +64,6 @@
   ],
   "Software":
   {
-    "MinimumVersion" : "4.1"
+    "MinimumVersion" : "6.4"
   }
 }

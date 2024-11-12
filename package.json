@@ -2,11 +2,12 @@
   "name": "streamdeck-homeassistant-vue",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "vite",
     "build": "vite build",
-    "build_dev": "vite build --sourcemap inline --minify false",
-    "preview": "vite preview",
+    "validate": "streamdeck validate ./de.perdoctus.streamdeck.homeassistant.sdPlugin",
+    "build-dev": "vite build --watch --sourcemap inline --minify false",
+    "bundle": "streamdeck pack ./de.perdoctus.streamdeck.homeassistant.sdPlugin",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore",
     "format": "prettier --write src/"
   },
@@ -14,7 +15,7 @@
     "@mdi/font": "^7.1.96",
     "@mdi/js": "^7.1.96",
     "@popperjs/core": "^2.11.8",
-    "axios": "^1.6.7",
+    "axios": "1.7.4",
     "bootstrap": "^5.3.2",
     "core-js": "^3.26.1",
     "js-yaml": "^4.1.0",
@@ -31,6 +32,7 @@
     "eslint-plugin-vue": "^9.17.0",
     "prettier": "^3.0.3",
     "sass": "^1.68.0",
-    "vite": "^4.4.9"
+    "vite": "^4.4.9",
+    "@elgato/cli": "^1.0.1"
   }
 }
