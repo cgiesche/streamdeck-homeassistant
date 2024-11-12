@@ -23,6 +23,10 @@ export class EntityConfigFactory {
    * @param displayConfigurationURL : String
    */
   constructor(displayConfigurationURL) {
+    axios.defaults.headers = {
+      'Cache-Control': 'public, max-age=86400'
+    }
+
     if (displayConfigurationURL) {
       console.log(`Loading display configuration from ${displayConfigurationURL}`)
       axios.get(displayConfigurationURL)

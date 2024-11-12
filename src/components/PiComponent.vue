@@ -233,6 +233,10 @@ import EntitySelection from '@/components/EntitySelection.vue'
 import axios from 'axios'
 import yaml from 'js-yaml'
 
+axios.defaults.headers = {
+  'Cache-Control': 'public, max-age=86400'
+}
+
 let manifest = ref(defaultManifest)
 
 let $HA = null
