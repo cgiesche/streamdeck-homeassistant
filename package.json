@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "vite build",
-    "validate": "streamdeck validate ./de.perdoctus.streamdeck.homeassistant.sdPlugin",
+    "validate": "streamdeck validate --no-update-check ./de.perdoctus.streamdeck.homeassistant.sdPlugin",
     "build-dev": "vite build --watch --sourcemap inline --minify false",
     "bundle": "streamdeck pack ./de.perdoctus.streamdeck.homeassistant.sdPlugin",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore",

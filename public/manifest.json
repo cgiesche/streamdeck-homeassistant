@@ -51,7 +51,7 @@
   "Name": "Home Assistant",
   "Icon": "images/plugin/plugin",
   "URL": "https://github.com/cgiesche/streamdeck-homeassistant",
-  "Version": "100.2.1",
+  "Version": "100.2.1.1",
   "OS": [
     {
       "Platform": "mac",
