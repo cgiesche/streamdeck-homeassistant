@@ -479,10 +479,7 @@
           "snapshot_entities": {
             "name": "Snapshot entities",
             "description": "The entities of which a snapshot is to be taken",
-            "example": [
-              "light.ceiling",
-              "light.kitchen"
-            ],
+            "example": ["light.ceiling", "light.kitchen"],
             "selector": {
               "object": null
             }
@@ -2180,11 +2177,7 @@
             "default": 0,
             "selector": {
               "select": {
-                "options": [
-                  "0",
-                  "1",
-                  "2"
-                ]
+                "options": ["0", "1", "2"]
               }
             }
           },
@@ -3875,9 +3868,7 @@
             "default": "hls",
             "selector": {
               "select": {
-                "options": [
-                  "hls"
-                ]
+                "options": ["hls"]
               }
             }
           }
