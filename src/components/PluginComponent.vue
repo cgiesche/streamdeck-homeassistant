@@ -35,17 +35,17 @@ let rotationAmount = []
 let rotationPercent = []
 
 onMounted(async () => {
-
   window.connectElgatoStreamDeckSocket = (inPort, inPluginUUID, inRegisterEvent, inInfo) => {
     $SD.value = new StreamDeck(inPort, inPluginUUID, inRegisterEvent, inInfo, '{}')
 
     $SD.value.on('globalsettings', (inGlobalSettings) => {
-        console.log('Got global settings.')
-        globalSettings.value = inGlobalSettings
-        entityConfigFactory = new EntityConfigFactory(inGlobalSettings.displayConfiguration?.urlOverride || inGlobalSettings.displayConfiguration?.url)
-        connectHomeAssistant()
-      }
-    )
+      console.log('Got global settings.')
+      globalSettings.value = inGlobalSettings
+      entityConfigFactory = new EntityConfigFactory(
+        inGlobalSettings.displayConfiguration?.urlOverride || inGlobalSettings.displayConfiguration?.url
+      )
+      connectHomeAssistant()
+    })
 
     $SD.value.on('connected', () => {
       $SD.value.requestGlobalSettings()
@@ -88,8 +88,7 @@ onMounted(async () => {
         rotationPercent[context] = 100
       }
 
-      if (rotationTimeout[context])
-        return
+      if (rotationTimeout[context]) return
 
       let serviceCall = () => {
         callService(context, settings.button.serviceRotation, {
@@ -106,7 +105,6 @@ onMounted(async () => {
       } else {
         serviceCall()
       }
-
     })
 
     $SD.value.on('dialDown', (message) => {
@@ -138,9 +136,10 @@ onMounted(async () => {
 
 async function fetchActiveStates() {
   try {
-    axios.get('https://cdn.jsdelivr.net/gh/cgiesche/streamdeck-homeassistant@master/public/config/active-states.yml')
-      .then(response => activeStates.value = yaml.load(response.data))
-      .catch(error => console.log(`Failed to download updated active-states.json: ${error}`))
+    axios
+      .get('https://cdn.jsdelivr.net/gh/cgiesche/streamdeck-homeassistant@master/public/config/active-states.yml')
+      .then((response) => (activeStates.value = yaml.load(response.data)))
+      .catch((error) => console.log(`Failed to download updated active-states.json: ${error}`))
   } catch (error) {
     console.log(`Failed to download updated active-states.json: ${error}`)
   }
@@ -153,7 +152,13 @@ function connectHomeAssistant() {
       $HA.value.close()
     }
     console.log('Connecting to Home Assistant ' + globalSettings.value.serverUrl)
-    $HA.value = new Homeassistant(globalSettings.value.serverUrl, globalSettings.value.accessToken, onHAConnected, onHAError, onHAClosed)
+    $HA.value = new Homeassistant(
+      globalSettings.value.serverUrl,
+      globalSettings.value.accessToken,
+      onHAConnected,
+      onHAError,
+      onHAClosed
+    )
   }
 }
 
@@ -177,7 +182,7 @@ function onHAClosed(msg) {
 }
 
 function showAlert() {
-  Object.keys(actionSettings.value).forEach(key => $SD.value.showAlert(key))
+  Object.keys(actionSettings.value).forEach((key) => $SD.value.showAlert(key))
 }
 
 function entityStatesChanged(event) {
@@ -198,12 +203,16 @@ function updateState(stateMessage) {
   }
 
   let domain = stateMessage.entity_id.split('.')[0]
-  let changedContexts = Object.keys(actionSettings.value).filter(key => actionSettings.value[key].display.entityId === stateMessage.entity_id)
+  let changedContexts = Object.keys(actionSettings.value).filter(
+    (key) => actionSettings.value[key].display.entityId === stateMessage.entity_id
+  )
 
-  changedContexts.forEach(context => {
+  changedContexts.forEach((context) => {
     try {
-      if (stateMessage.last_updated != null) stateMessage.attributes['last_updated'] = new Date(stateMessage.last_updated).toLocaleTimeString()
-      if (stateMessage.last_changed != null) stateMessage.attributes['last_changed'] = new Date(stateMessage.last_changed).toLocaleTimeString()
+      if (stateMessage.last_updated != null)
+        stateMessage.attributes['last_updated'] = new Date(stateMessage.last_updated).toLocaleTimeString()
+      if (stateMessage.last_changed != null)
+        stateMessage.attributes['last_changed'] = new Date(stateMessage.last_changed).toLocaleTimeString()
 
       updateContextState(context, domain, stateMessage)
     } catch (e) {
@@ -222,8 +231,12 @@ function updateContextState(currentContext, domain, stateObject) {
   let contextSettings = actionSettings.value[currentContext]
   let renderingConfig = entityConfigFactory.determineConfig(domain, stateObject, contextSettings.display)
 
-  renderingConfig.isAction = contextSettings.button.serviceShortPress.serviceId && (contextSettings.display.enableServiceIndicator === undefined || contextSettings.display.enableServiceIndicator) // undefined = on by default
-  renderingConfig.isMultiAction = contextSettings.button.serviceLongPress.serviceId && (contextSettings.display.enableServiceIndicator === undefined || contextSettings.display.enableServiceIndicator) // undefined = on by default
+  renderingConfig.isAction =
+    contextSettings.button.serviceShortPress.serviceId &&
+    (contextSettings.display.enableServiceIndicator === undefined || contextSettings.display.enableServiceIndicator) // undefined = on by default
+  renderingConfig.isMultiAction =
+    contextSettings.button.serviceLongPress.serviceId &&
+    (contextSettings.display.enableServiceIndicator === undefined || contextSettings.display.enableServiceIndicator) // undefined = on by default
 
   if (renderingConfig.rotationPercent !== undefined) {
     rotationPercent[currentContext] = renderingConfig.rotationPercent
@@ -232,7 +245,10 @@ function updateContextState(currentContext, domain, stateObject) {
   if (contextSettings.display.useCustomTitle) {
     let state = stateObject.state
     let stateAttributes = stateObject.attributes
-    renderingConfig.customTitle = nunjucks.renderString(contextSettings.display.buttonTitle, { ...{ state }, ...stateAttributes })
+    renderingConfig.customTitle = nunjucks.renderString(contextSettings.display.buttonTitle, {
+      ...{ state },
+      ...stateAttributes
+    })
   }
 
   if (contextSettings.display.useCustomButtonLabels) {
@@ -249,12 +265,17 @@ function updateContextState(currentContext, domain, stateObject) {
       renderingConfig.feedback = {}
     }
     renderingConfig.feedback.title = renderingConfig.customTitle ? renderingConfig.customTitle : ''
-    renderingConfig.feedback.icon = 'data:image/svg+xml;charset=utf8,' + svgUtils.renderIconSVG(renderingConfig.icon, renderingConfig.color)
+    renderingConfig.feedback.icon =
+      'data:image/svg+xml;charset=utf8,' + svgUtils.renderIconSVG(renderingConfig.icon, renderingConfig.color)
     if (renderingConfig.feedback.value === undefined) {
-      renderingConfig.feedback.value = svgUtils.renderTemplates(renderingConfig.labelTemplates, { ...stateObject.attributes, ...{ state: stateObject.state } }).join(' ')
+      renderingConfig.feedback.value = svgUtils
+        .renderTemplates(renderingConfig.labelTemplates, {
+          ...stateObject.attributes,
+          ...{ state: stateObject.state }
+        })
+        .join(' ')
     }
     $SD.value.setFeedback(currentContext, renderingConfig.feedback)
-
   } else if (contextSettings.display.useStateImagesForOnOffStates) {
     if (renderingConfig.customTitle) {
       $SD.value.setTitle(currentContext, renderingConfig.customTitle)
@@ -266,17 +287,23 @@ function updateContextState(currentContext, domain, stateObject) {
       console.log('Setting state of ' + currentContext + ' to 0')
       $SD.value.setState(currentContext, 0)
     }
-
   } else {
     if (renderingConfig.customTitle) {
       $SD.value.setTitle(currentContext, renderingConfig.customTitle)
     }
 
-    renderingConfig.isAction = contextSettings.button.serviceShortPress.serviceId && (contextSettings.display.enableServiceIndicator === undefined || contextSettings.display.enableServiceIndicator) // undefined = on by default
-    renderingConfig.isMultiAction = contextSettings.button.serviceLongPress.serviceId && (contextSettings.display.enableServiceIndicator === undefined || contextSettings.display.enableServiceIndicator) // undefined = on by default
+    renderingConfig.isAction =
+      contextSettings.button.serviceShortPress.serviceId &&
+      (contextSettings.display.enableServiceIndicator === undefined || contextSettings.display.enableServiceIndicator) // undefined = on by default
+    renderingConfig.isMultiAction =
+      contextSettings.button.serviceLongPress.serviceId &&
+      (contextSettings.display.enableServiceIndicator === undefined || contextSettings.display.enableServiceIndicator) // undefined = on by default
 
     if (!renderingConfig.color) {
-      renderingConfig.color = activeStates.value.indexOf(stateObject.state) !== -1 ? entityConfigFactory.colors.active : entityConfigFactory.colors.neutral
+      renderingConfig.color =
+        activeStates.value.indexOf(stateObject.state) !== -1
+          ? entityConfigFactory.colors.active
+          : entityConfigFactory.colors.neutral
     }
 
     const buttonSVG = svgUtils.renderButtonSVG(renderingConfig, stateObject)
@@ -287,8 +314,8 @@ function updateContextState(currentContext, domain, stateObject) {
 function setButtonSVG(svg, changedContext) {
   const image = 'data:image/svg+xml;,' + svg
   if (actionSettings.value[changedContext].controllerType === 'Encoder') {
-    $SD.value.setFeedbackLayout(changedContext, { 'layout': '$A0' })
-    $SD.value.setFeedback(changedContext, { 'full-canvas': image, 'canvas': null, 'title': '' })
+    $SD.value.setFeedbackLayout(changedContext, { layout: '$A0' })
+    $SD.value.setFeedback(changedContext, { 'full-canvas': image, canvas: null, title: '' })
   } else {
     $SD.value.setImage(changedContext, image)
   }
@@ -344,5 +371,4 @@ function callService(context, serviceToCall, serviceDataAttributes = {}) {
     }
   }
 }
-
 </script>

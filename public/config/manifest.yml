@@ -1,7 +1,7 @@
 display-configs:
   - id: 4893fc3e-a8b1-4c03-856a-53dd64dc0096
     title: Default (stable)
-    url: "https://cdn.jsdelivr.net/gh/cgiesche/streamdeck-homeassistant@master/public/config/default-display-config.yml"
+    url: 'https://cdn.jsdelivr.net/gh/cgiesche/streamdeck-homeassistant@master/public/config/default-display-config.yml'
   - id: 67795b3e-da82-47b4-ae76-b454a32f360a
     title: Default (preview)
-    url: "https://cdn.jsdelivr.net/gh/cgiesche/streamdeck-homeassistant@develop/public/config/default-display-config.yml"
+    url: 'https://cdn.jsdelivr.net/gh/cgiesche/streamdeck-homeassistant@develop/public/config/default-display-config.yml'

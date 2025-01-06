@@ -55,15 +55,14 @@
   "OS": [
     {
       "Platform": "mac",
-      "MinimumVersion" : "10.11"
+      "MinimumVersion": "10.11"
     },
     {
       "Platform": "windows",
-      "MinimumVersion" : "10"
+      "MinimumVersion": "10"
     }
   ],
-  "Software":
-  {
-    "MinimumVersion" : "6.4"
+  "Software": {
+    "MinimumVersion": "6.4"
   }
 }

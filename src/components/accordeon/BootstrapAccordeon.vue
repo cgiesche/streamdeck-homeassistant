@@ -1,10 +1,9 @@
 <template>
   <div :id="id" class="accordion">
-    <slot></slot>
+    <slot />
   </div>
 </template>
 <script setup>
-
 defineProps({
   id: {
     type: String,

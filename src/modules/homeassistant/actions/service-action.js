@@ -29,7 +29,7 @@ export class ServiceAction extends Action {
       throw new TypeError('serviceData must be an object')
     }
     if (entity_id) {
-      this.target = {entity_id: entity_id}
+      this.target = { entity_id: entity_id }
     }
 
     this.service = `${domain}.${service}`

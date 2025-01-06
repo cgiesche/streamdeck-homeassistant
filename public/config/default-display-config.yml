@@ -20,33 +20,33 @@
 #          color: #FFFFFF
 #          labelTemplates:
 
-_color: "#AAAAAA"
+_color: '#AAAAAA'
 _labelTemplates:
-  - ""
-  - ""
-  - "{{state}}{{unit_of_measurement}}"
+  - ''
+  - ''
+  - '{{state}}{{unit_of_measurement}}'
 _states:
   unavailable:
-    color: "#FF6F91"
+    color: '#FF6F91'
   unknown:
-    color: "#FF6F91"
+    color: '#FF6F91'
   # ======================== On-States ======================
   on:
-    color: "#ffd484"
+    color: '#ffd484'
   playing:
-    color: "#ffd484"
+    color: '#ffd484'
   open:
-    color: "#ffd484"
+    color: '#ffd484'
   opening:
-    color: "#ffd484"
+    color: '#ffd484'
   home:
-    color: "#ffd484"
+    color: '#ffd484'
   locked:
-    color: "#ffd484"
+    color: '#ffd484'
   heat:
-    color: "#ffd484"
+    color: '#ffd484'
   active:
-    color: "#ffd484"
+    color: '#ffd484'
   # =========================================================
 
 switch:
@@ -59,8 +59,8 @@ switch:
 light:
   labelTemplates:
   icon: mdi:lightbulb
-  color: "#888888"
-  feedbackLayout: "$B1"
+  color: '#888888'
+  feedbackLayout: '$B1'
   feedback: |
     {% set defaultBrightness = (255 if state === 'on' else 0) %}
     {% set brightness = attributes.brightness | default(defaultBrightness, true) %}
@@ -72,7 +72,7 @@ light:
     unavailable:
       icon: mdi:lightbulb-alert
     on:
-      color: "#ffd484"
+      color: '#ffd484'
 
 input_boolean:
   labelTemplates:
@@ -86,7 +86,7 @@ update:
   states:
     on:
       icon: mdi:package
-      color: "#FF8066"
+      color: '#FF8066'
 
 person:
   icon: mdi:account
@@ -136,10 +136,10 @@ sensor:
   classes:
     humidity:
       icon: mdi:water-percent
-      color: "#2C73D2"
+      color: '#2C73D2'
     atmospheric_pressure:
       icon: mdi:thermometer-lines
-      color: "#2C73D2"
+      color: '#2C73D2'
     temperature:
       icon: mdi:thermometer
       color: |
@@ -172,7 +172,7 @@ sensor:
         {% endif %}
 
     battery:
-      feedbackLayout: "$B1"
+      feedbackLayout: '$B1'
       feedback: |
         {
           "indicator": {{ state | int }},
@@ -228,25 +228,25 @@ sensor:
         {% endif %}
     power:
       icon: mdi:flash
-      color: "#F9F871"
+      color: '#F9F871'
     power_factor:
       icon: mdi:angle-acute
     voltage:
       icon: mdi:flash
-      color: "#F9F871"
+      color: '#F9F871'
     energy:
       icon: mdi:lightning-bolt
-      color: "#F9F871"
+      color: '#F9F871'
     current:
       icon: mdi:current-ac
-      color: "#2C73D2"
+      color: '#2C73D2'
 
 weather:
   labelTemplates:
-    - ""
-    - ""
-    - "{{temperature}}{{temperature_unit}}"
-    - "{{humidity}}%"
+    - ''
+    - ''
+    - '{{temperature}}{{temperature_unit}}'
+    - '{{humidity}}%'
   states:
     clear-night:
       icon: mdi:weather-night
@@ -295,8 +295,8 @@ vacuum:
   icon: mdi:robot-vacuum
   states:
     cleaning:
-      color: "#00C9A7"
+      color: '#00C9A7'
     returning:
-      color: "#F9F871"
+      color: '#F9F871'
     error:
-      color: "#FF6F91"
+      color: '#FF6F91'

@@ -11,11 +11,7 @@ const __dirname = path.dirname(__filename)
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  plugins: [
-    vue(),
-    ViteYaml(),
-    RestartStreamDeck()
-  ],
+  plugins: [vue(), ViteYaml(), RestartStreamDeck()],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
@@ -31,5 +27,12 @@ export default defineConfig({
       }
     }
   },
-  base: './'
+  base: './',
+  css: {
+    preprocessorOptions: {
+      scss: {
+        silenceDeprecations: ['mixed-decls', 'color-functions', 'global-builtin', 'import']
+      }
+    }
+  }
 })
