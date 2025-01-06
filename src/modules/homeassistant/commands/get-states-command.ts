@@ -9,7 +9,7 @@ export class GetStatesCommand extends Command {
    * Constructs a GetStatesCommand instance.
    * @param {number} requestId - The unique identifier for the command request.
    */
-  constructor(requestId) {
+  constructor(requestId: number) {
     super(requestId, 'get_states')
   }
 }

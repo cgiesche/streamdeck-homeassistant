@@ -1,10 +1,10 @@
 export class Entity {
-  domain
-  name
-  title
-  entityId
+  domain: string
+  name: string
+  title: string
+  entityId: string
 
-  constructor(domain, name, title) {
+  constructor(domain: string, name: string, title: string) {
     this.domain = domain
     this.name = name
     this.title = title

@@ -1,7 +1,25 @@
+// @ts-expect-error ts-checker doesn't understand yaml imports
 import defaultDisplayConfiguration from '../../../public/config/default-display-config.yml'
 import axios from 'axios'
-import nunjucks from 'nunjucks'
+import { renderString } from 'nunjucks'
 import yaml from 'js-yaml'
+import type { StateMessage } from '@/modules/homeassistant/homeassistant'
+
+export interface RenderingConfig {
+  feedbackLayout: string | null
+  feedback: {
+    title: string
+    icon: string | null
+    value: string
+  } | null
+  icon: string | null
+  color: string | null
+  labelTemplates: string[] | null
+  customTitle: string | null
+  isAction: boolean
+  isMultiAction: boolean
+  rotationPercent: number
+}
 
 export class EntityConfigFactory {
   displayConfiguration = defaultDisplayConfiguration
@@ -21,10 +39,8 @@ export class EntityConfigFactory {
   /**
    * @param displayConfigurationURL : String
    */
-  constructor(displayConfigurationURL) {
-    axios.defaults.headers = {
-      'Cache-Control': 'public, max-age=86400'
-    }
+  constructor(displayConfigurationURL: string) {
+    axios.defaults.headers['Cache-Control'] = 'public, max-age=86400'
 
     if (displayConfigurationURL) {
       console.log(`Loading display configuration from ${displayConfigurationURL}`)
@@ -46,11 +62,17 @@ export class EntityConfigFactory {
    * @param displaySettings
    * @returns {{color: *, icon: *, labelTemplates: *}}
    */
-  determineConfig(domain, stateObject, displaySettings) {
+  determineConfig(
+    domain: string,
+    stateObject: StateMessage,
+    displaySettings: {
+      iconSettings: string
+    }
+  ) {
     const attributes = stateObject.attributes
     const deviceClass = attributes.device_class
 
-    let renderingConfig = this.getConfig(domain, stateObject, deviceClass)
+    const renderingConfig = this.getConfig(domain, stateObject, deviceClass)
 
     if (displaySettings.iconSettings === 'HIDE') {
       // Remove default if icon should not be rendered
@@ -62,7 +84,7 @@ export class EntityConfigFactory {
       // Use icon from home-assistant, if no default or preferred
       renderingConfig.icon = attributes.icon
     }
-    let rgbColor = attributes.rgb_color
+    const rgbColor = attributes.rgb_color
     if (rgbColor) {
       renderingConfig.color = this.rgbToHex(rgbColor[0], rgbColor[1], rgbColor[2])
     }
@@ -70,20 +92,24 @@ export class EntityConfigFactory {
     return renderingConfig
   }
 
-  getConfig(domain, stateObject, deviceClass) {
-    const resolvers = []
+  getConfig(
+    domain: string,
+    stateObject: { state: string },
+    deviceClass: string
+  ): Partial<RenderingConfig> {
+    const resolvers: object[] = []
     this.addResolverConfig(resolvers, stateObject.state, domain, deviceClass)
     resolvers.reverse()
 
-    const feedbackLayoutString = this.resolve('feedbackLayout', resolvers)
-    const feedbackValueString = this.resolve('feedback', resolvers)
-    const iconString = this.resolve('icon', resolvers)
-    const colorString = this.resolve('color', resolvers)
-    const labelTemplates = this.resolve('labelTemplates', resolvers)
+    const feedbackLayoutString = this.resolve('feedbackLayout', resolvers) as string | null
+    const feedbackValueString = this.resolve('feedback', resolvers) as string | null
+    const iconString = this.resolve('icon', resolvers) as string | null
+    const colorString = this.resolve('color', resolvers) as string | null
+    const labelTemplates = this.resolve('labelTemplates', resolvers) as string[] | null
 
     const feedbackLayout = this.render(feedbackLayoutString, stateObject)
     const renderedFeedback = this.render(feedbackValueString, stateObject)
-    const feedback = feedbackValueString ? JSON.parse(renderedFeedback) : {}
+    const feedback = feedbackValueString ? JSON.parse(renderedFeedback!) : {}
 
     const icon = this.render(iconString, stateObject)
     const color = this.render(colorString, stateObject)
@@ -97,13 +123,14 @@ export class EntityConfigFactory {
     }
   }
 
-  addResolverConfig(resolvers, state, domain, deviceClass) {
-    let config = this.displayConfiguration
+  addResolverConfig(resolvers: unknown[], state: string, domain: string, deviceClass: string) {
+    const config = this.displayConfiguration
 
-    const defaultConfig = {}
-    if (config._icon) defaultConfig.icon = config._icon
-    if (config._color) defaultConfig.color = config._color
-    if (config._labelTemplates) defaultConfig.labelTemplates = config._labelTemplates
+    const defaultConfig = {
+      icon: config._icon,
+      color: config._color,
+      labelTemplates: config._labelTemplates
+    }
     resolvers.push(defaultConfig)
 
     const defaultStateConfig = config._states?.[state]
@@ -125,9 +152,9 @@ export class EntityConfigFactory {
   /**
    * @returns String
    */
-  render(string, stateObject) {
+  render(string: string | null, stateObject: object) {
     if (string) {
-      let renderedString = nunjucks.renderString(string, stateObject)
+      const renderedString = renderString(string, stateObject)
       if (renderedString) {
         return renderedString.trim()
       }
@@ -135,15 +162,17 @@ export class EntityConfigFactory {
     return string
   }
 
-  resolve(prop, resolvers) {
+  resolve(prop: string, resolvers: object[]): object | null {
     for (const resolver of resolvers) {
       if (Object.hasOwn(resolver, prop)) {
+        // @ts-expect-error This is a dynamic property access, can't be typed in current implementation
         return resolver[prop]
       }
     }
+    return null
   }
 
-  rgbToHex(r, g, b) {
+  rgbToHex(r: number, g: number, b: number) {
     return '#' + ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)
   }
 }

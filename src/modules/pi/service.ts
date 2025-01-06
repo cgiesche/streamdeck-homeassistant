@@ -7,7 +7,14 @@ export class Service {
   target
   serviceId
 
-  constructor(domain, name, title, description, dataFields, target) {
+  constructor(
+    domain: string,
+    name: string,
+    title: string,
+    description: string,
+    dataFields: unknown,
+    target: { entity: unknown }
+  ) {
     this.domain = domain
     this.name = name
     this.title = title

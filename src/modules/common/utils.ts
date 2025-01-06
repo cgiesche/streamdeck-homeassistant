@@ -1,6 +1,7 @@
 export const ObjectUtils = {
-  paths: (object) => {
-    let paths = []
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  paths: (object: any) => {
+    const paths: string[] = []
     Object.keys(object).forEach((key) => {
       let keyPath = key
       if (Array.isArray(object)) {

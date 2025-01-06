@@ -1,13 +1,62 @@
+import type { SettingsType } from '@/modules/common/settings'
+
+export interface BaseCommand {
+  context: string
+}
+
+export interface WillAppearCommand extends BaseCommand {
+  payload: {
+    settings: SettingsType
+  }
+}
+
+export interface DialRotateCommand extends BaseCommand {
+  payload: {
+    ticks: number
+  }
+}
+
+export interface DidReceiveSettingsCommand extends BaseCommand {
+  payload: {
+    settings: SettingsType
+  }
+}
+
+export interface GlobalSettings {
+  serverUrl: string
+  accessToken: string
+  displayConfiguration: {
+    url: string
+    urlOverride: string
+  }
+}
+
 export class StreamDeck {
-  constructor(inPort, inPropertyInspectorUUID, inRegisterEvent, inInfo, inActionInfo) {
-    let actionInfo = JSON.parse(inActionInfo)
+  propertyInspectorUUID: string
+  events: Readonly<{
+    on: (name: string, fn: (data: never) => void) => unknown
+    has: (name: string) => boolean
+    emit: (name: string, data: object) => false | void
+    eventList: Map<string, unknown>
+  }>
+  streamDeckWebsocket: WebSocket
+  on: (evt: string, fn: (data: never) => void) => unknown
+
+  constructor(
+    inPort: number,
+    inPropertyInspectorUUID: string,
+    inRegisterEvent: string,
+    inInfo: string,
+    inActionInfo: string
+  ) {
+    const actionInfo = JSON.parse(inActionInfo)
 
     this.propertyInspectorUUID = inPropertyInspectorUUID
     this.events = ELGEvents.eventEmitter()
 
     this.streamDeckWebsocket = new WebSocket('ws://localhost:' + inPort)
     this.streamDeckWebsocket.onopen = () => {
-      let json = {
+      const json = {
         event: inRegisterEvent,
         uuid: inPropertyInspectorUUID
       }
@@ -18,7 +67,7 @@ export class StreamDeck {
     this.on = (evt, fn) => this.events.on(evt, fn)
 
     this.streamDeckWebsocket.onmessage = (evt) => {
-      let incomingEvent = JSON.parse(evt.data)
+      const incomingEvent = JSON.parse(evt.data)
       switch (incomingEvent.event) {
         case 'didReceiveGlobalSettings':
           this.events.emit('globalsettings', incomingEvent.payload['settings'])
@@ -64,15 +113,15 @@ export class StreamDeck {
   }
 
   requestGlobalSettings() {
-    let getGlobalSettingsMessage = {
+    const getGlobalSettingsMessage = {
       event: 'getGlobalSettings',
       context: this.propertyInspectorUUID
     }
     this.streamDeckWebsocket.send(JSON.stringify(getGlobalSettingsMessage))
   }
 
-  saveGlobalSettings(payload) {
-    let message = {
+  saveGlobalSettings(payload: unknown) {
+    const message = {
       event: 'setGlobalSettings',
       context: this.propertyInspectorUUID,
       payload: payload
@@ -81,8 +130,8 @@ export class StreamDeck {
     this.streamDeckWebsocket.send(JSON.stringify(message))
   }
 
-  saveSettings(actionSettings) {
-    let message = {
+  saveSettings(actionSettings: unknown) {
+    const message = {
       event: 'setSettings',
       context: this.propertyInspectorUUID,
       payload: actionSettings
@@ -90,8 +139,8 @@ export class StreamDeck {
     this.streamDeckWebsocket.send(JSON.stringify(message))
   }
 
-  setTitle(context, title) {
-    let message = {
+  setTitle(context: unknown, title: string) {
+    const message = {
       event: 'setTitle',
       context: context,
       payload: {
@@ -102,8 +151,8 @@ export class StreamDeck {
     this.streamDeckWebsocket.send(JSON.stringify(message))
   }
 
-  setImage(context, image) {
-    let message = {
+  setImage(context: unknown, image: unknown) {
+    const message = {
       event: 'setImage',
       context: context,
       payload: {
@@ -116,8 +165,8 @@ export class StreamDeck {
     this.streamDeckWebsocket.send(JSON.stringify(message))
   }
 
-  setFeedback(context, payload) {
-    let message = {
+  setFeedback(context: unknown, payload: unknown) {
+    const message = {
       event: 'setFeedback',
       context: context,
       payload: payload
@@ -126,8 +175,8 @@ export class StreamDeck {
     this.streamDeckWebsocket.send(JSON.stringify(message))
   }
 
-  setFeedbackLayout(context, payload) {
-    let message = {
+  setFeedbackLayout(context: unknown, payload: unknown) {
+    const message = {
       event: 'setFeedbackLayout',
       context: context,
       payload: payload
@@ -136,8 +185,8 @@ export class StreamDeck {
     this.streamDeckWebsocket.send(JSON.stringify(message))
   }
 
-  showAlert(context) {
-    let message = {
+  showAlert(context: unknown) {
+    const message = {
       event: 'showAlert',
       context: context
     }
@@ -145,8 +194,8 @@ export class StreamDeck {
     this.streamDeckWebsocket.send(JSON.stringify(message))
   }
 
-  showOk(context) {
-    let message = {
+  showOk(context: unknown) {
+    const message = {
       event: 'showOk',
       context: context
     }
@@ -154,8 +203,8 @@ export class StreamDeck {
     this.streamDeckWebsocket.send(JSON.stringify(message))
   }
 
-  setState(context, number) {
-    let message = {
+  setState(context: unknown, number: unknown) {
+    const message = {
       event: 'setState',
       context: context,
       payload: {
@@ -166,8 +215,8 @@ export class StreamDeck {
     this.streamDeckWebsocket.send(JSON.stringify(message))
   }
 
-  log(message) {
-    let messageEvent = {
+  log(message: unknown) {
+    const messageEvent = {
       event: 'logMessage',
       payload: {
         message: message
@@ -182,30 +231,31 @@ const ELGEvents = {
   eventEmitter: function () {
     const eventList = new Map()
 
-    const on = (name, fn) => {
+    const on = (name: string, fn: unknown) => {
       if (!eventList.has(name)) eventList.set(name, ELGEvents.pubSub())
 
       return eventList.get(name).sub(fn)
     }
 
-    const has = (name) => eventList.has(name)
+    const has = (name: string) => eventList.has(name)
 
-    const emit = (name, data) => eventList.has(name) && eventList.get(name).pub(data)
+    const emit = (name: string, data: unknown) =>
+      eventList.has(name) && eventList.get(name).pub(data)
 
     return Object.freeze({ on, has, emit, eventList })
   },
 
   pubSub: function pubSub() {
-    const subscribers = new Set()
+    const subscribers = new Set<(value: unknown) => unknown>()
 
-    const sub = (fn) => {
+    const sub = (fn: (value: unknown) => unknown) => {
       subscribers.add(fn)
       return () => {
         subscribers.delete(fn)
       }
     }
 
-    const pub = (data) => subscribers.forEach((fn) => fn(data))
+    const pub = (data: unknown) => subscribers.forEach((fn) => fn(data))
     return Object.freeze({ pub, sub })
   }
 }

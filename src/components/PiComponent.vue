@@ -90,7 +90,7 @@
     <div v-if="haConnectionState === 'connected'" class="clearfix mb-3">
       <h1>{{ controllerType }} appearance</h1>
 
-      <EntitySelection class="mb-3" :available-entities="availableEntities" v-model="entity" />
+      <EntitySelection class="mb-3" :available-entities="availableEntities" v-model="entity as any" />
 
       <div class="form-check form-switch">
         <input id="chkButtonTitle" v-model="useCustomTitle" class="form-check-input" type="checkbox" />
@@ -270,30 +270,29 @@
   </div>
 </template>
 
-<script setup>
+<script lang="ts" setup>
+// @ts-expect-error ts-checker doesn't understand yaml imports
 import defaultManifest from '../../public/config/manifest.yml'
-import { StreamDeck } from '@/modules/common/streamdeck'
+import { type DidReceiveSettingsCommand, type GlobalSettings, StreamDeck } from '@/modules/common/streamdeck'
 import { Settings } from '@/modules/common/settings'
 import { Homeassistant } from '@/modules/homeassistant/homeassistant'
 import { Entity } from '@/modules/pi/entity'
 import { Service } from '@/modules/pi/service'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, type Ref, ref } from 'vue'
 import ServiceCallConfiguration from '@/components/ServiceCallConfiguration.vue'
 import { ObjectUtils } from '@/modules/common/utils'
 import AccordeonComponent from '@/components/accordeon/BootstrapAccordeon.vue'
 import AccordeonItem from '@/components/accordeon/BootstrapAccordeonItem.vue'
 import EntitySelection from '@/components/EntitySelection.vue'
 import axios from 'axios'
-import yaml from 'js-yaml'
+import { load as yamlLoad } from 'js-yaml'
 
-axios.defaults.headers = {
-  'Cache-Control': 'public, max-age=86400'
-}
+axios.defaults.headers['Cache-Control'] = 'public, max-age=86400'
 
-let manifest = ref(defaultManifest)
+const manifest = ref(defaultManifest)
 
-let $HA = null
-let $SD = null
+let $HA: Homeassistant | null = null
+let $SD: StreamDeck | null = null
 
 const serverUrl = ref('')
 const accessToken = ref('')
@@ -317,20 +316,38 @@ const useCustomButtonLabels = ref(false)
 const buttonLabels = ref('')
 const enableServiceIndicator = ref(true)
 const iconSettings = ref('PREFER_PLUGIN')
-const availableEntityDomains = ref([])
-const availableEntities = ref([])
-const availableServiceDomains = ref([])
-const availableServices = ref([])
-const currentStates = ref([])
+const availableEntityDomains: Ref<Array<string>> = ref([])
+const availableEntities: Ref<Array<Entity>> = ref([])
+const availableServiceDomains: Ref<Array<string>> = ref([])
+const availableServices: Ref<Array<Service>> = ref([])
+const currentStates: Ref<Array<{ entityId: string; attributes: string[] }>> = ref([])
 const haConnectionState = ref('disconnected') // disconnected, connecting, connected
 const haError = ref('')
 
 const controllerType = ref('')
 
+declare global {
+  interface Window {
+    connectElgatoStreamDeckSocket: (
+      inPort: number,
+      inPropertyInspectorUUID: string,
+      inRegisterEvent: string,
+      inInfo: string,
+      inActionInfo: string
+    ) => void
+  }
+}
+
 onMounted(() => {
   updateManifest()
 
-  window.connectElgatoStreamDeckSocket = (inPort, inPropertyInspectorUUID, inRegisterEvent, inInfo, inActionInfo) => {
+  window.connectElgatoStreamDeckSocket = (
+    inPort: number,
+    inPropertyInspectorUUID: string,
+    inRegisterEvent: string,
+    inInfo: string,
+    inActionInfo: string
+  ) => {
     $SD = new StreamDeck(inPort, inPropertyInspectorUUID, inRegisterEvent, inInfo, inActionInfo)
 
     // Dual State entity (custom icons for on/off)
@@ -340,12 +357,12 @@ onMounted(() => {
       inActionInfoObject['action'] === 'de.perdoctus.streamdeck.homeassistant.dual-state-entity'
     controllerType.value = inActionInfoObject.payload.controller
 
-    $SD.on('globalsettings', (globalSettings) => {
+    $SD.on('globalsettings', (globalSettings: GlobalSettings) => {
       if (globalSettings) {
         serverUrl.value = globalSettings.serverUrl
         accessToken.value = globalSettings.accessToken
 
-        let displayConfigurationFromSettings = globalSettings.displayConfiguration
+        const displayConfigurationFromSettings = globalSettings.displayConfiguration
         if (displayConfigurationFromSettings) {
           displayConfiguration.value = displayConfigurationFromSettings
           if (displayConfigurationFromSettings.urlOverride) {
@@ -359,10 +376,10 @@ onMounted(() => {
       }
     })
 
-    $SD.on('connected', (actionInfo) => {
-      $SD.requestGlobalSettings()
+    $SD.on('connected', (actionInfo: DidReceiveSettingsCommand) => {
+      $SD!.requestGlobalSettings()
 
-      let settings = Settings.parse(actionInfo.payload.settings)
+      const settings = Settings.parse(actionInfo.payload.settings)
 
       entity.value = settings['display']['entityId']
       enableServiceIndicator.value =
@@ -386,7 +403,7 @@ function updateManifest() {
   console.log('Updating manifest.')
   axios
     .get('https://cdn.jsdelivr.net/gh/cgiesche/streamdeck-homeassistant@master/public/config/manifest.yml')
-    .then((response) => (this.manifest = yaml.load(response.data)))
+    .then((response) => (manifest.value = yamlLoad(response.data)))
     .catch((error) => console.log(`Failed to download updated manifest.yml: ${error}`))
 }
 
@@ -395,9 +412,9 @@ const isHaSettingsComplete = computed(() => {
 })
 
 const entityAttributes = computed(() => {
-  let currentEntityState = currentStates.value.find((state) => state.entityId === entity.value)
+  const currentEntityState = currentStates.value.find((state) => state.entityId === entity.value)
   if (currentEntityState && currentEntityState.attributes) {
-    let attributes = currentEntityState.attributes.map((attribute) => `{{${attribute}}}`)
+    const attributes = currentEntityState.attributes.map((attribute) => `{{${attribute}}}`)
     return ['{{state}}', ...attributes]
   }
   return []
@@ -416,14 +433,14 @@ function connectHomeAssistant() {
       accessToken.value,
       () => {
         haConnectionState.value = 'connected'
-        $HA.getStates((states) => {
+        $HA!.getStates((states) => {
           availableEntityDomains.value = Array.from(
-            states.map((state) => state.entity_id.split('.')[0]).reduce((acc, curr) => acc.add(curr), new Set())
+            states.map((state) => state.entity_id.split('.')[0]).reduce((acc, curr) => acc.add(curr), new Set<string>())
           ).sort()
 
           availableEntities.value = states
             .map((state) => {
-              let splittedId = state.entity_id.split('.')
+              const splittedId = state.entity_id.split('.')
               return new Entity(splittedId[0], splittedId[1], state.attributes.friendly_name || state.entity_id)
             })
             .sort((a, b) =>
@@ -437,12 +454,19 @@ function connectHomeAssistant() {
             }
           })
         })
-        $HA.getServices((services) => {
+        $HA!.getServices((services: object) => {
           availableServices.value = Object.entries(services).flatMap((domainServices) => {
             const domain = domainServices[0]
             return Object.entries(domainServices[1]).map((services) => {
-              let serviceName = services[0]
-              let serviceData = services[1]
+              const serviceName = services[0]
+              const serviceData = services[1] as {
+                name: string
+                description: string
+                fields: string
+                target: {
+                  entity: unknown
+                }
+              }
               return new Service(
                 domain,
                 serviceName,
@@ -465,7 +489,7 @@ function connectHomeAssistant() {
       }
     )
   } catch (e) {
-    haError.value = e
+    haError.value = `${e}`
     haConnectionState.value = 'disconnected'
   }
 }
@@ -473,7 +497,7 @@ function connectHomeAssistant() {
 function saveGlobalSettings() {
   haError.value = ''
 
-  let displayConfigurationsSettings = displayConfiguration.value
+  const displayConfigurationsSettings = displayConfiguration.value
 
   // validate custom config
   if (displayConfigurationUrlOverride.value) {
@@ -485,7 +509,7 @@ function saveGlobalSettings() {
     displayConfigurationsSettings.urlOverride = displayConfigurationUrlOverride.value
   }
 
-  $SD.saveGlobalSettings({
+  $SD!.saveGlobalSettings({
     serverUrl: serverUrl.value,
     accessToken: accessToken.value,
     displayConfiguration: displayConfigurationsSettings
@@ -495,7 +519,7 @@ function saveGlobalSettings() {
 }
 
 function saveSettings() {
-  let settings = {
+  const settings = {
     version: 5,
 
     controllerType: controllerType.value,
@@ -522,6 +546,6 @@ function saveSettings() {
     rotationTickBucketSizeMs: rotationTickBucketSizeMs.value
   }
 
-  $SD.saveSettings(settings)
+  $SD!.saveSettings(settings)
 }
 </script>

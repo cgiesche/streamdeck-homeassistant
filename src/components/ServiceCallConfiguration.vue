@@ -8,6 +8,7 @@
           v-model="selectedDomain"
           class="form-select form-select-sm"
           @change="
+            // prettier-ignore
             update('serviceId', null);
             update('entityId', null)
           "
@@ -20,6 +21,7 @@
           class="btn btn-sm btn-outline-secondary"
           type="button"
           @click="
+            // prettier-ignore
             selectedDomain = '';
             clear('serviceId', 'entityId', 'serviceData')
           "
@@ -36,7 +38,7 @@
           id="service"
           :value="modelValue.serviceId"
           class="form-select form-select-sm"
-          @change="update('serviceId', $event.target.value)"
+          @change="update('serviceId', ($event.target as HTMLSelectElement).value)"
         >
           <option
             v-for="domainService in domainServices"
@@ -77,7 +79,7 @@
   "option": "value"
 }'
         rows="5"
-        @input="update('serviceData', $event.target.value)"
+        @input="update('serviceData', ($event.target as HTMLTextAreaElement).value)"
       />
       <div class="invalid-feedback" v-if="serviceDataInvalidFeedback">
         {{ serviceDataInvalidFeedback }}
@@ -101,12 +103,15 @@
   </div>
 </template>
 
-<script setup>
-import { computed, onMounted, ref } from 'vue'
-import nunjucks from 'nunjucks'
+<script lang="ts" setup>
+import { computed, onMounted, type PropType, ref } from 'vue'
+import { renderString } from 'nunjucks'
 import EntitySelection from '@/components/EntitySelection.vue'
+import type { Service } from '@/modules/pi/service'
+import type { Entity } from '@/modules/pi/entity'
 
-const titleSort = (s1, s2) => (s1.title.toLowerCase() > s2.title.toLowerCase() ? 1 : -1)
+const titleSort = (s1: { title: string }, s2: { title: string }) =>
+  s1.title.toLowerCase() > s2.title.toLowerCase() ? 1 : -1
 
 const props = defineProps({
   modelValue: {
@@ -120,11 +125,11 @@ const props = defineProps({
   },
   availableServices: {
     required: true,
-    type: [] // Service[]
+    type: Object as PropType<Array<Service>>
   },
   availableEntities: {
     required: true,
-    type: [] // Entity[]
+    type: Object as PropType<Array<Entity>>
   }
 })
 
@@ -138,13 +143,13 @@ onMounted(() => {
   }
 })
 
-function update(key, value) {
+function update(key: string, value: unknown) {
   console.log(`Update ${key} to ${JSON.stringify(value)}`)
   emit('update:modelValue', { ...props.modelValue, [key]: value })
 }
 
-function clear(...keys) {
-  let clearedValue = { ...props.modelValue }
+function clear(...keys: string[]) {
+  const clearedValue = { ...props.modelValue }
   keys.forEach((key) => delete clearedValue[key])
   emit('update:modelValue', clearedValue)
 }
@@ -170,11 +175,15 @@ const domainEntities = computed(() => {
   if (!props.availableServices || !props.availableEntities || !props.modelValue || !props.modelValue.serviceId) {
     return []
   }
-  let selectedService = props.availableServices.filter((service) => service.serviceId === props.modelValue.serviceId)[0]
+  const selectedService = props.availableServices.filter(
+    (service) => service.serviceId === props.modelValue.serviceId
+  )[0]
   if (selectedService && selectedService.target && selectedService.target.entity) {
     // target.entity may contain a single or an array of entities. Make sure we always work with array.
-    let targetEntities = ensureArray(selectedService.target.entity)
-    let targetDomains = targetEntities.filter((entity) => entity.domain).flatMap((entity) => ensureArray(entity.domain))
+    const targetEntities = ensureArray(selectedService.target.entity)
+    const targetDomains = targetEntities
+      .filter((entity) => entity.domain)
+      .flatMap((entity) => ensureArray(entity.domain))
     if (targetDomains.length > 0) {
       return props.availableEntities.filter((entity) => targetDomains.includes(entity.domain)).sort(titleSort)
     } else {
@@ -185,12 +194,12 @@ const domainEntities = computed(() => {
 })
 
 const serviceDataInvalidFeedback = computed(() => {
-  let serviceDataString = props.modelValue.serviceData
+  const serviceDataString = props.modelValue.serviceData
   if (!serviceDataString) {
     return ''
   }
   try {
-    const renderedServiceData = nunjucks.renderString(serviceDataString, {
+    const renderedServiceData = renderString(serviceDataString, {
       ticks: 5,
       rotationPercent: 100,
       rotationAbsolute: 100
@@ -207,7 +216,9 @@ const dataProperties = computed(() => {
   if (!(props.availableServices.length && props.availableEntities && props.modelValue && props.modelValue.serviceId)) {
     return []
   }
-  let selectedService = props.availableServices.filter((service) => service.serviceId === props.modelValue.serviceId)[0]
+  const selectedService = props.availableServices.filter(
+    (service) => service.serviceId === props.modelValue.serviceId
+  )[0]
   if (!selectedService || !selectedService.dataFields) {
     return []
   }
@@ -219,7 +230,7 @@ const dataProperties = computed(() => {
   })
 })
 
-function ensureArray(input) {
+function ensureArray(input: unknown) {
   return Array.isArray(input) ? input : [input]
 }
 </script>

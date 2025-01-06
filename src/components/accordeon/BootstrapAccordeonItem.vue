@@ -25,7 +25,7 @@
   </div>
 </template>
 
-<script setup>
+<script lang="ts" setup>
 defineProps({
   accordeonId: {
     type: String,

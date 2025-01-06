@@ -3,7 +3,7 @@
     <slot />
   </div>
 </template>
-<script setup>
+<script lang="ts" setup>
 defineProps({
   id: {
     type: String,

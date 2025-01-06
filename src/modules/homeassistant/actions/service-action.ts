@@ -4,6 +4,10 @@ import { Action } from '@/modules/homeassistant/actions/action'
  * ServiceAction, extending Action, facilitates interactions with HomeAssistant services.
  */
 export class ServiceAction extends Action {
+  service: string
+  data: unknown
+  target: unknown
+
   /**
    * Constructs a ServiceAction instance.
    * @param {string} domain - Service domain, must be a non-empty string.
@@ -13,7 +17,7 @@ export class ServiceAction extends Action {
    * @throws {Error} if 'domain' or 'service' are empty or not strings.
    * @throws {TypeError} if 'entity_id' is not an array or 'serviceData' is not an object.
    */
-  constructor(domain, service, entity_id, serviceData) {
+  constructor(domain: string, service: string, entity_id: unknown[] | null, serviceData: unknown) {
     super()
 
     if (typeof domain !== 'string' || !domain.trim()) {
