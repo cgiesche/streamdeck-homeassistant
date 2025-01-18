@@ -80,10 +80,12 @@ export class EntityConfigFactory {
     const iconString = this.resolve('icon', resolvers)
     const colorString = this.resolve('color', resolvers)
     const labelTemplates = this.resolve('labelTemplates', resolvers)
+    const rotationPercentString = this.resolve('rotationPercent', resolvers)
 
     const feedbackLayout = this.render(feedbackLayoutString, stateObject)
     const renderedFeedback = this.render(feedbackValueString, stateObject)
     const feedback = feedbackValueString ? JSON.parse(renderedFeedback) : {}
+    const rotationPercent = rotationPercentString ? +this.render(rotationPercentString, stateObject) : undefined
 
     const icon = this.render(iconString, stateObject)
     const color = this.render(colorString, stateObject)
@@ -93,7 +95,8 @@ export class EntityConfigFactory {
       feedback: feedback,
       icon: icon,
       color: color,
-      labelTemplates: labelTemplates
+      labelTemplates: labelTemplates,
+      rotationPercent
     }
   }
 
