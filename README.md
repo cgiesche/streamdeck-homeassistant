@@ -132,6 +132,7 @@ After you save your Home Assistant Settings, the plugin will automatically try t
     ```
 
 # Happy? Consider donating me a coffee :)
+[<img src="https://api.gitsponsors.com/api/badge/img?id=328231227" height="30">](https://api.gitsponsors.com/api/badge/link?p=A0Ld1lpHLUBhFhbrfhaghA2MNcqW0Vu/r3LHebjZA2w+qhP4SAzdNEP03kyu/fbgCX8ftpxf4wyqoZOvuBkJ2g==)
 
 [![buy me a coffee](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://www.paypal.com/donate?hosted_button_id=3UKRJEJVWV9H4)
 
