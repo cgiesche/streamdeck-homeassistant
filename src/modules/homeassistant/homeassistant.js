@@ -39,7 +39,11 @@ export class Homeassistant {
           throw messageData.error.message
         }
         if (this.requests.has(messageData.id)) {
-          this.requests.get(messageData.id)(messageData.result)
+          let result = messageData.result.map(state => ({
+            ...state,
+            name: state.attributes.friendly_name || state.entity_id
+          }))
+          this.requests.get(messageData.id)(result)
         }
         break
       case 'event':
