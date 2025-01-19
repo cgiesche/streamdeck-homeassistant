@@ -1,6 +1,7 @@
 import { exec } from 'node:child_process'
+import { type Plugin } from 'vite'
 
-export default function RestartStreamDeck() {
+export default function RestartStreamDeck(): Plugin {
   return {
     name: 'streamdeck-restart-once',
     apply: 'build',

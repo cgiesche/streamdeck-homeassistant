@@ -1,9 +1,23 @@
 import Snap from 'snapsvg-cjs'
-import { urlencode } from 'nunjucks/src/filters'
 import * as Mdi from '@mdi/js'
-import nunjucks from 'nunjucks'
+import { renderString } from 'nunjucks'
+import type { RenderingConfig } from '@/modules/plugin/entityConfigFactoryNg'
 
 export class SvgUtils {
+  private buttonRes: { width: number; height: number }
+  private halfRes: { width: number; height: number }
+  private readonly fontSize: number
+  private lineAttr: {
+    fill: string
+    'font-family': string
+    'font-weight': string
+    'font-size': string
+    'text-anchor': string
+    stroke: string
+    strokeWidth: number
+  }
+  private snap: Snap.Paper
+
   constructor(resolution = { width: 144, height: 144 }) {
     this.buttonRes = resolution
     this.halfRes = {
@@ -27,7 +41,13 @@ export class SvgUtils {
    * Renders a complete button image based on the given rendering-config.
    * @return string
    */
-  renderButtonSVG(renderingConfig, stateObject) {
+  renderButtonSVG(
+    renderingConfig: Partial<RenderingConfig>,
+    stateObject: {
+      attributes: object
+      state: unknown
+    }
+  ) {
     const buttonLabels = this.renderTemplates(renderingConfig.labelTemplates, {
       ...stateObject.attributes,
       ...{ state: stateObject.state }
@@ -45,26 +65,27 @@ export class SvgUtils {
    * Renders the given MDI as SVG.
    * @return string
    */
-  renderIconSVG(mdiIconName, iconColor) {
+  renderIconSVG(mdiIconName: string | null | undefined, iconColor: string) {
     return this.#generateIconSVG(mdiIconName, iconColor)
   }
 
-  renderTemplates(templates, values) {
+  renderTemplates(templates: string[] | null | undefined, values: object) {
     return templates
       ? templates
           .map((template) => (template ? template : ''))
-          .map((template) => nunjucks.renderString(template, values))
+          .map((template) => renderString(template, values))
       : []
   }
 
-  #generateIconSVG(mdiIconName, color) {
+  #generateIconSVG(mdiIconName: string | null | undefined, color: string) {
     let iconData = null
     if (mdiIconName) {
+      // @ts-expect-error dynamic import of icon based on name
       iconData = Mdi[this.#toPascalCase(mdiIconName)]
     }
 
     const iconSVG = this.snap.path(iconData)
-    iconSVG.attr('fill', color)
+    iconSVG.attr({ fill: color })
     const iconBBox = iconSVG.getBBox()
     const iconHeight = iconBBox.height
     const iconWidth = iconBBox.width
@@ -73,20 +94,27 @@ export class SvgUtils {
     const scaleFactor = Math.min(targetHeight / iconHeight, targetWidth / iconWidth)
     iconSVG.transform(`scale(${scaleFactor})`)
 
-    let outerSVG = this.snap.outerSVG()
+    const outerSVG = this.snap.outerSVG()
     this.snap.clear()
     return outerSVG
   }
 
-  #generateButtonSVG(labels, mdiIconName, iconColor, isAction = false, isMultiAction = false) {
+  #generateButtonSVG(
+    labels: string[],
+    mdiIconName: string | null | undefined,
+    iconColor: string | null | undefined,
+    isAction = false,
+    isMultiAction = false
+  ) {
     let iconData = null
     if (mdiIconName) {
+      // @ts-expect-error dynamic import of icon based on name
       iconData = Mdi[this.#toPascalCase(mdiIconName)]
     }
 
     if (iconData) {
       const iconSVG = this.snap.path(iconData)
-      iconSVG.attr('fill', iconColor)
+      iconSVG.attr({ fill: iconColor })
       const iconBBox = iconSVG.getBBox()
       const iconHeight = iconBBox.height
       const iconWidth = iconBBox.width
@@ -100,12 +128,12 @@ export class SvgUtils {
 
     if (isAction) {
       const color = isMultiAction ? '#3e89ff' : '#62ff65'
-      this.snap.circle(this.buttonRes.width - 1, 0, 15).attr('fill', color)
+      this.snap.circle(this.buttonRes.width - 1, 0, 15).attr({ fill: color })
     }
 
     let currentLineNumber = 0
     for (let i = 0; i < labels.length; i++) {
-      let lines = labels[i].split('\n')
+      const lines = labels[i].split('\n')
       for (let i = currentLineNumber; i < lines.length + currentLineNumber; i++) {
         this.#drawText(lines[i - currentLineNumber], i)
       }
@@ -120,13 +148,13 @@ export class SvgUtils {
     // this.snap.line(0, this.halfRes / 2, this.buttonRes, this.halfRes / 2).attr("stroke", "#FFFFFF")
     // this.snap.line(0, this.halfRes * 1.5, this.buttonRes, this.halfRes * 1.5).attr("stroke", "#FFFFFF")
 
-    let outerSVG = this.snap.outerSVG()
+    const outerSVG = this.snap.outerSVG()
     this.snap.clear()
     return outerSVG
   }
 
-  #drawText(text, lineNr) {
-    const escapedText = urlencode(text)
+  #drawText(text: string, lineNr: number) {
+    const escapedText = encodeURIComponent(text)
     const quarterHeight = this.buttonRes.height / 4
     this.snap
       .text(
@@ -138,13 +166,13 @@ export class SvgUtils {
       .transform(`translateX(${this.halfRes.width})`)
   }
 
-  #toPascalCase = (iconName) => {
+  #toPascalCase = (iconName: string) => {
     const iconNameRaw = iconName.substring(4)
     const iconNamePascalCase = iconNameRaw.replace(/(^\w|-\w)/g, this.#clearAndUpper)
     return 'mdi' + iconNamePascalCase
   }
 
-  #clearAndUpper = (text) => {
+  #clearAndUpper = (text: string) => {
     return text.replace(/-/, '').toUpperCase()
   }
 }

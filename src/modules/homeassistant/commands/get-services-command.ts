@@ -9,7 +9,7 @@ export class GetServicesCommand extends Command {
    * Constructs a GetServicesCommand instance.*
    * @param {number} requestId - The unique identifier for the command request.
    */
-  constructor(requestId) {
+  constructor(requestId: number) {
     super(requestId, 'get_services')
   }
 }

@@ -2,43 +2,54 @@
   <span>Nothing to see here!</span>
 </template>
 
-<script setup>
-import { StreamDeck } from '@/modules/common/streamdeck'
-import { Homeassistant } from '@/modules/homeassistant/homeassistant'
+<script lang="ts" setup>
+import {
+  type BaseCommand,
+  type DialRotateCommand,
+  type DidReceiveSettingsCommand,
+  type GlobalSettings,
+  StreamDeck,
+  type WillAppearCommand
+} from '@/modules/common/streamdeck'
+import { Homeassistant, type StateMessage } from '@/modules/homeassistant/homeassistant'
 import { SvgUtils } from '@/modules/plugin/svgUtils'
-import nunjucks from 'nunjucks'
-import { Settings } from '@/modules/common/settings'
-import { onMounted, ref } from 'vue'
+import { renderString } from 'nunjucks'
+import { Settings, type SettingsV5 } from '@/modules/common/settings'
+import { onMounted, type Ref, ref } from 'vue'
 import { EntityConfigFactory } from '@/modules/plugin/entityConfigFactoryNg'
+// @ts-expect-error ts-checker doesn't understand yaml imports
 import defaultActiveStates from '../../public/config/active-states.yml'
 import axios from 'axios'
-import yaml from 'js-yaml'
+import { load as yamlLoad } from 'js-yaml'
 
-axios.defaults.headers = {
-  'Cache-Control': 'public, max-age=86400'
-}
+axios.defaults.headers['Cache-Control'] = 'public, max-age=86400'
 
-let entityConfigFactory
+let entityConfigFactory: EntityConfigFactory
 const svgUtils = new SvgUtils()
 
-const $SD = ref(null)
-const $HA = ref(null)
-const $reconnectTimeout = ref({})
-const globalSettings = ref({})
-const actionSettings = ref([])
+const $SD: Ref<StreamDeck | null> = ref(null)
+const $HA: Ref<Homeassistant | null> = ref(null)
+const $reconnectTimeout: Ref<number | null> = ref(null)
+const globalSettings: Ref<GlobalSettings | null> = ref(null)
+const actionSettings: Ref<{ [key: string]: SettingsV5 }> = ref({})
 const buttonLongpressTimeouts = ref(new Map()) //context, timeout
 
 const activeStates = ref(defaultActiveStates)
 
-let rotationTimeout = []
-let rotationAmount = []
-let rotationPercent = []
+const rotationTimeout: { [key: string]: NodeJS.Timeout | null } = {}
+const rotationAmount: { [key: string]: number } = {}
+const rotationPercent: { [key: string]: number } = {}
 
 onMounted(async () => {
-  window.connectElgatoStreamDeckSocket = (inPort, inPluginUUID, inRegisterEvent, inInfo) => {
+  window.connectElgatoStreamDeckSocket = (
+    inPort: number,
+    inPluginUUID: string,
+    inRegisterEvent: string,
+    inInfo: string
+  ) => {
     $SD.value = new StreamDeck(inPort, inPluginUUID, inRegisterEvent, inInfo, '{}')
 
-    $SD.value.on('globalsettings', (inGlobalSettings) => {
+    $SD.value.on('globalsettings', (inGlobalSettings: GlobalSettings) => {
       console.log('Got global settings.')
       globalSettings.value = inGlobalSettings
       entityConfigFactory = new EntityConfigFactory(
@@ -48,19 +59,19 @@ onMounted(async () => {
     })
 
     $SD.value.on('connected', () => {
-      $SD.value.requestGlobalSettings()
+      $SD.value!.requestGlobalSettings()
     })
 
-    $SD.value.on('keyDown', (message) => {
+    $SD.value.on('keyDown', (message: BaseCommand) => {
       buttonDown(message.context)
     })
 
-    $SD.value.on('keyUp', (message) => {
+    $SD.value.on('keyUp', (message: BaseCommand) => {
       buttonUp(message.context)
     })
 
-    $SD.value.on('willAppear', (message) => {
-      let context = message.context
+    $SD.value.on('willAppear', (message: WillAppearCommand) => {
+      const context = message.context
       rotationAmount[context] = 0
       rotationPercent[context] = 0
       actionSettings.value[context] = Settings.parse(message.payload.settings)
@@ -69,16 +80,16 @@ onMounted(async () => {
       }
     })
 
-    $SD.value.on('willDisappear', (message) => {
-      let context = message.context
+    $SD.value.on('willDisappear', (message: BaseCommand) => {
+      const context = message.context
       delete actionSettings.value[context]
     })
 
-    $SD.value.on('dialRotate', (message) => {
-      let context = message.context
-      let settings = actionSettings.value[context]
-      let scaledTicks = message.payload.ticks * (settings.rotationTickMultiplier || 1)
-      let tickBucketSizeMs = settings.rotationTickBucketSizeMs || 300
+    $SD.value.on('dialRotate', (message: DialRotateCommand) => {
+      const context = message.context
+      const settings = actionSettings.value[context]
+      const scaledTicks = message.payload.ticks * (settings.rotationTickMultiplier || 1)
+      const tickBucketSizeMs = settings.rotationTickBucketSizeMs || 300
 
       rotationAmount[context] += scaledTicks
       rotationPercent[context] += scaledTicks
@@ -90,7 +101,7 @@ onMounted(async () => {
 
       if (rotationTimeout[context]) return
 
-      let serviceCall = () => {
+      const serviceCall = () => {
         callService(context, settings.button.serviceRotation, {
           ticks: rotationAmount[context],
           rotationPercent: rotationPercent[context],
@@ -107,22 +118,22 @@ onMounted(async () => {
       }
     })
 
-    $SD.value.on('dialDown', (message) => {
+    $SD.value.on('dialDown', (message: BaseCommand) => {
       buttonDown(message.context)
     })
 
-    $SD.value.on('dialUp', (message) => {
+    $SD.value.on('dialUp', (message: BaseCommand) => {
       buttonUp(message.context)
     })
 
-    $SD.value.on('touchTap', (message) => {
-      let context = message.context
-      let settings = actionSettings.value[context]
+    $SD.value.on('touchTap', (message: BaseCommand) => {
+      const context = message.context
+      const settings = actionSettings.value[context]
       callService(context, settings.button.serviceTap)
     })
 
-    $SD.value.on('didReceiveSettings', (message) => {
-      let context = message.context
+    $SD.value.on('didReceiveSettings', (message: DidReceiveSettingsCommand) => {
+      const context = message.context
       rotationAmount[context] = 0
       actionSettings.value[context] = Settings.parse(message.payload.settings)
       if ($HA.value) {
@@ -138,7 +149,7 @@ async function fetchActiveStates() {
   try {
     axios
       .get('https://cdn.jsdelivr.net/gh/cgiesche/streamdeck-homeassistant@master/public/config/active-states.yml')
-      .then((response) => (activeStates.value = yaml.load(response.data)))
+      .then((response) => (activeStates.value = yamlLoad(response.data)))
       .catch((error) => console.log(`Failed to download updated active-states.json: ${error}`))
   } catch (error) {
     console.log(`Failed to download updated active-states.json: ${error}`)
@@ -147,7 +158,7 @@ async function fetchActiveStates() {
 
 function connectHomeAssistant() {
   console.log('Connecting to Home Assistant')
-  if (globalSettings.value.serverUrl && globalSettings.value.accessToken) {
+  if (globalSettings.value && globalSettings.value.serverUrl && globalSettings.value.accessToken) {
     if ($HA.value) {
       $HA.value.close()
     }
@@ -163,47 +174,55 @@ function connectHomeAssistant() {
 }
 
 const onHAConnected = () => {
-  $HA.value.getStatesDebounced(entityStatesChanged)
-  $HA.value.subscribeEvents(entityStateChanged)
+  $HA.value!.getStatesDebounced(entityStatesChanged)
+  $HA.value!.subscribeEvents(entityStateChanged)
 }
 
-function onHAError(msg) {
+function onHAError(msg: string) {
   showAlert()
   console.log(`Home Assistant connection error: ${msg}`)
-  window.clearTimeout($reconnectTimeout)
+  if ($reconnectTimeout.value) {
+    window.clearTimeout($reconnectTimeout.value)
+  }
   $reconnectTimeout.value = window.setTimeout(connectHomeAssistant, 5000)
 }
 
-function onHAClosed(msg) {
+function onHAClosed(msg: CloseEvent) {
   showAlert()
   console.log(`Home Assistant connection closed, trying to reopen connection: ${msg}`)
-  window.clearTimeout($reconnectTimeout)
+  if ($reconnectTimeout.value) {
+    window.clearTimeout($reconnectTimeout.value)
+  }
   $reconnectTimeout.value = window.setTimeout(connectHomeAssistant, 5000)
 }
 
 function showAlert() {
-  Object.keys(actionSettings.value).forEach((key) => $SD.value.showAlert(key))
+  Object.keys(actionSettings.value).forEach((key) => $SD.value!.showAlert(key))
 }
 
-function entityStatesChanged(event) {
+function entityStatesChanged(event: StateMessage[]) {
   event.forEach(updateState)
 }
 
-function entityStateChanged(event) {
+function entityStateChanged(event: {
+  data: {
+    new_state: StateMessage
+  }
+}) {
   if (event) {
-    let newState = event.data.new_state
+    const newState = event.data.new_state
     updateState(newState)
   }
 }
 
-function updateState(stateMessage) {
+function updateState(stateMessage: StateMessage) {
   if (!stateMessage.entity_id) {
     console.log(`Missing entity_id in updated state: ${stateMessage}`)
     return
   }
 
-  let domain = stateMessage.entity_id.split('.')[0]
-  let changedContexts = Object.keys(actionSettings.value).filter(
+  const domain = stateMessage.entity_id.split('.')[0]
+  const changedContexts = Object.keys(actionSettings.value).filter(
     (key) => actionSettings.value[key].display.entityId === stateMessage.entity_id
   )
 
@@ -217,25 +236,27 @@ function updateState(stateMessage) {
       updateContextState(context, domain, stateMessage)
     } catch (e) {
       console.error(e)
-      $SD.value.setImage(context, null)
-      $SD.value.showAlert(context)
+      $SD.value!.setImage(context, null)
+      $SD.value!.showAlert(context)
     }
   })
 }
 
-function isEncoder(contextSettings) {
+function isEncoder(contextSettings: SettingsV5) {
   return contextSettings.controllerType === 'Encoder'
 }
 
-function updateContextState(currentContext, domain, stateObject) {
-  let contextSettings = actionSettings.value[currentContext]
-  let renderingConfig = entityConfigFactory.determineConfig(domain, stateObject, contextSettings.display)
+function updateContextState(currentContext: string, domain: string, stateObject: StateMessage) {
+  const contextSettings = actionSettings.value[currentContext]
+  const renderingConfig = entityConfigFactory.determineConfig(domain, stateObject, contextSettings.display)
 
   renderingConfig.isAction =
-    contextSettings.button.serviceShortPress.serviceId &&
+    contextSettings.button.serviceShortPress.serviceId !== null &&
+    contextSettings.button.serviceShortPress.serviceId !== '' &&
     (contextSettings.display.enableServiceIndicator === undefined || contextSettings.display.enableServiceIndicator) // undefined = on by default
   renderingConfig.isMultiAction =
-    contextSettings.button.serviceLongPress.serviceId &&
+    contextSettings.button.serviceLongPress.serviceId !== null &&
+    contextSettings.button.serviceLongPress.serviceId !== '' &&
     (contextSettings.display.enableServiceIndicator === undefined || contextSettings.display.enableServiceIndicator) // undefined = on by default
 
   if (renderingConfig.rotationPercent !== undefined) {
@@ -243,9 +264,9 @@ function updateContextState(currentContext, domain, stateObject) {
   }
 
   if (contextSettings.display.useCustomTitle) {
-    let state = stateObject.state
-    let stateAttributes = stateObject.attributes
-    renderingConfig.customTitle = nunjucks.renderString(contextSettings.display.buttonTitle, {
+    const state = stateObject.state
+    const stateAttributes = stateObject.attributes
+    renderingConfig.customTitle = renderString(contextSettings.display.buttonTitle, {
       ...{ state },
       ...stateAttributes
     })
@@ -259,14 +280,18 @@ function updateContextState(currentContext, domain, stateObject) {
     if (!renderingConfig.feedbackLayout) {
       renderingConfig.feedbackLayout = '$A1'
     }
-    $SD.value.setFeedbackLayout(currentContext, { layout: renderingConfig.feedbackLayout })
+    $SD.value!.setFeedbackLayout(currentContext, { layout: renderingConfig.feedbackLayout })
 
     if (!renderingConfig.feedback) {
-      renderingConfig.feedback = {}
+      renderingConfig.feedback = {
+        title: '',
+        icon: null,
+        value: ''
+      }
     }
     renderingConfig.feedback.title = renderingConfig.customTitle ? renderingConfig.customTitle : ''
     renderingConfig.feedback.icon =
-      'data:image/svg+xml;charset=utf8,' + svgUtils.renderIconSVG(renderingConfig.icon, renderingConfig.color)
+      'data:image/svg+xml;charset=utf8,' + svgUtils.renderIconSVG(renderingConfig.icon, renderingConfig.color!)
     if (renderingConfig.feedback.value === undefined) {
       renderingConfig.feedback.value = svgUtils
         .renderTemplates(renderingConfig.labelTemplates, {
@@ -275,28 +300,30 @@ function updateContextState(currentContext, domain, stateObject) {
         })
         .join(' ')
     }
-    $SD.value.setFeedback(currentContext, renderingConfig.feedback)
+    $SD.value!.setFeedback(currentContext, renderingConfig.feedback)
   } else if (contextSettings.display.useStateImagesForOnOffStates) {
     if (renderingConfig.customTitle) {
-      $SD.value.setTitle(currentContext, renderingConfig.customTitle)
+      $SD.value!.setTitle(currentContext, renderingConfig.customTitle)
     }
     if (activeStates.value.indexOf(stateObject.state) !== -1) {
       console.log('Setting state of ' + currentContext + ' to 1')
-      $SD.value.setState(currentContext, 1)
+      $SD.value!.setState(currentContext, 1)
     } else {
       console.log('Setting state of ' + currentContext + ' to 0')
-      $SD.value.setState(currentContext, 0)
+      $SD.value!.setState(currentContext, 0)
     }
   } else {
     if (renderingConfig.customTitle) {
-      $SD.value.setTitle(currentContext, renderingConfig.customTitle)
+      $SD.value!.setTitle(currentContext, renderingConfig.customTitle)
     }
 
     renderingConfig.isAction =
-      contextSettings.button.serviceShortPress.serviceId &&
+      contextSettings.button.serviceShortPress.serviceId !== null &&
+      contextSettings.button.serviceShortPress.serviceId !== '' &&
       (contextSettings.display.enableServiceIndicator === undefined || contextSettings.display.enableServiceIndicator) // undefined = on by default
     renderingConfig.isMultiAction =
-      contextSettings.button.serviceLongPress.serviceId &&
+      contextSettings.button.serviceLongPress.serviceId !== null &&
+      contextSettings.button.serviceLongPress.serviceId !== '' &&
       (contextSettings.display.enableServiceIndicator === undefined || contextSettings.display.enableServiceIndicator) // undefined = on by default
 
     if (!renderingConfig.color) {
@@ -311,22 +338,22 @@ function updateContextState(currentContext, domain, stateObject) {
   }
 }
 
-function setButtonSVG(svg, changedContext) {
+function setButtonSVG(svg: string, changedContext: string) {
   const image = 'data:image/svg+xml;,' + svg
   if (actionSettings.value[changedContext].controllerType === 'Encoder') {
-    $SD.value.setFeedbackLayout(changedContext, { layout: '$A0' })
-    $SD.value.setFeedback(changedContext, { 'full-canvas': image, canvas: null, title: '' })
+    $SD.value!.setFeedbackLayout(changedContext, { layout: '$A0' })
+    $SD.value!.setFeedback(changedContext, { 'full-canvas': image, canvas: null, title: '' })
   } else {
-    $SD.value.setImage(changedContext, image)
+    $SD.value!.setImage(changedContext, image)
   }
 }
 
-function buttonDown(context) {
+function buttonDown(context: string) {
   const timeout = setTimeout(buttonLongPress, 300, context)
   buttonLongpressTimeouts.value.set(context, timeout)
 }
 
-function buttonUp(context) {
+function buttonUp(context: string) {
   // If "long press timeout" is still present, we perform a normal press
   const lpTimeout = buttonLongpressTimeouts.value.get(context)
   if (lpTimeout) {
@@ -336,14 +363,14 @@ function buttonUp(context) {
   }
 }
 
-function buttonShortPress(context) {
-  let settings = actionSettings.value[context]
+function buttonShortPress(context: string) {
+  const settings = actionSettings.value[context]
   callService(context, settings.button.serviceShortPress)
 }
 
-function buttonLongPress(context) {
+function buttonLongPress(context: string) {
   buttonLongpressTimeouts.value.delete(context)
-  let settings = actionSettings.value[context]
+  const settings = actionSettings.value[context]
   if (settings.button.serviceLongPress.serviceId) {
     callService(context, settings.button.serviceLongPress)
   } else {
@@ -351,7 +378,11 @@ function buttonLongPress(context) {
   }
 }
 
-function callService(context, serviceToCall, serviceDataAttributes = {}) {
+function callService(
+  context: string,
+  serviceToCall: { serviceId: string | null; serviceData: string; entityId: string },
+  serviceDataAttributes = {}
+) {
   if ($HA.value) {
     if (serviceToCall['serviceId']) {
       try {
@@ -359,14 +390,14 @@ function callService(context, serviceToCall, serviceDataAttributes = {}) {
 
         let serviceData = null
         if (serviceToCall.serviceData) {
-          let renderedServiceData = nunjucks.renderString(serviceToCall.serviceData, serviceDataAttributes)
+          const renderedServiceData = renderString(serviceToCall.serviceData, serviceDataAttributes)
           serviceData = JSON.parse(renderedServiceData)
         }
 
         $HA.value.callService(serviceIdParts[1], serviceIdParts[0], serviceToCall.entityId, serviceData)
       } catch (e) {
         console.error(e)
-        $SD.value.showAlert(context)
+        $SD.value!.showAlert(context)
       }
     }
   }

@@ -4,11 +4,16 @@
     <select
       size="5"
       id="entity"
-      @change="emit('update:modelValue', $event.target.value)"
+      @change="emit('update:modelValue', ($event.target as HTMLSelectElement).value)"
       :value="modelValue"
       class="form-select form-select-sm mb-1"
     >
-      <option v-for="entity in filteredEntities" v-bind:key="entity" :value="entity.entityId" :title="entity?.entityId">
+      <option
+        v-for="entity in filteredEntities"
+        v-bind:key="entity as any"
+        :value="entity.entityId"
+        :title="entity?.entityId"
+      >
         {{ entity.title }}
       </option>
     </select>
@@ -20,19 +25,19 @@
     />
   </div>
 </template>
-<script setup>
-import { computed, ref } from 'vue'
+<script lang="ts" setup>
+import { computed, type PropType, ref } from 'vue'
 import { Entity } from '@/modules/pi/entity'
 
 const props = defineProps({
   modelValue: {
     required: true,
-    type: Object,
-    default: () => new Entity()
+    type: Object as PropType<Entity>,
+    default: () => new Entity('', '', '')
   },
   availableEntities: {
     required: true,
-    type: [] // Entity[]
+    type: Object as PropType<Array<Entity>>
   }
 })
 
@@ -45,10 +50,10 @@ const filteredEntities = computed(() => {
     return props.availableEntities
   }
 
-  let filterLc = entityFilter.value.toLowerCase()
+  const filterLc = entityFilter.value.toLowerCase()
   return props.availableEntities.filter((entity) => {
-    let entityIdMatches = entity.entityId.toLowerCase().indexOf(filterLc) !== -1
-    let titleMatches = entity.title.toLowerCase().indexOf(filterLc) !== -1
+    const entityIdMatches = entity.entityId.toLowerCase().indexOf(filterLc) !== -1
+    const titleMatches = entity.title.toLowerCase().indexOf(filterLc) !== -1
     return entityIdMatches || titleMatches
   })
 })

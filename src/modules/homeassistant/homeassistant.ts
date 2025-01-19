@@ -3,9 +3,39 @@ import { ExecuteScriptCommand } from '@/modules/homeassistant/commands/execute-s
 import { SubscribeEventsCommand } from '@/modules/homeassistant/commands/subscribe-events-command'
 import { GetStatesCommand } from '@/modules/homeassistant/commands/get-states-command'
 import { GetServicesCommand } from '@/modules/homeassistant/commands/get-services-command'
+import { Command } from '@/modules/homeassistant/commands/command'
+
+export interface StateMessage {
+  entity_id: string
+  last_updated: string
+  last_changed: string
+  state: string
+  attributes: {
+    icon: string
+    friendly_name: string
+    device_class: string
+    last_updated: string
+    last_changed: string
+    rgb_color: number[]
+  }
+}
 
 export class Homeassistant {
-  constructor(url, accessToken, onReady, onError, onClose) {
+  requests: Map<unknown, (data: unknown) => void>
+  requestIdSequence: number
+  websocket: WebSocket
+  accessToken: string
+  onReady: () => void
+  onError: (message: string) => void
+  lastFullSync: number | null
+
+  constructor(
+    url: string,
+    accessToken: string,
+    onReady: () => void,
+    onError: (message: string) => void,
+    onClose: (ev: CloseEvent) => void
+  ) {
     this.requests = new Map()
     this.requestIdSequence = 1
     this.websocket = new WebSocket(url)
@@ -18,6 +48,7 @@ export class Homeassistant {
       this.onError('Failed to connect to ' + url)
     }
     this.websocket.onclose = onClose
+    this.lastFullSync = null
   }
 
   close() {
@@ -27,8 +58,16 @@ export class Homeassistant {
     }
   }
 
-  handleMessage(msg) {
-    let messageData = JSON.parse(msg.data)
+  handleMessage(msg: MessageEvent) {
+    const messageData: {
+      type: string
+      id: unknown
+      success: unknown
+      error: { message: string }
+      result: unknown
+      event: unknown
+      message: string
+    } = JSON.parse(msg.data)
 
     switch (messageData.type) {
       case 'auth_required':
@@ -39,12 +78,12 @@ export class Homeassistant {
           throw messageData.error.message
         }
         if (this.requests.has(messageData.id)) {
-          this.requests.get(messageData.id)(messageData.result)
+          this.requests.get(messageData.id)!(messageData.result)
         }
         break
       case 'event':
         if (this.requests.has(messageData.id)) {
-          this.requests.get(messageData.id)(messageData.event)
+          this.requests.get(messageData.id)!(messageData.event)
         }
         break
       case 'auth_ok':
@@ -66,7 +105,7 @@ export class Homeassistant {
   }
 
   sendAuthentication() {
-    let authMessage = {
+    const authMessage = {
       type: 'auth',
       access_token: this.accessToken
     }
@@ -74,36 +113,49 @@ export class Homeassistant {
     this.websocket.send(JSON.stringify(authMessage))
   }
 
-  getStatesDebounced(callback) {
+  getStatesDebounced(callback: (data: StateMessage[]) => void) {
     if (!this.lastFullSync || Date.now() - this.lastFullSync > 2000) {
       this.lastFullSync = Date.now()
       this.getStates(callback)
     }
   }
 
-  getStates(callback) {
-    let getStatesCommand = new GetStatesCommand(this.nextRequestId())
+  getStates(callback: (data: StateMessage[]) => void) {
+    const getStatesCommand = new GetStatesCommand(this.nextRequestId())
     this.sendCommand(getStatesCommand, callback)
   }
 
-  getServices(callback) {
-    let getServicesCommand = new GetServicesCommand(this.nextRequestId())
+  getServices(callback: (data: object) => void) {
+    const getServicesCommand = new GetServicesCommand(this.nextRequestId())
     this.sendCommand(getServicesCommand, callback)
   }
 
-  subscribeEvents(callback) {
-    let subscribeEventCommand = new SubscribeEventsCommand(this.nextRequestId())
+  subscribeEvents(
+    callback: (event: {
+      data: {
+        new_state: StateMessage
+      }
+    }) => void
+  ) {
+    const subscribeEventCommand = new SubscribeEventsCommand(this.nextRequestId())
     this.sendCommand(subscribeEventCommand, callback)
   }
 
-  callService(service, domain, entity_id = null, serviceData = null, callback = null) {
-    let executeScriptCmd = new ExecuteScriptCommand(this.nextRequestId(), [
+  callService(
+    service: string,
+    domain: string,
+    entity_id: unknown | null = null,
+    serviceData = null,
+    callback: (data: unknown) => void = () => {}
+  ) {
+    const executeScriptCmd = new ExecuteScriptCommand(this.nextRequestId(), [
       new ServiceAction(domain, service, entity_id ? [entity_id] : null, serviceData || {})
     ])
     this.sendCommand(executeScriptCmd, callback)
   }
 
-  sendCommand(command, callback) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  sendCommand(command: Command, callback: (data: any) => void) {
     if (callback) {
       this.requests.set(command.id, callback)
     }

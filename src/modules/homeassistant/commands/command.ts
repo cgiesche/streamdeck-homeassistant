@@ -3,6 +3,9 @@
  * that can be used to interact with the HomeAssistant WebSocket API.
  */
 export class Command {
+  id: number
+  type: string
+
   /**
    * Constructs a Command instance.
    * @param {number} requestId - The unique identifier for the command request.
@@ -11,7 +14,7 @@ export class Command {
    * @throws {Error} If the requestId is not a non-negative number.
    * @throws {Error} If the type is not a non-empty string.
    */
-  constructor(requestId, type) {
+  constructor(requestId: number, type: string) {
     // Prevent direct instantiation of this abstract class.
     if (new.target === Command) {
       throw new TypeError('Cannot instantiate abstract class Command directly')

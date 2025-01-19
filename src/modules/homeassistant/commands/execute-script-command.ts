@@ -9,6 +9,8 @@ import { Action } from '@/modules/homeassistant/actions/action'
  * This enhancement enables more dynamic and context-sensitive operations within HomeAssistant.
  */
 export class ExecuteScriptCommand extends Command {
+  sequence: Action[]
+
   /**
    * Constructs a CallExecuteScriptCommand instance.
    *
@@ -16,7 +18,7 @@ export class ExecuteScriptCommand extends Command {
    * @param {Action[]} [actions=[]] - Array of ScriptCommand instances. Optional, defaults to empty.
    * @throws {TypeError} if actions is not an array or has non-Action elements.
    */
-  constructor(requestId, actions = []) {
+  constructor(requestId: number, actions: Action[] = []) {
     super(requestId, 'execute_script')
 
     if (!Array.isArray(actions)) {
