@@ -27,9 +27,11 @@ jobs:
 
       - name: NPM Install
         run: npm install
-      - name: VUE Build
+      - name: Lint
+        run: npm run ci-lint
+      - name: Build
         run: npm run build
-      - name: Streamdeck Bundle
+      - name: StreamDeck Bundle
         run: npm run bundle
 
       - name: Upload Release Asset

@@ -1,0 +1,248 @@
+interface SettingsV1 {
+  version: 1
+  domain: string
+  entityId: string
+  useCustomTitle: boolean
+  buttonTitle: string
+  enableServiceIndicator: boolean
+  hideIcon: boolean
+  useCustomButtonLabels: boolean
+  buttonLabels: string
+  useStateImagesForOnOffStates: boolean
+  service: {
+    id: string
+    data: string
+  }
+  serviceLongPress: {
+    id: string
+    data: string
+  }
+}
+
+interface SettingsV2 {
+  version: 2
+  display: {
+    domain: string
+    entityId: string
+    useCustomTitle: boolean
+    buttonTitle: string
+    enableServiceIndicator: boolean
+    hideIcon: boolean
+    useCustomButtonLabels: boolean
+    buttonLabels: string
+    useStateImagesForOnOffStates: boolean
+  }
+  button: {
+    service: {
+      domain: string
+      name: string
+      data: string
+    }
+    serviceLongPress: {
+      domain: string
+      name: string
+      data: string
+    }
+  }
+}
+
+interface SettingsV3 {
+  version: 3
+  display: {
+    domain: string
+    entityId: string
+    useCustomTitle: boolean
+    buttonTitle: string
+    enableServiceIndicator: boolean
+    hideIcon: boolean
+    useCustomButtonLabels: boolean
+    buttonLabels: string
+    useStateImagesForOnOffStates: boolean
+  }
+  button: {
+    serviceShortPress: ActionSettings
+    serviceLongPress: ActionSettings
+  }
+}
+
+interface SettingsV4 {
+  version: 4
+  display: {
+    domain: string
+    entityId: string
+    useCustomTitle: boolean
+    buttonTitle: string
+    enableServiceIndicator: boolean
+    hideIcon: boolean | undefined
+    useCustomButtonLabels: boolean
+    buttonLabels: string
+    useStateImagesForOnOffStates: boolean
+  }
+  button: {
+    serviceShortPress: ActionSettings
+    serviceLongPress: ActionSettings
+    serviceRotation: ActionSettings
+    serviceTap: ActionSettings
+  }
+  controllerType: string
+  rotationTickMultiplier: number
+  rotationTickBucketSizeMs: number
+}
+
+export enum IconSettings {
+  HIDE = 'HIDE',
+  PREFER_HA = 'PREFER_HA',
+  PREFER_PLUGIN = 'PREFER_PLUGIN'
+}
+export type Settings = {
+  version: 5
+  display: {
+    entityId: string
+    useCustomTitle: boolean
+    buttonTitle: string
+    enableServiceIndicator: boolean
+    useCustomButtonLabels: boolean
+    buttonLabels: string
+    iconSettings: IconSettings
+  }
+  button: {
+    serviceShortPress: ActionSettings
+    serviceLongPress: ActionSettings
+    serviceRotation: ActionSettings
+    serviceTap: ActionSettings
+  }
+  rotationTickMultiplier: number
+  rotationTickBucketSizeMs: number
+}
+
+export type ActionSettings = {
+  entityId?: Nullable<string>
+  serviceId?: Nullable<string>
+  serviceData?: Nullable<string>
+}
+
+export type LegacySettings = SettingsV1 | SettingsV2 | SettingsV3 | SettingsV4
+
+export const latestSettingsVersion = 5
+export function migrateSettings(settings: LegacySettings | Settings): Settings {
+  if (settings.version === undefined || settings.version == 1) {
+    const settingsV2: SettingsV2 = {
+      version: 2,
+      display: {
+        domain: settings.domain,
+        entityId: settings.entityId,
+        useCustomTitle: settings.useCustomTitle,
+        buttonTitle: settings.buttonTitle || '{{friendly_name}}',
+        enableServiceIndicator:
+          settings.enableServiceIndicator || settings.enableServiceIndicator === undefined,
+        hideIcon: settings.hideIcon,
+        useCustomButtonLabels: settings.useCustomButtonLabels,
+        buttonLabels: settings.buttonLabels,
+        useStateImagesForOnOffStates: settings.useStateImagesForOnOffStates // determined by action ID (manifest)
+      },
+      button: {
+        service: {
+          domain: '',
+          name: '',
+          data: ''
+        },
+        serviceLongPress: {
+          domain: '',
+          name: '',
+          data: ''
+        }
+      }
+    }
+
+    if (settings.service) {
+      settingsV2.button.service.domain = settings.domain
+      settingsV2.button.service.name = settings.service.id
+      settingsV2.button.service.data = settings.service.data
+    }
+    if (settings.serviceLongPress) {
+      settingsV2.button.serviceLongPress.domain = settings.domain
+      settingsV2.button.serviceLongPress.name = settings.serviceLongPress.id
+      settingsV2.button.serviceLongPress.data = settings.serviceLongPress.data
+    }
+
+    return migrateSettings(settingsV2)
+  }
+
+  if (settings.version === 2) {
+    const settingsV3: SettingsV3 = {
+      version: 3,
+      display: settings.display,
+      button: {
+        serviceShortPress: {
+          serviceId: '',
+          entityId: '',
+          serviceData: ''
+        },
+        serviceLongPress: {
+          serviceId: '',
+          entityId: '',
+          serviceData: ''
+        }
+      }
+    }
+
+    if (settings.button.service.name) {
+      settingsV3.button.serviceShortPress = {
+        serviceId: settings.button.service.domain + '.' + settings.button.service.name,
+        entityId: settings.display.entityId,
+        serviceData: settings.button.service.data
+      }
+    }
+
+    if (settings.button.serviceLongPress.name) {
+      settingsV3.button.serviceLongPress = {
+        serviceId:
+          settings.button.serviceLongPress.domain + '.' + settings.button.serviceLongPress.name,
+        entityId: settings.display.entityId,
+        serviceData: settings.button.serviceLongPress.data
+      }
+    }
+
+    return migrateSettings(settingsV3)
+  }
+
+  if (settings.version === 3) {
+    const settingsV4: SettingsV4 = {
+      ...settings,
+      version: 4,
+      button: {
+        ...settings.button,
+        serviceRotation: {
+          serviceId: '',
+          entityId: '',
+          serviceData: ''
+        },
+        serviceTap: {
+          serviceId: '',
+          entityId: '',
+          serviceData: ''
+        }
+      },
+      controllerType: 'Keypad',
+      rotationTickMultiplier: 1,
+      rotationTickBucketSizeMs: 300
+    }
+
+    return migrateSettings(settingsV4)
+  }
+
+  if (settings.version === 4) {
+    const settingsV5: Settings = {
+      ...settings,
+      version: 5,
+      display: {
+        ...settings.display,
+        iconSettings: settings.display.hideIcon ? IconSettings.HIDE : IconSettings.PREFER_PLUGIN
+      }
+    }
+
+    return migrateSettings(settingsV5)
+  }
+
+  return settings
+}

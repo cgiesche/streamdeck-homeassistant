@@ -29,8 +29,11 @@ jobs:
       - name: NPM Install
         run: npm install
 
+      - name: Lint
+        run: npm run ci-lint
+
       - name: Build
         run: npm run build
 
-      - name: Streamdeck Validate
+      - name: StreamDeck Validate
         run: npm run validate

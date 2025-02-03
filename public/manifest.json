@@ -46,7 +46,7 @@
   "CategoryIcon": "images/category",
   "SDKVersion": 2,
   "Author": "Christoph Giesche",
-  "CodePath": "plugin.html",
+  "CodePath": "bin/plugin.js",
   "Description": "Control your Home Assistant entities with stream deck.",
   "Name": "Home Assistant",
   "Icon": "images/plugin/plugin",
@@ -63,6 +63,10 @@
     }
   ],
   "Software": {
-    "MinimumVersion": "6.4"
+    "MinimumVersion": "6.8"
+  },
+  "Nodejs": {
+    "Version": "20",
+    "Debug": "--inspect=127.0.0.1:57661"
   }
 }
