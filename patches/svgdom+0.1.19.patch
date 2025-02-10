@@ -1,0 +1,35 @@
+diff --git a/node_modules/svgdom/src/config.js b/node_modules/svgdom/src/config.js
+index b7ab88f..b24cbf5 100644
+--- a/node_modules/svgdom/src/config.js
++++ b/node_modules/svgdom/src/config.js
+@@ -15,7 +15,7 @@ export const setFontFamilyMappings = function (map) {
+ }
+ 
+ // TODO: make async
+-export const preloadFonts = () => {
++export const preloadFonts = function () {
+   const map = _config.fontFamilyMappings
+ 
+   for (const [ font, file ] of Object.entries(map)) {
+diff --git a/node_modules/svgdom/src/other/CssQuery.js b/node_modules/svgdom/src/other/CssQuery.js
+index edca6f9..a925f83 100644
+--- a/node_modules/svgdom/src/other/CssQuery.js
++++ b/node_modules/svgdom/src/other/CssQuery.js
+@@ -2,6 +2,8 @@ import { removeQuotes, splitNotInBrackets } from '../utils/strUtils.js'
+ import * as regex from '../utils/regex.js'
+ import { html } from '../utils/namespaces.js'
+ 
++const eval2 = eval
++
+ export class CssQuery {
+   constructor (query) {
+     if (CssQuery.cache.has(query)) {
+@@ -126,7 +128,7 @@ const nth = (node, arr, nth) => {
+   // eval nth to get the index
+   for (var i, n = 0, nl = arr.length; n < nl; ++n) {
+     /* eslint no-eval: off */
+-    i = eval(nth)
++    i = eval2(nth)
+ 
+     if (i > nl) break
+     if (arr[i - 1] === node) return true
