@@ -6,6 +6,7 @@ import {
   type HassEntity,
   type HassServiceTarget,
   type HassServices,
+  type UnsubscribeFunc,
   callService,
   createConnection,
   createLongLivedTokenAuth,
@@ -20,7 +21,11 @@ type UpdateActionCallback = (entity: HassEntity) => void
 export class HomeAssistant {
   private connection: Nullable<Connection> = null
   private connectionError = 0
+
   private entities: Nullable<Collection<HassEntities>> = null
+  private readonly entitiesToSubscribe = new Array<string>()
+  private entitiesUnsubscribeFunc: Nullable<UnsubscribeFunc> = null
+  private entitiesSubscribeTimeout: Nullable<NodeJS.Timeout> = null
   private readonly listeners: Map<string, { entityId: string; callback: UpdateActionCallback }> =
     new Map()
 
@@ -30,10 +35,8 @@ export class HomeAssistant {
     try {
       this.connectionError = 0
       this.connection = await createConnection({ auth })
-      this.entities = entitiesColl(this.connection)
-      this.entities.subscribe((entities) => {
-        this.handleStateChanges(entities)
-      })
+      this.entities = entitiesColl(this.connection, this.entitiesToSubscribe)
+      this.setupEntitiesSubscription()
     } catch (error) {
       if (typeof error === 'number') {
         this.connectionError = error
@@ -66,8 +69,8 @@ export class HomeAssistant {
     return []
   }
 
-  getState(entityId: string): Nullable<HassEntity> {
-    return this.entities?.state[entityId]
+  async getState(entityId: string): Promise<Nullable<HassEntity>> {
+    return (await this.getStates()).find((entity) => entity.entity_id === entityId)
   }
 
   async getServices(): Promise<HassServices> {
@@ -112,14 +115,40 @@ export class HomeAssistant {
 
   subscribe(actionId: string, entityId: string, callback: UpdateActionCallback) {
     this.listeners.set(actionId, { entityId, callback })
-    const entityState = this.getState(entityId)
-    if (entityState) {
-      callback(entityState)
-    }
+    this.setupEntitiesSubscription()
   }
 
   unsubscribe(actionId: string) {
     this.listeners.delete(actionId)
+    this.setupEntitiesSubscription()
+  }
+
+  private setupEntitiesSubscription() {
+    if (this.entitiesSubscribeTimeout) {
+      clearTimeout(this.entitiesSubscribeTimeout)
+    }
+
+    // Prevent multiple un-subscriptions/subscriptions changes in a very short time
+    this.entitiesSubscribeTimeout = setTimeout(() => {
+      if (this.entities == null) return
+
+      if (this.entitiesUnsubscribeFunc) {
+        this.entitiesUnsubscribeFunc()
+      }
+
+      const entitiesToSubscribe = new Set<string>()
+      this.listeners.forEach((listener) => {
+        entitiesToSubscribe.add(listener.entityId)
+      })
+
+      this.entitiesToSubscribe.length = 0
+      for (const entityId of entitiesToSubscribe) {
+        this.entitiesToSubscribe.push(entityId)
+      }
+      this.entitiesUnsubscribeFunc = this.entities.subscribe((entities) => {
+        this.handleStateChanges(entities)
+      })
+    }, 50)
   }
 
   private handleStateChanges(event: HassEntities) {

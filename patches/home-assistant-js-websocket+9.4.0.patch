@@ -1,0 +1,70 @@
+diff --git a/node_modules/home-assistant-js-websocket/dist/collection.d.ts b/node_modules/home-assistant-js-websocket/dist/collection.d.ts
+index 32e4c4f..8887312 100644
+--- a/node_modules/home-assistant-js-websocket/dist/collection.d.ts
++++ b/node_modules/home-assistant-js-websocket/dist/collection.d.ts
+@@ -16,5 +16,6 @@ export type Collection<State> = {
+  */
+ export declare const getCollection: <State>(conn: Connection, key: string, fetchCollection: ((conn: Connection) => Promise<State>) | undefined, subscribeUpdates?: (conn: Connection, store: Store<State>) => Promise<UnsubscribeFunc>, options?: {
+     unsubGrace: boolean;
++    entityIds: string[];
+ }) => Collection<State>;
+ export declare const createCollection: <State>(key: string, fetchCollection: (conn: Connection) => Promise<State>, subscribeUpdates: ((conn: Connection, store: Store<State>) => Promise<UnsubscribeFunc>) | undefined, conn: Connection, onChange: (state: State) => void) => UnsubscribeFunc;
+diff --git a/node_modules/home-assistant-js-websocket/dist/collection.js b/node_modules/home-assistant-js-websocket/dist/collection.js
+index 959f9d4..dbdea95 100644
+--- a/node_modules/home-assistant-js-websocket/dist/collection.js
++++ b/node_modules/home-assistant-js-websocket/dist/collection.js
+@@ -10,7 +10,7 @@ const DEBUG = false;
+  * @param subscribeUpdates subscribe to updates on the current state
+  * @returns
+  */
+-export const getCollection = (conn, key, fetchCollection, subscribeUpdates, options = { unsubGrace: true }) => {
++export const getCollection = (conn, key, fetchCollection, subscribeUpdates, options = { unsubGrace: true, entityIds: [] }) => {
+     // @ts-ignore
+     if (conn[key]) {
+         // @ts-ignore
+@@ -46,7 +46,7 @@ export const getCollection = (conn, key, fetchCollection, subscribeUpdates, opti
+             console.log(`Subscribing to ${key}`);
+         }
+         if (subscribeUpdates) {
+-            unsubProm = subscribeUpdates(conn, store);
++            unsubProm = subscribeUpdates(conn, store, options.entityIds);
+         }
+         if (fetchCollection) {
+             // Fetch when connection re-established.
+diff --git a/node_modules/home-assistant-js-websocket/dist/entities.d.ts b/node_modules/home-assistant-js-websocket/dist/entities.d.ts
+index 44c5e01..f7d8452 100644
+--- a/node_modules/home-assistant-js-websocket/dist/entities.d.ts
++++ b/node_modules/home-assistant-js-websocket/dist/entities.d.ts
+@@ -1,4 +1,4 @@
+ import { HassEntities, UnsubscribeFunc } from "./types.js";
+ import { Connection } from "./connection.js";
+-export declare const entitiesColl: (conn: Connection) => import("./collection.js").Collection<HassEntities>;
+-export declare const subscribeEntities: (conn: Connection, onChange: (state: HassEntities) => void) => UnsubscribeFunc;
++export declare const entitiesColl: (conn: Connection, entityIds?: string[]) => import("./collection.js").Collection<HassEntities>;
++export declare const subscribeEntities: (conn: Connection, onChange: (state: HassEntities) => void, entityIds?: string[]) => UnsubscribeFunc;
+diff --git a/node_modules/home-assistant-js-websocket/dist/entities.js b/node_modules/home-assistant-js-websocket/dist/entities.js
+index 679dfda..b50922d 100644
+--- a/node_modules/home-assistant-js-websocket/dist/entities.js
++++ b/node_modules/home-assistant-js-websocket/dist/entities.js
+@@ -73,8 +73,9 @@ function processEvent(store, updates) {
+     }
+     store.setState(state, true);
+ }
+-const subscribeUpdates = (conn, store) => conn.subscribeMessage((ev) => processEvent(store, ev), {
++const subscribeUpdates = (conn, store, entityIds=[]) => conn.subscribeMessage((ev) => processEvent(store, ev), {
+     type: "subscribe_entities",
++    entity_ids: entityIds,
+ });
+ function legacyProcessEvent(store, event) {
+     const state = store.state;
+@@ -100,7 +101,7 @@ async function legacyFetchEntities(conn) {
+     return entities;
+ }
+ const legacySubscribeUpdates = (conn, store) => conn.subscribeEvents((ev) => legacyProcessEvent(store, ev), "state_changed");
+-export const entitiesColl = (conn) => atLeastHaVersion(conn.haVersion, 2022, 4, 0)
+-    ? getCollection(conn, "_ent", undefined, subscribeUpdates)
++export const entitiesColl = (conn, entityIds=[]) => atLeastHaVersion(conn.haVersion, 2022, 4, 0)
++    ? getCollection(conn, "_ent", undefined, subscribeUpdates, {unsubGrace: false, entityIds: entityIds})
+     : getCollection(conn, "_ent", legacyFetchEntities, legacySubscribeUpdates);
+-export const subscribeEntities = (conn, onChange) => entitiesColl(conn).subscribe(onChange);
++export const subscribeEntities = (conn, onChange, entityIds=[]) => entitiesColl(conn, entityIds).subscribe(onChange);

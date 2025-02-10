@@ -319,7 +319,7 @@ export class GenericEntityAction extends SingletonAction<Settings> {
   }
 
   private async onGetEntityAttributes(ev: GetEntityEvent) {
-    const state = this.homeAssistant.getState(ev.entityId)
+    const state = await this.homeAssistant.getState(ev.entityId)
     await streamDeck.ui.current?.sendToPropertyInspector({
       event: 'getEntityAttributes',
       attributes: state == null ? [] : Object.keys(state.attributes)
