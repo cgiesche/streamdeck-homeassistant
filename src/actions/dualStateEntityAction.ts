@@ -6,7 +6,7 @@ import type { RenderingConfig } from '@/models/renderConfig'
 
 @action({ UUID: 'de.perdoctus.streamdeck.homeassistant.dual-state-entity' })
 export class DualStateEntityAction extends GenericEntityAction {
-  override async updateKeypadDisplay(
+  protected override async updateKeypadDisplay(
     renderingConfig: RenderingConfig,
     action: KeyAction,
     stateObject: HassEntity

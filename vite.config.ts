@@ -33,5 +33,12 @@ export default defineConfig({
         silenceDeprecations: ['mixed-decls', 'color-functions', 'global-builtin', 'import']
       }
     }
+  },
+  test: {
+    dir: 'test',
+    setupFiles: 'test/setup.ts',
+    coverage: {
+      include: ['src/**']
+    }
   }
 })

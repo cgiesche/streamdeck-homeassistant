@@ -15,8 +15,7 @@ export class SvgUtils {
     'font-weight': 'bold',
     'font-size': `${this.fontSize}px`,
     'text-anchor': 'middle',
-    stroke: '#000',
-    strokeWidth: 4
+    stroke: '#000'
   }
   private readonly canvas: Svg
 
@@ -31,20 +30,20 @@ export class SvgUtils {
   /**
    * Renders a complete button image based on the given rendering-config.
    */
-  renderButtonSVG(renderingConfig: RenderingConfig, stateObject: HassEntity) {
+  renderButtonSVG(
+    renderingConfig: RenderingConfig,
+    stateObject: AtLeast<HassEntity, 'attributes' | 'state'>
+  ) {
     const buttonLabels = this.renderTemplates(renderingConfig.labelTemplates, {
       ...stateObject.attributes,
       state: stateObject.state
     })
-    return (
-      'data:image/svg+xml;charset=utf8,' +
-      this.generateButtonSVG(
-        buttonLabels,
-        renderingConfig.icon,
-        renderingConfig.color,
-        renderingConfig.isAction,
-        renderingConfig.isMultiAction
-      )
+    return this.generateButtonSVG(
+      buttonLabels,
+      renderingConfig.icon,
+      renderingConfig.color,
+      renderingConfig.isAction,
+      renderingConfig.isMultiAction
     )
   }
 
@@ -52,7 +51,7 @@ export class SvgUtils {
    * Renders the given MDI as SVG.
    */
   renderIconSVG(mdiIconName: Nullable<string>, iconColor: string) {
-    return 'data:image/svg+xml;charset=utf8,' + this.generateIconSVG(mdiIconName, iconColor)
+    return this.generateIconSVG(mdiIconName, iconColor)
   }
 
   renderTemplates(templates: Nullable<string[]>, values: object) {
@@ -143,6 +142,8 @@ export class SvgUtils {
   }
 
   private drawText(text: string, lineNr: number) {
+    if (text.length === 0) return
+
     const quarterHeight = this.buttonRes.height / 4
     this.canvas
       .text(text)

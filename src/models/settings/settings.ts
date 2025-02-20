@@ -68,7 +68,6 @@ interface SettingsV3 {
 interface SettingsV4 {
   version: 4
   display: {
-    domain: string
     entityId: string
     useCustomTitle: boolean
     buttonTitle: string
@@ -208,10 +207,20 @@ export function migrateSettings(settings: LegacySettings | Settings): Settings {
 
   if (settings.version === 3) {
     const settingsV4: SettingsV4 = {
-      ...settings,
       version: 4,
+      display: {
+        ...settings.display,
+        entityId: `${settings.display.domain}.${settings.display.entityId}`
+      },
       button: {
-        ...settings.button,
+        serviceShortPress: {
+          ...settings.button.serviceShortPress,
+          entityId: `${settings.display.domain}.${settings.button.serviceShortPress.entityId}`
+        },
+        serviceLongPress: {
+          ...settings.button.serviceLongPress,
+          entityId: `${settings.display.domain}.${settings.button.serviceLongPress.entityId}`
+        },
         serviceRotation: {
           serviceId: '',
           entityId: '',

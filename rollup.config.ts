@@ -55,7 +55,7 @@ const config: RollupOptions = {
     yaml(),
     typescript({
       mapRoot: isWatching ? './' : undefined,
-      exclude: ['src/pi/main.ts', 'src/plugin/main.ts']
+      exclude: ['src/pi/main.ts', 'src/plugin/main.ts', '**/*.test.ts', 'test/**', '*.config.ts']
     }),
     nodeResolve({
       browser: false,

@@ -21,16 +21,25 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Setup Node.js environment
-        uses: actions/setup-node@v2.1.4
+        uses: actions/setup-node@v4
 
       - name: NPM Install
         run: npm install
 
       - name: Lint
         run: npm run ci-lint
+
+      - name: Test
+        run: npx vitest --coverage.enabled true
+
+      - name: 'Upload Coverage'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage
 
       - name: Build
         run: npm run build

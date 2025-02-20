@@ -33,3 +33,16 @@ index edca6f9..a925f83 100644
  
      if (i > nl) break
      if (arr[i - 1] === node) return true
+diff --git a/node_modules/svgdom/src/utils/textUtils.js b/node_modules/svgdom/src/utils/textUtils.js
+index a6591c8..d54c7a2 100644
+--- a/node_modules/svgdom/src/utils/textUtils.js
++++ b/node_modules/svgdom/src/utils/textUtils.js
+@@ -5,6 +5,8 @@ import { Box, NoBox } from '../other/Box.js'
+ import { getConfig, getFonts } from '../config.js'
+ 
+ export const textBBox = function (text, x, y, details) {
++  // Don't try to load any fonts
++  return new NoBox()
+ 
+   if (!text) return new NoBox()
+ 

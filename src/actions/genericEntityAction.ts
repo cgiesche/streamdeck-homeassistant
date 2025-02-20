@@ -68,7 +68,7 @@ export class GenericEntityAction extends SingletonAction<Settings> {
     }
   }
 
-  private async updateDisplay(settings: Settings, actionId: string, stateObject: HassEntity) {
+  async updateDisplay(settings: Settings, actionId: string, stateObject: HassEntity) {
     const action = streamDeck.actions.getActionById(actionId)
     if (action == null) {
       streamDeck.logger.warn(`Action ${actionId} not found`)
@@ -83,7 +83,7 @@ export class GenericEntityAction extends SingletonAction<Settings> {
     }
   }
 
-  async updateDialDisplay(
+  private async updateDialDisplay(
     renderingConfig: RenderingConfig,
     action: DialAction,
     stateObject: HassEntity
@@ -91,10 +91,9 @@ export class GenericEntityAction extends SingletonAction<Settings> {
     await action.setFeedbackLayout(renderingConfig.feedbackLayout)
 
     renderingConfig.feedback.title = renderingConfig.customTitle ?? ''
-    renderingConfig.feedback.icon = this.svgUtils.renderIconSVG(
-      renderingConfig.icon,
-      renderingConfig.color
-    )
+    renderingConfig.feedback.icon =
+      'data:image/svg+xml;charset=utf8,' +
+      this.svgUtils.renderIconSVG(renderingConfig.icon, renderingConfig.color)
     renderingConfig.feedback.value ??= this.svgUtils
       .renderTemplates(renderingConfig.labelTemplates, {
         ...stateObject.attributes,
@@ -104,7 +103,7 @@ export class GenericEntityAction extends SingletonAction<Settings> {
     await action.setFeedback(renderingConfig.feedback)
   }
 
-  async updateKeypadDisplay(
+  protected async updateKeypadDisplay(
     renderingConfig: RenderingConfig,
     action: KeyAction,
     stateObject: HassEntity
@@ -117,7 +116,9 @@ export class GenericEntityAction extends SingletonAction<Settings> {
       ? this.entityConfigFactory.colors.active
       : this.entityConfigFactory.colors.neutral
 
-    const image = this.svgUtils.renderButtonSVG(renderingConfig, stateObject)
+    const image =
+      'data:image/svg+xml;charset=utf8,' +
+      this.svgUtils.renderButtonSVG(renderingConfig, stateObject)
     await action.setImage(image)
   }
 
