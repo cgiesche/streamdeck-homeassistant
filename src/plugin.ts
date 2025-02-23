@@ -37,3 +37,9 @@ await streamDeck.settings.getGlobalSettings<GlobalSettings>().then(async (settin
   await homeAssistant.connect(settings.serverUrl, settings.accessToken)
   await entityConfigFactory.setDisplayConfigurationUrl(settings.displayConfiguration?.urlOverride)
 })
+
+// Reconnect when resuming from sleep.
+streamDeck.system.onSystemDidWakeUp(() => {
+  streamDeck.logger.info('System woke up, reconnecting to Home Assistant...')
+  homeAssistant.reconnect()
+})

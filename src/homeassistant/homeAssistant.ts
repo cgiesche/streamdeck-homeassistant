@@ -21,6 +21,7 @@ type UpdateActionCallback = (entity: HassEntity) => void
 export class HomeAssistant {
   private connection: Nullable<Connection> = null
   private connectionError = 0
+  private heartbeatInterval: Nullable<NodeJS.Timeout> = null
 
   private entities: Nullable<Collection<HassEntities>> = null
   private readonly entitiesToSubscribe = new Array<string>()
@@ -35,6 +36,7 @@ export class HomeAssistant {
     try {
       this.connectionError = 0
       this.connection = await createConnection({ auth })
+      this.resetHeartbeatInterval()
       this.entities = entitiesColl(this.connection, this.entitiesToSubscribe)
       this.setupEntitiesSubscription()
     } catch (error) {
@@ -45,6 +47,10 @@ export class HomeAssistant {
       }
       streamDeck.logger.error('Error connecting to Home Assistant:', error)
     }
+  }
+
+  reconnect() {
+    this.connection?.reconnect()
   }
 
   close() {
@@ -146,6 +152,7 @@ export class HomeAssistant {
         this.entitiesToSubscribe.push(entityId)
       }
       this.entitiesUnsubscribeFunc = this.entities.subscribe((entities) => {
+        this.resetHeartbeatInterval()
         this.handleStateChanges(entities)
       })
     }, 50)
@@ -158,5 +165,18 @@ export class HomeAssistant {
         listener.callback(entity)
       }
     }
+  }
+
+  private resetHeartbeatInterval() {
+    if (this.heartbeatInterval) {
+      clearInterval(this.heartbeatInterval)
+    }
+    this.heartbeatInterval = setInterval(async () => {
+      try {
+        await this.connection?.ping()
+      } catch (e) {
+        streamDeck.logger.error('Error pinging Home Assistant', e)
+      }
+    }, 5000)
   }
 }

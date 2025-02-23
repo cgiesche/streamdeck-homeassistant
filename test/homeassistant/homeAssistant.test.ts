@@ -258,7 +258,7 @@ it('test subscribing to events', async () => {
   })
 
   expect(entitiesCollectionMock.subscribe.mock.calls).toHaveLength(0)
-  vi.runAllTimers()
+  vi.advanceTimersByTime(1000)
   expect(entitiesCollectionMock.subscribe.mock.calls).toHaveLength(1)
 
   expect(subscribedEntities).toHaveLength(3)
@@ -274,11 +274,50 @@ it('test subscribing to events', async () => {
   homeAssistant.unsubscribe('actionId1')
   homeAssistant.unsubscribe('actionId3')
 
-  vi.runAllTimers()
+  vi.advanceTimersByTime(1000)
   expect(entitiesCollectionMock.subscribe.mock.calls).toHaveLength(2)
 
   expect(subscribedEntities).toHaveLength(1)
   expect(subscribedEntities).toContain('light.another_light')
+})
+
+it('test connection heartbeat', async () => {
+  vi.useFakeTimers()
+  const connection = mock<Connection>()
+  vi.mocked(createConnection).mockResolvedValue(connection)
+
+  const entitiesCollectionMock = mock<Collection<HassEntities>>()
+  vi.mocked(entitiesColl).mockReturnValue(entitiesCollectionMock)
+
+  const homeAssistant = new HomeAssistant()
+  await homeAssistant.connect('test-url', 'test-token')
+  homeAssistant.subscribe('action', 'entityId', () => {})
+
+  expect(connection.ping.mock.calls).toHaveLength(0)
+  vi.advanceTimersByTime(5000)
+  expect(connection.ping.mock.calls).toHaveLength(1)
+
+  // Test that the heartbeat interval is reset when new events are received
+  const subscriptionCallback = entitiesCollectionMock.subscribe.mock.lastCall?.at(0)
+  for (let i = 0; i < 20; i++) {
+    vi.advanceTimersByTime(4000)
+    subscriptionCallback!({})
+  }
+  expect(connection.ping.mock.calls).toHaveLength(1)
+
+  vi.advanceTimersByTime(5000)
+  expect(connection.ping.mock.calls).toHaveLength(2)
+})
+
+it('test reconnecting', async () => {
+  const connection = mock<Connection>()
+  vi.mocked(createConnection).mockResolvedValue(connection)
+
+  const homeAssistant = new HomeAssistant()
+  await homeAssistant.connect('test-url', 'test-token')
+
+  homeAssistant.reconnect()
+  expect(connection.reconnect.mock.calls).toHaveLength(1)
 })
 
 function buildTestStates(): HassEntity[] {
