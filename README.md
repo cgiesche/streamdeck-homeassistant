@@ -132,6 +132,7 @@ After you save your Home Assistant Settings, the plugin will automatically try t
     ```
 
 # Happy? Consider donating me a coffee :)
+
 [![buy me a coffee](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://www.paypal.com/donate?hosted_button_id=3UKRJEJVWV9H4)
 
 [https://www.reddit.com/r/homeassistant/comments/laq2g4/homeassistant_streamdeck_plugin_dynamic_not_just/glu0zep/?utm_source=share&utm_medium=web2x&context=3]: https://www.reddit.com/r/homeassistant/comments/laq2g4/homeassistant_streamdeck_plugin_dynamic_not_just/glu0zep/?utm_source=share&utm_medium=web2x&context=3

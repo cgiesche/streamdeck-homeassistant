@@ -1,0 +1,3 @@
+{
+  "_comment": "This file is required to exist because the StreamDeck SDK loads it on init during the tests"
+}

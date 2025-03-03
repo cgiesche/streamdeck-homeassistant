@@ -11,8 +11,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2.1.4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
 
       - name: Determine tag name
         id: tagName
@@ -27,9 +27,13 @@ jobs:
 
       - name: NPM Install
         run: npm install
-      - name: VUE Build
+      - name: Lint
+        run: npm run ci-lint
+      - name: Test
+        run: npm run test
+      - name: Build
         run: npm run build
-      - name: Streamdeck Bundle
+      - name: StreamDeck Bundle
         run: npm run bundle
 
       - name: Upload Release Asset
