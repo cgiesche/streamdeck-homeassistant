@@ -13,13 +13,15 @@
       ],
       "SupportedInMultiActions": true,
       "UUID": "de.perdoctus.streamdeck.homeassistant.entity",
-      "Controllers": ["Keypad", "Encoder"],
+      "Controllers": [
+        "Keypad",
+        "Encoder"
+      ],
       "Encoder": {
         "layout": "$A0",
         "StackColor": "#AABBCC"
       }
     },
-
     {
       "Icon": "images/actionImage",
       "Name": "Entity (custom icons)",
