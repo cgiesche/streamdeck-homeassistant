@@ -14,6 +14,7 @@ export type ReconnectEvent = SendToPluginBaseEvent & {
   event: 'reconnect'
   serverUrl: string
   accessToken: string
+  customDisplayConfigurationUrl: Nullable<string>
 }
 
 export type GetEntityEvent = SendToPluginBaseEvent & {

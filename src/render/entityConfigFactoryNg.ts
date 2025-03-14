@@ -1,3 +1,5 @@
+import fs from 'fs'
+
 import streamDeck, { type FeedbackPayload } from '@elgato/streamdeck'
 import axios from 'axios'
 import type { HassEntity } from 'home-assistant-js-websocket'
@@ -27,12 +29,20 @@ export class EntityConfigFactory {
   }
 
   async setDisplayConfigurationUrl(url: Nullable<string>) {
-    if (!url) return
+    if (!url) {
+      this.displayConfiguration = defaultDisplayConfiguration as DisplayConfig
+      return
+    }
 
     streamDeck.logger.info(`Loading display configuration from ${url}`)
     try {
-      const response = await axios.get<string>(url)
-      this.displayConfiguration = yaml.load(response.data) as DisplayConfig
+      let response: string
+      if (url.startsWith('file://')) {
+        response = fs.readFileSync(url.replace('file://', ''), 'utf8')
+      } else {
+        response = (await axios.get<string>(url)).data
+      }
+      this.displayConfiguration = yaml.load(response) as DisplayConfig
     } catch (error) {
       streamDeck.logger.error(`Failed to download display configuration from ${url}`, error)
     }
@@ -96,7 +106,12 @@ export class EntityConfigFactory {
 
     const feedbackLayout = this.render(feedbackLayoutString, stateObject)
     const renderedFeedback = this.render(feedbackValueString, stateObject)
-    const feedback = renderedFeedback ? (JSON.parse(renderedFeedback) as FeedbackPayload) : {}
+    let feedback: FeedbackPayload = {}
+    try {
+      feedback = renderedFeedback ? (JSON.parse(renderedFeedback) as FeedbackPayload) : {}
+    } catch (error) {
+      streamDeck.logger.error('Failed to parse feedback template', error)
+    }
 
     const icon = this.render(iconString, stateObject)
     const color = this.render(colorString, stateObject)
