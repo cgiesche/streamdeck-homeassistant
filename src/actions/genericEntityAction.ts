@@ -329,6 +329,7 @@ export class GenericEntityAction extends SingletonAction<Settings> {
 
   private async onReconnect(ev: ReconnectEvent) {
     await this.homeAssistant.connect(ev.serverUrl, ev.accessToken)
+    await this.entityConfigFactory.setDisplayConfigurationUrl(ev.customDisplayConfigurationUrl)
     await this.sendConnectionState()
   }
 

@@ -152,3 +152,21 @@ it('test setting bad custom display configuration', async () => {
   const renderConfig = entityConfigFactory.buildRenderConfig(entity, settings)
   expect(renderConfig.icon).toBe('mdi:lightbulb')
 })
+
+it('test setting custom display configuration with file', async () => {
+  const entityConfigFactory = new EntityConfigFactory()
+  const entity = buildTestEntity()
+  const settings = buildTestSettings()
+
+  // Set the display configuration URL to a local file
+  await entityConfigFactory.setDisplayConfigurationUrl(
+    'file://resources/custom-display-configuration.yml'
+  )
+  const renderConfig1 = entityConfigFactory.buildRenderConfig(entity, settings)
+  expect(renderConfig1.icon).toBe('mdi:ceiling-light')
+
+  // Set the display configuration URL back to the default
+  await entityConfigFactory.setDisplayConfigurationUrl('')
+  const renderConfig2 = entityConfigFactory.buildRenderConfig(entity, settings)
+  expect(renderConfig2.icon).toBe('mdi:lightbulb')
+})
