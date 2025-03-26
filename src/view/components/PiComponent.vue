@@ -427,7 +427,8 @@ async function saveGlobalSettings() {
   await streamDeckClient.send('sendToPlugin', {
     event: 'reconnect',
     serverUrl: serverUrl.value,
-    accessToken: accessToken.value
+    accessToken: accessToken.value,
+    customDisplayConfigurationUrl: displayConfigurationUrlOverride.value
   })
 }
 
