@@ -30,6 +30,8 @@ _states:
     color: '#FF6F91'
   unknown:
     color: '#FF6F91'
+  error:
+    color: '#FF6F91'
   # ======================== On-States ======================
   on:
     color: '#ffd484'
@@ -298,5 +300,13 @@ vacuum:
       color: '#00C9A7'
     returning:
       color: '#F9F871'
-    error:
-      color: '#FF6F91'
+
+lawn_mower:
+  icon: mdi:robot-mower
+  states:
+    mowing:
+      color: '#00C9A7'
+    paused:
+      color: '#F9F871'
+    returning:
+      color: '#F9F871'
