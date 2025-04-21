@@ -26,7 +26,7 @@ await streamDeck.connect()
 // Reconnect to Home Assistant when the global settings are changed.
 await streamDeck.settings.getGlobalSettings<GlobalSettings>().then(async (settings) => {
   // Convert the old WebSocket URL format to the new format required by the Home Assistant library.
-  if (settings.serverUrl.startsWith('wss://') || settings.serverUrl.startsWith('ws://')) {
+  if (settings.serverUrl && (settings.serverUrl.startsWith('wss://') || settings.serverUrl.startsWith('ws://'))) {
     settings.serverUrl = settings.serverUrl
       .replace('ws://', 'http://')
       .replace('wss://', 'https://')
@@ -34,7 +34,12 @@ await streamDeck.settings.getGlobalSettings<GlobalSettings>().then(async (settin
     await streamDeck.settings.setGlobalSettings(settings)
   }
 
-  await homeAssistant.connect(settings.serverUrl, settings.accessToken)
+  if (settings.serverUrl && settings.accessToken) {
+    streamDeck.logger.info('Connecting to Home Assistant...')
+    await homeAssistant.connect(settings.serverUrl, settings.accessToken)
+  } else {
+    streamDeck.logger.info('No Home Assistant server URL or access token set, not connecting to Home Assistant.')
+  }
   await entityConfigFactory.setDisplayConfigurationUrl(settings.displayConfiguration?.urlOverride)
 })
 
