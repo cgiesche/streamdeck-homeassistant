@@ -434,8 +434,8 @@ async function saveGlobalSettings() {
 
 async function loadGlobalSettings() {
   const globalSettings = await streamDeckClient.getGlobalSettings()
-  serverUrl.value = globalSettings.serverUrl
-  accessToken.value = globalSettings.accessToken
+  serverUrl.value = globalSettings.serverUrl || ''
+  accessToken.value = globalSettings.accessToken || ''
 
   displayConfiguration.value = globalSettings.displayConfiguration
   displayConfigurationUrlOverride.value = globalSettings.displayConfiguration?.urlOverride ?? ''
