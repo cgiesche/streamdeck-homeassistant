@@ -310,3 +310,14 @@ lawn_mower:
       color: '#F9F871'
     returning:
       color: '#F9F871'
+
+fan:
+  labelTemplates:
+    - ''
+    - ''
+    - |
+      {{'~' if oscillating}}
+  icon: mdi:fan
+  states:
+    off:
+      icon: mdi:fan-off
