@@ -52,14 +52,14 @@ _states:
   # =========================================================
 
 switch:
-  labelTemplates:
+  labelTemplates: []
   icon: mdi:toggle-switch-off
   states:
     on:
       icon: mdi:toggle-switch
 
 light:
-  labelTemplates:
+  labelTemplates: []
   icon: mdi:lightbulb
   color: '#888888'
   feedbackLayout: '$B1'
@@ -77,7 +77,7 @@ light:
       color: '#ffd484'
 
 input_boolean:
-  labelTemplates:
+  labelTemplates: []
   icon: mdi:toggle-switch-off
   states:
     on:
@@ -97,7 +97,7 @@ person:
       icon: mdi:account-arrow-right
 
 binary_sensor:
-  labelTemplates:
+  labelTemplates: []
   icon: mdi:radiobox-blank
   states:
     on:
