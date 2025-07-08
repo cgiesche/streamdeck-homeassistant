@@ -41,13 +41,7 @@
       },
       "additionalProperties": false,
       "required": [],
-      "optional": [
-        "icon",
-        "color",
-        "labelTemplates",
-        "states",
-        "classes"
-      ]
+      "optional": ["icon", "color", "labelTemplates", "states", "classes"]
     }
   },
   "additionalProperties": false,
@@ -76,12 +70,7 @@
           },
           "additionalProperties": false,
           "required": [],
-          "optional": [
-            "icon",
-            "color",
-            "labelTemplates",
-            "states"
-          ]
+          "optional": ["icon", "color", "labelTemplates", "states"]
         }
       }
     }

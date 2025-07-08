@@ -1,4 +1,6 @@
 .DS_Store
+coverage
+test/logs
 node_modules
 /de.perdoctus.streamdeck.homeassistant.sdPlugin
 *.streamDeckPlugin

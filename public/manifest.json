@@ -19,7 +19,6 @@
         "StackColor": "#AABBCC"
       }
     },
-
     {
       "Icon": "images/actionImage",
       "Name": "Entity (custom icons)",
@@ -46,7 +45,7 @@
   "CategoryIcon": "images/category",
   "SDKVersion": 2,
   "Author": "Christoph Giesche",
-  "CodePath": "plugin.html",
+  "CodePath": "bin/plugin.js",
   "Description": "Control your Home Assistant entities with stream deck.",
   "Name": "Home Assistant",
   "Icon": "images/plugin/plugin",
@@ -55,15 +54,18 @@
   "OS": [
     {
       "Platform": "mac",
-      "MinimumVersion" : "10.11"
+      "MinimumVersion": "10.11"
     },
     {
       "Platform": "windows",
-      "MinimumVersion" : "10"
+      "MinimumVersion": "10"
     }
   ],
-  "Software":
-  {
-    "MinimumVersion" : "6.4"
+  "Software": {
+    "MinimumVersion": "6.8"
+  },
+  "Nodejs": {
+    "Version": "20",
+    "Debug": "--inspect=127.0.0.1:57661"
   }
 }
