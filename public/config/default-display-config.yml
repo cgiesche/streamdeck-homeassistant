@@ -24,7 +24,12 @@ _color: '#AAAAAA'
 _labelTemplates:
   - ''
   - ''
-  - '{{state}}{{unit_of_measurement}}'
+  - |
+    {% if (state | float('f')) == 'f' -%}
+      {{ state }}
+    {% else -%}
+      {{ state | round(2) }}{{unit_of_measurement}}
+    {% endif %}
 _states:
   unavailable:
     color: '#FF6F91'
