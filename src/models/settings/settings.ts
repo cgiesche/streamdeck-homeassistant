@@ -1,3 +1,5 @@
+import streamDeck from '@elgato/streamdeck'
+
 interface SettingsV1 {
   version: 1
   domain: string
@@ -88,13 +90,29 @@ interface SettingsV4 {
   rotationTickBucketSizeMs: number
 }
 
-export enum IconSettings {
-  HIDE = 'HIDE',
-  PREFER_HA = 'PREFER_HA',
-  PREFER_PLUGIN = 'PREFER_PLUGIN'
-}
-export type Settings = {
+export type SettingsV5 = {
   version: 5
+  display: {
+    entityId: string
+    useCustomTitle: boolean
+    buttonTitle: string
+    enableServiceIndicator: boolean
+    useCustomButtonLabels: boolean
+    buttonLabels: string
+    iconSettings: IconSettings
+  }
+  button: {
+    serviceShortPress: ActionSettings
+    serviceLongPress: ActionSettings
+    serviceRotation: ActionSettings
+    serviceTap: ActionSettings
+  }
+  rotationTickMultiplier: number
+  rotationTickBucketSizeMs: number
+}
+
+export type Settings = {
+  version: 6
   display: {
     entityId: string
     useCustomTitle: boolean
@@ -120,9 +138,16 @@ export type ActionSettings = {
   serviceData?: Nullable<string>
 }
 
-export type LegacySettings = SettingsV1 | SettingsV2 | SettingsV3 | SettingsV4
+export enum IconSettings {
+  HIDE = 'HIDE',
+  PREFER_HA = 'PREFER_HA',
+  PREFER_PLUGIN = 'PREFER_PLUGIN'
+}
 
-export const latestSettingsVersion = 5
+export type LegacySettings = SettingsV1 | SettingsV2 | SettingsV3 | SettingsV4 | SettingsV5
+
+export const latestSettingsVersion = 6
+
 export function migrateSettings(settings: LegacySettings | Settings): Settings {
   if (settings.version === undefined || settings.version == 1) {
     const settingsV2: SettingsV2 = {
@@ -241,7 +266,7 @@ export function migrateSettings(settings: LegacySettings | Settings): Settings {
   }
 
   if (settings.version === 4) {
-    const settingsV5: Settings = {
+    const settingsV5: SettingsV5 = {
       ...settings,
       version: 5,
       display: {
@@ -253,5 +278,54 @@ export function migrateSettings(settings: LegacySettings | Settings): Settings {
     return migrateSettings(settingsV5)
   }
 
+  if (settings.version === 5) {
+    const settingsV6: Settings = {
+      ...settings,
+      version: 6,
+      display: {
+        ...settings.display,
+        entityId: fixDuplicateDomain(settings.display.entityId) || ''
+      },
+      button: {
+        serviceShortPress: {
+          ...settings.button.serviceShortPress,
+          entityId: fixDuplicateDomain(settings.button.serviceShortPress?.entityId)
+        },
+        serviceLongPress: {
+          ...settings.button.serviceLongPress,
+          entityId: fixDuplicateDomain(settings.button.serviceLongPress?.entityId)
+        },
+        serviceRotation: {
+          ...settings.button.serviceRotation,
+          entityId: fixDuplicateDomain(settings.button.serviceRotation?.entityId)
+        },
+        serviceTap: {
+          ...settings.button.serviceTap,
+          entityId: fixDuplicateDomain(settings.button.serviceTap?.entityId)
+        }
+      }
+    }
+
+    return settingsV6
+  }
+
   return settings
+}
+
+/**
+ * Fixes duplicate domains in entityId strings.
+ * For example, "light.light.foobar" becomes "light.foobar".
+ */
+function fixDuplicateDomain(entityId?: string | null): string | undefined | null {
+  if (!entityId) {
+    return entityId
+  }
+
+  const parts = entityId.split('.')
+  if (parts.length == 3 && parts[0] === parts[1]) {
+    streamDeck.logger.warn(`Fixing duplicate domain in entityId: ${entityId}`)
+    return parts[0] + '.' + parts.slice(2).join('.')
+  }
+
+  return entityId
 }

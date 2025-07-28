@@ -38,6 +38,6 @@ export function buildTestSettings(): Settings {
     },
     rotationTickBucketSizeMs: 0,
     rotationTickMultiplier: 0,
-    version: 5
+    version: 6
   }
 }
