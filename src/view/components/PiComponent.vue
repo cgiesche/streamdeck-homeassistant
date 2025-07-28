@@ -461,7 +461,7 @@ async function loadSettings() {
 
 async function saveSettings() {
   const settings: Settings = {
-    version: 5,
+    version: 6,
 
     display: {
       entityId: entity.value,
