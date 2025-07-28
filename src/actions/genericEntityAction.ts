@@ -92,7 +92,8 @@ export class GenericEntityAction extends SingletonAction<Settings> {
 
     renderingConfig.feedback.title = renderingConfig.customTitle ?? ''
     renderingConfig.feedback.icon =
-      'data:image/svg+xml,' + encodeURIComponent(this.svgUtils.renderIconSVG(renderingConfig.icon, renderingConfig.color))
+      'data:image/svg+xml,' +
+      encodeURIComponent(this.svgUtils.renderIconSVG(renderingConfig.icon, renderingConfig.color))
     renderingConfig.feedback.value ??= this.svgUtils
       .renderTemplates(renderingConfig.labelTemplates, {
         ...stateObject.attributes,
@@ -115,8 +116,10 @@ export class GenericEntityAction extends SingletonAction<Settings> {
       ? this.entityConfigFactory.colors.active
       : this.entityConfigFactory.colors.neutral
 
-    const image = 'data:image/svg+xml,' + encodeURIComponent(this.svgUtils.renderButtonSVG(renderingConfig, stateObject));
-    streamDeck.logger.warn("Image Data: " + image)
+    const image =
+      'data:image/svg+xml,' +
+      encodeURIComponent(this.svgUtils.renderButtonSVG(renderingConfig, stateObject))
+    streamDeck.logger.warn('Image Data: ' + image)
     await action.setImage(image)
   }
 
