@@ -25,7 +25,7 @@ it('test settings v1 migration', () => {
   }
 
   const migratedSettings = migrateSettings(settingsV1)
-  expect(migratedSettings.version).toBe(5)
+  expect(migratedSettings.version).toBe(6)
   expect(migratedSettings.display.entityId).toBe(`${settingsV1.domain}.${settingsV1.entityId}`)
   expect(migratedSettings.display.useCustomTitle).toBe(settingsV1.useCustomTitle)
   expect(migratedSettings.display.buttonTitle).toBe(settingsV1.buttonTitle)
@@ -92,7 +92,7 @@ it('test settings v4 migration', () => {
   }
 
   const migratedSettings = migrateSettings(settingsV4)
-  expect(migratedSettings.version).toBe(5)
+  expect(migratedSettings.version).toBe(6)
   expect(migratedSettings.display.entityId).toBe(settingsV4.display.entityId)
   expect(migratedSettings.display.useCustomTitle).toBe(settingsV4.display.useCustomTitle)
   expect(migratedSettings.display.buttonTitle).toBe(settingsV4.display.buttonTitle)
