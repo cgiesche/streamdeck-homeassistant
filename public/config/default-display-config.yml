@@ -20,47 +20,57 @@
 #          color: #FFFFFF
 #          labelTemplates:
 
-_color: "#AAAAAA"
+_color: '#AAAAAA'
 _labelTemplates:
-  - ""
-  - ""
-  - "{{state}}{{unit_of_measurement}}"
+  - ''
+  - ''
+  - |
+    {% if (state | float('f')) == 'f' -%}
+      {{ state }}
+    {% else -%}
+      {{ state | round(2) }}{{unit_of_measurement}}
+    {% endif %}
 _states:
   unavailable:
-    color: "#FF6F91"
+    color: '#FF6F91'
   unknown:
-    color: "#FF6F91"
+    color: '#FF6F91'
+  error:
+    color: '#FF6F91'
   # ======================== On-States ======================
   on:
-    color: "#ffd484"
+    color: '#ffd484'
   playing:
-    color: "#ffd484"
+    color: '#ffd484'
   open:
-    color: "#ffd484"
+    color: '#ffd484'
   opening:
-    color: "#ffd484"
+    color: '#ffd484'
   home:
-    color: "#ffd484"
+    color: '#ffd484'
   locked:
-    color: "#ffd484"
+    color: '#ffd484'
   heat:
-    color: "#ffd484"
+    color: '#ffd484'
   active:
-    color: "#ffd484"
+    color: '#ffd484'
   # =========================================================
 
 switch:
+  labelTemplates: []
   icon: mdi:toggle-switch-off
   states:
     on:
       icon: mdi:toggle-switch
 
 light:
+  labelTemplates: []
   icon: mdi:lightbulb
-  color: "#888888"
-  feedbackLayout: "$B1"
+  color: '#888888'
+  feedbackLayout: '$B1'
   feedback: |
-    {% set brightness = attributes.brightness | default(255, true) %}
+    {% set defaultBrightness = (255 if state === 'on' else 0) %}
+    {% set brightness = attributes.brightness | default(defaultBrightness, true) %}
     {
       "indicator": {{ brightness / 255 * 100 }},
       "value": "{{ (brightness / 255 * 100) | int }}%"
@@ -69,9 +79,10 @@ light:
     unavailable:
       icon: mdi:lightbulb-alert
     on:
-      color: "#ffd484"
+      color: '#ffd484'
 
 input_boolean:
+  labelTemplates: []
   icon: mdi:toggle-switch-off
   states:
     on:
@@ -82,7 +93,7 @@ update:
   states:
     on:
       icon: mdi:package
-      color: "#FF8066"
+      color: '#FF8066'
 
 person:
   icon: mdi:account
@@ -91,6 +102,7 @@ person:
       icon: mdi:account-arrow-right
 
 binary_sensor:
+  labelTemplates: []
   icon: mdi:radiobox-blank
   states:
     on:
@@ -131,10 +143,10 @@ sensor:
   classes:
     humidity:
       icon: mdi:water-percent
-      color: "#2C73D2"
+      color: '#2C73D2'
     atmospheric_pressure:
       icon: mdi:thermometer-lines
-      color: "#2C73D2"
+      color: '#2C73D2'
     temperature:
       icon: mdi:thermometer
       color: |
@@ -167,7 +179,7 @@ sensor:
         {% endif %}
 
     battery:
-      feedbackLayout: "$B1"
+      feedbackLayout: '$B1'
       feedback: |
         {
           "indicator": {{ state | int }},
@@ -223,25 +235,25 @@ sensor:
         {% endif %}
     power:
       icon: mdi:flash
-      color: "#F9F871"
+      color: '#F9F871'
     power_factor:
       icon: mdi:angle-acute
     voltage:
       icon: mdi:flash
-      color: "#F9F871"
+      color: '#F9F871'
     energy:
       icon: mdi:lightning-bolt
-      color: "#F9F871"
+      color: '#F9F871'
     current:
       icon: mdi:current-ac
-      color: "#2C73D2"
+      color: '#2C73D2'
 
 weather:
   labelTemplates:
-    - ""
-    - ""
-    - "{{temperature}}{{temperature_unit}}"
-    - "{{humidity}}%"
+    - ''
+    - ''
+    - '{{temperature}}{{temperature_unit}}'
+    - '{{humidity}}%'
   states:
     clear-night:
       icon: mdi:weather-night
@@ -290,8 +302,27 @@ vacuum:
   icon: mdi:robot-vacuum
   states:
     cleaning:
-      color: "#00C9A7"
+      color: '#00C9A7'
     returning:
-      color: "#F9F871"
-    error:
-      color: "#FF6F91"
+      color: '#F9F871'
+
+lawn_mower:
+  icon: mdi:robot-mower
+  states:
+    mowing:
+      color: '#00C9A7'
+    paused:
+      color: '#F9F871'
+    returning:
+      color: '#F9F871'
+
+fan:
+  labelTemplates:
+    - ''
+    - ''
+    - |
+      {{'~' if oscillating}}
+  icon: mdi:fan
+  states:
+    off:
+      icon: mdi:fan-off

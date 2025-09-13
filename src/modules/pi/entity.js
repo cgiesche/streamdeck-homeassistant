@@ -12,6 +12,4 @@ export class Entity {
         this.entityId = `${domain}.${name}`
     }
 
-
-
 }

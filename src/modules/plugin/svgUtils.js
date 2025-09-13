@@ -5,21 +5,19 @@ import nunjucks from 'nunjucks'
 
 export class SvgUtils {
 
-    constructor(resolution = {width: 144, height: 144}) {
+    constructor(resolution = {width: 288, height: 288}) {
         this.buttonRes = resolution;
         this.halfRes = {
             width: this.buttonRes.width / 2,
             height: this.buttonRes.height / 2
         }
-        this.fontSize = 24;
+        this.fontSize = 48;
         this.lineAttr = {
             "fill": "#FFF",
             "font-family": "sans-serif",
             "font-weight": "bold",
             "font-size": `${this.fontSize}px`,
-            "text-anchor": "middle",
-            "stroke": "#000",
-            "strokeWidth": 4,
+            "text-anchor": "middle"
         }
         this.snap = Snap(this.buttonRes.width, this.buttonRes.height);
     }
@@ -90,7 +88,7 @@ export class SvgUtils {
 
         if (isAction) {
             const color = isMultiAction ? "#3e89ff" : "#62ff65"
-            this.snap.circle(this.buttonRes.width - 1, 0, 15).attr("fill", color)
+            this.snap.circle(this.buttonRes.width - 1, 0, 30).attr("fill", color)
         }
 
         let currentLineNumber = 0;

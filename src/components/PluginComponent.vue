@@ -281,7 +281,7 @@ function updateContextState(currentContext, domain, stateObject) {
 }
 
 function setButtonSVG(svg, changedContext) {
-  const image = 'data:image/svg+xml;,' + svg
+  const image = 'data:image/svg+xml;,' + svg;
   if (actionSettings.value[changedContext].controllerType === 'Encoder') {
     $SD.value.setFeedbackLayout(changedContext, { 'layout': '$A0' })
     $SD.value.setFeedback(changedContext, { 'full-canvas': image, 'canvas': null, 'title': '' })
