@@ -381,7 +381,7 @@ function connectHomeAssistant() {
             return Object.entries(domainServices[1]).map(services => {
               let serviceName = services[0]
               let serviceData = services[1]
-              return new Service(domain, serviceName, serviceData.name, serviceData.description, serviceData.fields, serviceData.target)
+              return new Service(domain, serviceName,  serviceData.fields, serviceData.target)
             })
           })
           availableServiceDomains.value = Object.keys(services).sort()

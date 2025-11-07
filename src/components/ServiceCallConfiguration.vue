@@ -24,7 +24,7 @@
                 @change="update('serviceId', $event.target.value)">
           <option v-for="domainService in domainServices" v-bind:key="domainService.serviceId"
                   :value="domainService.serviceId">
-            {{ domainService.title }}
+            {{ domainService.name }}
           </option>
         </select>
         <button class="btn btn-sm btn-outline-secondary" type="button"
@@ -81,7 +81,7 @@ import {computed, onMounted, ref} from "vue";
 import nunjucks from "nunjucks";
 import EntitySelection from "@/components/EntitySelection.vue";
 
-const titleSort = (s1, s2) => s1.title.toLowerCase() > s2.title.toLowerCase() ? 1 : -1;
+const titleSort = (s1, s2) => s1.name.toLowerCase() > s2.name.toLowerCase() ? 1 : -1;
 
 
 const props = defineProps({
