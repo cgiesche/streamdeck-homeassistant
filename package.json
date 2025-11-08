@@ -8,32 +8,32 @@
     "validate": "streamdeck validate --no-update-check ./de.perdoctus.streamdeck.homeassistant.sdPlugin",
     "build-dev": "vite build --watch --sourcemap inline --minify false",
     "bundle": "streamdeck bundle --no-update-check ./de.perdoctus.streamdeck.homeassistant.sdPlugin",
-    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore",
+    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix",
     "format": "prettier --write src/"
   },
   "dependencies": {
     "@mdi/font": "^7.4.47",
     "@mdi/js": "^7.4.47",
     "@popperjs/core": "^2.11.8",
-    "axios": "1.12.1",
+    "axios": "1.13.2",
     "bootstrap": "^5.3.8",
-    "core-js": "^3.45.1",
+    "core-js": "^3.46.0",
     "js-yaml": "^4.1.0",
     "nunjucks": "3.2.4",
     "snapsvg-cjs": "^0.0.6",
-    "vue": "^3.5.21"
+    "vue": "^3.5.24"
   },
   "devDependencies": {
-    "@elgato/cli": "^1.5.0",
+    "@elgato/cli": "^1.5.1",
     "@modyfi/vite-plugin-yaml": "^1.1.1",
-    "@rushstack/eslint-patch": "^1.12.0",
+    "@rushstack/eslint-patch": "^1.14.1",
     "@vitejs/plugin-vue": "^6.0.1",
     "@vue/eslint-config-prettier": "^10.2.0",
-    "eslint": "^9.35.0",
-    "eslint-plugin-vue": "^10.4.0",
-    "npm-check-updates": "^18.1.1",
+    "eslint": "^9.39.1",
+    "eslint-plugin-vue": "^10.5.1",
+    "npm-check-updates": "^19.1.2",
     "prettier": "^3.6.2",
-    "sass": "^1.92.1",
-    "vite": "^7.1.5"
+    "sass": "^1.93.3",
+    "vite": "^7.2.2"
   }
 }

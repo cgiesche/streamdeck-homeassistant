@@ -1,10 +1,9 @@
 export class Service {
-
-    domain
-    name
-    dataFields
-    target
-    serviceId
+  domain
+  name
+  dataFields
+  target
+  serviceId
 
   constructor(domain, name, dataFields, target) {
     this.domain = domain

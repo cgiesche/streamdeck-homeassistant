@@ -4,7 +4,6 @@ import nunjucks from 'nunjucks'
 import yaml from 'js-yaml'
 
 export class EntityConfigFactory {
-
   displayConfiguration = defaultDisplayConfiguration
 
   colors = {
@@ -25,9 +24,14 @@ export class EntityConfigFactory {
   constructor(displayConfigurationURL) {
     if (displayConfigurationURL) {
       console.log(`Loading display configuration from ${displayConfigurationURL}`)
-      axios.get(displayConfigurationURL)
-        .then(response => this.displayConfiguration = yaml.load(response.data))
-        .catch(error => console.log(`Failed to download display configuration from ${displayConfigurationURL}: ${error}`))
+      axios
+        .get(displayConfigurationURL)
+        .then((response) => (this.displayConfiguration = yaml.load(response.data)))
+        .catch((error) =>
+          console.log(
+            `Failed to download display configuration from ${displayConfigurationURL}: ${error}`
+          )
+        )
     }
   }
 
@@ -47,7 +51,10 @@ export class EntityConfigFactory {
     if (displaySettings.iconSettings === 'HIDE') {
       // Remove default if icon should not be rendered
       renderingConfig.icon = null
-    } else if (attributes.icon && (!renderingConfig.icon || displaySettings.iconSettings === 'PREFER_HA')) {
+    } else if (
+      attributes.icon &&
+      (!renderingConfig.icon || displaySettings.iconSettings === 'PREFER_HA')
+    ) {
       // Use icon from home-assistant, if no default or preferred
       renderingConfig.icon = attributes.icon
     }
@@ -58,7 +65,6 @@ export class EntityConfigFactory {
 
     return renderingConfig
   }
-
 
   getConfig(domain, stateObject, deviceClass) {
     const resolvers = []
@@ -71,7 +77,7 @@ export class EntityConfigFactory {
     const colorString = this.resolve('color', resolvers)
     const labelTemplates = this.resolve('labelTemplates', resolvers)
 
-    const feedbackLayout= this.render(feedbackLayoutString, stateObject)
+    const feedbackLayout = this.render(feedbackLayoutString, stateObject)
     const renderedFeedback = this.render(feedbackValueString, stateObject)
     const feedback = feedbackValueString ? JSON.parse(renderedFeedback) : {}
 
@@ -134,7 +140,6 @@ export class EntityConfigFactory {
   }
 
   rgbToHex(r, g, b) {
-    return '#' + (1 << 24 | r << 16 | g << 8 | b).toString(16).slice(1)
+    return '#' + ((1 << 24) | (r << 16) | (g << 8) | b).toString(16).slice(1)
   }
-
 }

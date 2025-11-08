@@ -1,38 +1,52 @@
 <template>
   <div class="container-fluid">
-
     <h1>Global Settings</h1>
     <div class="clearfix mb-3">
-
       <div class="mb-3">
         <label class="form-label" for="serverUrl">Server URL</label>
-        <input id="serverUrl" v-model="serverUrl" class="form-control form-control-sm" type="url">
-        <div class="form-text"><strong>Without SSL</strong> ws://localhost:8123/api/websocket
-        </div>
-        <div class="form-text"><strong>With SSL</strong> wss://ha.mydomain.net:8123/api/websocket (requires a trusted
+        <input id="serverUrl" v-model="serverUrl" class="form-control form-control-sm" type="url" />
+        <div class="form-text"><strong>Without SSL</strong> ws://localhost:8123/api/websocket</div>
+        <div class="form-text">
+          <strong>With SSL</strong> wss://ha.mydomain.net:8123/api/websocket (requires a trusted
           certificate)
         </div>
       </div>
 
       <div class="mb-3">
         <label class="form-label" for="accessToken">Access-Token</label>
-        <input id="accessToken" v-model="accessToken" class="form-control form-control-sm" required type="password">
-        <div class="form-text">Long-lived access tokens can be created using the "Long-Lived Access Tokens"
-          section at the
-          bottom of a user's Home Assistant profile page.
-          <a class="info"
-             href='https://developers.home-assistant.io/docs/auth_api/#long-lived-access-token' target="_blank">Home
-            Assistant
-            documentation</a></div>
+        <input
+          id="accessToken"
+          v-model="accessToken"
+          class="form-control form-control-sm"
+          required
+          type="password"
+        />
+        <div class="form-text">
+          Long-lived access tokens can be created using the "Long-Lived Access Tokens" section at
+          the bottom of a user's Home Assistant profile page.
+          <a
+            class="info"
+            href="https://developers.home-assistant.io/docs/auth_api/#long-lived-access-token"
+            target="_blank"
+            >Home Assistant documentation</a
+          >
+        </div>
       </div>
 
       <div class="mb-3">
         <label class="form-label" for="displayConfig">Display configuration ("Theme")</label>
         <div class="input-group">
-          <select :disabled="displayConfigurationUrlOverride.length > 0" id="displayConfig"
-                  v-model="displayConfiguration" class="form-select form-select-sm">
-            <option v-for="availableConfiguration in manifest['display-configs']" :key="availableConfiguration"
-                    :value="availableConfiguration">
+          <select
+            :disabled="displayConfigurationUrlOverride.length > 0"
+            id="displayConfig"
+            v-model="displayConfiguration"
+            class="form-select form-select-sm"
+          >
+            <option
+              v-for="availableConfiguration in manifest['display-configs']"
+              :key="availableConfiguration"
+              :value="availableConfiguration"
+            >
               {{ availableConfiguration.title }}
             </option>
           </select>
@@ -40,11 +54,19 @@
 
         <div class="mt-3">
           <label for="formFileSm" class="form-label">Custom display configuration URL</label>
-          <input v-model="displayConfigurationUrlOverride" class="form-control form-control-sm" type="url"
-                 placeholder="file://c:/custom.yml">
-          <div class="form-text">Specify path or URL to customized display configuration. Unsupported! <a
-            target="_blank"
-            href="https://raw.githubusercontent.com/cgiesche/streamdeck-homeassistant/master/public/config/default-display-config.yml">Example</a>.
+          <input
+            v-model="displayConfigurationUrlOverride"
+            class="form-control form-control-sm"
+            type="url"
+            placeholder="file://c:/custom.yml"
+          />
+          <div class="form-text">
+            Specify path or URL to customized display configuration. Unsupported!
+            <a
+              target="_blank"
+              href="https://raw.githubusercontent.com/cgiesche/streamdeck-homeassistant/master/public/config/default-display-config.yml"
+              >Example</a
+            >.
           </div>
         </div>
       </div>
@@ -54,12 +76,20 @@
         <button class="btn-close" type="button" @click="haError = ''"></button>
       </div>
 
-      <button :disabled="!isHaSettingsComplete || haConnectionState === 'connecting'"
-              class="btn btn-sm btn-primary float-end"
-              v-on:click="saveGlobalSettings">
-        <span v-if="haConnectionState === 'connecting'" aria-hidden="true" class="spinner-border spinner-border-sm"
-              role="status"></span>
-        <span>{{ haConnectionState === 'connected' ? 'Save and reconnect' : 'Save and connect' }}</span>
+      <button
+        :disabled="!isHaSettingsComplete || haConnectionState === 'connecting'"
+        class="btn btn-sm btn-primary float-end"
+        v-on:click="saveGlobalSettings"
+      >
+        <span
+          v-if="haConnectionState === 'connecting'"
+          aria-hidden="true"
+          class="spinner-border spinner-border-sm"
+          role="status"
+        ></span>
+        <span>{{
+          haConnectionState === 'connected' ? 'Save and reconnect' : 'Save and connect'
+        }}</span>
       </button>
     </div>
 
@@ -68,156 +98,231 @@
     <div v-if="haConnectionState === 'connected'" class="clearfix mb-3">
       <h1>{{ controllerType }} appearance</h1>
 
-      <EntitySelection class="mb-3" :available-entities="availableEntities" v-model="entity"></EntitySelection>
+      <EntitySelection
+        class="mb-3"
+        :available-entities="availableEntities"
+        v-model="entity"
+      ></EntitySelection>
 
       <div class="form-check form-switch">
-        <input id="chkButtonTitle" v-model="useCustomTitle" class="form-check-input" type="checkbox">
+        <input
+          id="chkButtonTitle"
+          v-model="useCustomTitle"
+          class="form-check-input"
+          type="checkbox"
+        />
         <label class="form-check-label" for="chkButtonTitle">Use custom title</label>
       </div>
 
       <div v-if="useCustomTitle">
-
         <div class="mb-3">
-          <input id="buttonTitle" v-model="buttonTitle" class="form-control form-control-sm"
-                 placeholder="{{friendly_name}}"
-                 type="text">
-          <span class="form-text text-danger">You have to clear the main title in the main stream deck window to make this
-            title
-            template work.</span>
+          <input
+            id="buttonTitle"
+            v-model="buttonTitle"
+            class="form-control form-control-sm"
+            placeholder="{{friendly_name}}"
+            type="text"
+          />
+          <span class="form-text text-danger"
+            >You have to clear the main title in the main stream deck window to make this title
+            template work.</span
+          >
           <details>
             <summary>Available variables</summary>
-            <div v-for="attr in entityAttributes" v-bind:key="attr" class="form-text font-monospace">{{ attr }}</div>
+            <div
+              v-for="attr in entityAttributes"
+              v-bind:key="attr"
+              class="form-text font-monospace"
+            >
+              {{ attr }}
+            </div>
           </details>
         </div>
       </div>
 
-
       <div class="form-check form-switch">
-        <input id="chkCustomLabels" v-model="useCustomButtonLabels" class="form-check-input" type="checkbox">
+        <input
+          id="chkCustomLabels"
+          v-model="useCustomButtonLabels"
+          class="form-check-input"
+          type="checkbox"
+        />
         <label class="form-check-label" for="chkCustomLabels">Custom labels</label>
       </div>
 
       <div v-if="useCustomButtonLabels">
         <div class="mb-3">
-            <textarea id="buttonLabels" v-model="buttonLabels" class="form-control font-monospace"
-                      placeholder="Line 1 (may overlap with icon)"
-                      rows="4"></textarea>
+          <textarea
+            id="buttonLabels"
+            v-model="buttonLabels"
+            class="form-control font-monospace"
+            placeholder="Line 1 (may overlap with icon)"
+            rows="4"
+          ></textarea>
           <details>
             <summary>Available variables</summary>
-            <div v-for="attr in entityAttributes" v-bind:key="attr" class="form-text font-monospace">{{ attr }}</div>
+            <div
+              v-for="attr in entityAttributes"
+              v-bind:key="attr"
+              class="form-text font-monospace"
+            >
+              {{ attr }}
+            </div>
           </details>
         </div>
       </div>
 
       <template v-if="controllerType !== 'Encoder'">
         <div class="form-check form-switch">
-          <input id="chkEnableServiceIndicator" v-model="enableServiceIndicator" class="form-check-input"
-                 type="checkbox">
-          <label class="form-check-label" for="chkEnableServiceIndicator">Show visual service indicators</label>
+          <input
+            id="chkEnableServiceIndicator"
+            v-model="enableServiceIndicator"
+            class="form-check-input"
+            type="checkbox"
+          />
+          <label class="form-check-label" for="chkEnableServiceIndicator"
+            >Show visual service indicators</label
+          >
         </div>
       </template>
 
       <div class="mt-3 mb-3">
         <div class="form-check">
-          <input class="form-check-input" type="radio" id="radioPlugin" value="PREFER_PLUGIN" v-model="iconSettings">
+          <input
+            class="form-check-input"
+            type="radio"
+            id="radioPlugin"
+            value="PREFER_PLUGIN"
+            v-model="iconSettings"
+          />
           <label class="form-check-label" for="radioPlugin">
             Prefer icon from plugin (recommended)
           </label>
         </div>
         <div class="form-check">
-          <input class="form-check-input" type="radio" id="radioHomeAssistant" value="PREFER_HA"
-                 v-model="iconSettings">
-          <label class="form-check-label" for="radioHomeAssistant">
-            Prefer icon from HA
-          </label>
+          <input
+            class="form-check-input"
+            type="radio"
+            id="radioHomeAssistant"
+            value="PREFER_HA"
+            v-model="iconSettings"
+          />
+          <label class="form-check-label" for="radioHomeAssistant"> Prefer icon from HA </label>
         </div>
         <div class="form-check">
-          <input class="form-check-input" type="radio" id="radioHide" value="HIDE" v-model="iconSettings">
-          <label class="form-check-label" for="radioHide">
-            Hide icon
-          </label>
+          <input
+            class="form-check-input"
+            type="radio"
+            id="radioHide"
+            value="HIDE"
+            v-model="iconSettings"
+          />
+          <label class="form-check-label" for="radioHide"> Hide icon </label>
         </div>
       </div>
-
 
       <h1>{{ controllerType }} actions</h1>
 
       <AccordeonComponent id="presses" class="mb-2">
         <AccordeonItem accordeon-id="presses" item-id="shortPress" title="Short Press">
-          <ServiceCallConfiguration v-model="serviceShortPress" :available-entities="availableEntities"
-                                    :available-services="availableServices"
-                                    class="mb-2"
+          <ServiceCallConfiguration
+            v-model="serviceShortPress"
+            :available-entities="availableEntities"
+            :available-services="availableServices"
+            class="mb-2"
           ></ServiceCallConfiguration>
         </AccordeonItem>
 
         <AccordeonItem accordeon-id="presses" item-id="longPress" title="Long Press">
-          <ServiceCallConfiguration v-model="serviceLongPress" :available-entities="availableEntities"
-                                    :available-services="availableServices"
-                                    class="mb-2"></ServiceCallConfiguration>
-
+          <ServiceCallConfiguration
+            v-model="serviceLongPress"
+            :available-entities="availableEntities"
+            :available-services="availableServices"
+            class="mb-2"
+          ></ServiceCallConfiguration>
         </AccordeonItem>
 
         <template v-if="controllerType === 'Encoder'">
           <AccordeonItem accordeon-id="presses" item-id="touch" title="Screen tap">
-            <ServiceCallConfiguration v-model="serviceTap" :available-entities="availableEntities"
-                                      :available-services="availableServices"
-                                      class="mb-2"></ServiceCallConfiguration>
+            <ServiceCallConfiguration
+              v-model="serviceTap"
+              :available-entities="availableEntities"
+              :available-services="availableServices"
+              class="mb-2"
+            ></ServiceCallConfiguration>
           </AccordeonItem>
 
           <AccordeonItem accordeon-id="presses" item-id="dialRotate" title="Rotation">
-            <ServiceCallConfiguration v-model="serviceRotation"
-                                      :available-entities="availableEntities"
-                                      :available-services="availableServices"></ServiceCallConfiguration>
+            <ServiceCallConfiguration
+              v-model="serviceRotation"
+              :available-entities="availableEntities"
+              :available-services="availableServices"
+            ></ServiceCallConfiguration>
 
             <details class="mb-2">
               <summary>Available variables</summary>
               <div class="form-text">
-                <span v-pre class="text-info font-monospace">{{ ticks }}</span> - The number of ticks the dial was
-                rotated (negative value for left turn, positive value for right turn).
+                <span v-pre class="text-info font-monospace">{{ ticks }}</span> - The number of
+                ticks the dial was rotated (negative value for left turn, positive value for right
+                turn).
               </div>
               <div class="form-text">
-                <span v-pre class="text-info font-monospace">{{ rotationPercent }}</span> - A number between 0 and 100
-                that represents the rotation percentage value of the dial.
+                <span v-pre class="text-info font-monospace">{{ rotationPercent }}</span> - A number
+                between 0 and 100 that represents the rotation percentage value of the dial.
               </div>
               <div class="form-text">
-                <span v-pre class="text-info font-monospace">{{ rotationAbsolute }}</span> - A number between 0 and 255
-                that represents the absolute rotation value of the dial.
+                <span v-pre class="text-info font-monospace">{{ rotationAbsolute }}</span> - A
+                number between 0 and 255 that represents the absolute rotation value of the dial.
               </div>
             </details>
 
-            <label class="form-label" for="rotationTickMultiplier">Dial rotation tick multiplier
-              (x{{ rotationTickMultiplier }})</label>
-            <input id="rotationTickMultiplier" v-model="rotationTickMultiplier" class="form-range" max="10"
-                   min="0.1" step="0.1" type="range">
+            <label class="form-label" for="rotationTickMultiplier"
+              >Dial rotation tick multiplier (x{{ rotationTickMultiplier }})</label
+            >
+            <input
+              id="rotationTickMultiplier"
+              v-model="rotationTickMultiplier"
+              class="form-range"
+              max="10"
+              min="0.1"
+              step="0.1"
+              type="range"
+            />
             <div class="form-text mb-2">
-              Each tick of the dial will be multiplied with this value. This results in faster or slower value changes.
+              Each tick of the dial will be multiplied with this value. This results in faster or
+              slower value changes.
             </div>
 
-            <label class="form-label" for="rotationTickBucketSizeMs">Dial rotation tick bucket size
-              ({{ rotationTickBucketSizeMs }} ms)</label>
-            <input id="rotationTickBucketSizeMs" v-model="rotationTickBucketSizeMs" class="form-range" max="1000"
-                   min="0" step="50" type="range">
+            <label class="form-label" for="rotationTickBucketSizeMs"
+              >Dial rotation tick bucket size ({{ rotationTickBucketSizeMs }} ms)</label
+            >
+            <input
+              id="rotationTickBucketSizeMs"
+              v-model="rotationTickBucketSizeMs"
+              class="form-range"
+              max="1000"
+              min="0"
+              step="50"
+              type="range"
+            />
             <div class="form-text mb-2">
-              If greater than zero, ticks are aggregated for the given amount of milliseconds and then passed to your
-              service call. This results in less service calls. A value of zero will result in a service call for each
-              tick, which may cause trouble with home assistant.
+              If greater than zero, ticks are aggregated for the given amount of milliseconds and
+              then passed to your service call. This results in less service calls. A value of zero
+              will result in a service call for each tick, which may cause trouble with home
+              assistant.
             </div>
-
           </AccordeonItem>
         </template>
-
       </AccordeonComponent>
 
       <button class="btn btn-sm btn-primary float-end" v-on:click="saveSettings">
         Save configuration
       </button>
-
     </div>
   </div>
 </template>
 
 <script setup>
-
 import defaultManifest from '../../public/config/manifest.yml'
 import { StreamDeck } from '@/modules/common/streamdeck'
 import { Settings } from '@/modules/common/settings'
@@ -273,13 +378,20 @@ const controllerType = ref('')
 onMounted(() => {
   updateManifest()
 
-  window.connectElgatoStreamDeckSocket = (inPort, inPropertyInspectorUUID, inRegisterEvent, inInfo, inActionInfo) => {
+  window.connectElgatoStreamDeckSocket = (
+    inPort,
+    inPropertyInspectorUUID,
+    inRegisterEvent,
+    inInfo,
+    inActionInfo
+  ) => {
     $SD = new StreamDeck(inPort, inPropertyInspectorUUID, inRegisterEvent, inInfo, inActionInfo)
 
     // Dual State entity (custom icons for on/off)
     const inActionInfoObject = JSON.parse(inActionInfo)
 
-    useStateImagesForOnOffStates.value = inActionInfoObject['action'] === 'de.perdoctus.streamdeck.homeassistant.dual-state-entity'
+    useStateImagesForOnOffStates.value =
+      inActionInfoObject['action'] === 'de.perdoctus.streamdeck.homeassistant.dual-state-entity'
     controllerType.value = inActionInfoObject.payload.controller
 
     $SD.on('globalsettings', (globalSettings) => {
@@ -307,7 +419,9 @@ onMounted(() => {
       let settings = Settings.parse(actionInfo.payload.settings)
 
       entity.value = settings['display']['entityId']
-      enableServiceIndicator.value = settings['display']['enableServiceIndicator'] || settings['display']['enableServiceIndicator'] === undefined
+      enableServiceIndicator.value =
+        settings['display']['enableServiceIndicator'] ||
+        settings['display']['enableServiceIndicator'] === undefined
       iconSettings.value = settings['display']['iconSettings']
       useCustomTitle.value = settings['display']['useCustomTitle']
       buttonTitle.value = settings['display']['buttonTitle'] || '{{friendly_name}}'
@@ -325,9 +439,12 @@ onMounted(() => {
 
 function updateManifest() {
   console.log('Updating manifest.')
-  axios.get('https://cdn.jsdelivr.net/gh/cgiesche/streamdeck-homeassistant@master/public/config/manifest.yml')
-    .then(response => this.manifest = yaml.load(response.data))
-    .catch(error => console.log(`Failed to download updated manifest.yml: ${error}`))
+  axios
+    .get(
+      'https://cdn.jsdelivr.net/gh/cgiesche/streamdeck-homeassistant@master/public/config/manifest.yml'
+    )
+    .then((response) => (this.manifest = yaml.load(response.data)))
+    .catch((error) => console.log(`Failed to download updated manifest.yml: ${error}`))
 }
 
 const isHaSettingsComplete = computed(() => {
@@ -337,7 +454,7 @@ const isHaSettingsComplete = computed(() => {
 const entityAttributes = computed(() => {
   let currentEntityState = currentStates.value.find((state) => state.entityId === entity.value)
   if (currentEntityState && currentEntityState.attributes) {
-    let attributes = currentEntityState.attributes.map(attribute => `{{${attribute}}}`)
+    let attributes = currentEntityState.attributes.map((attribute) => `{{${attribute}}}`)
     return ['{{state}}', ...attributes]
   }
   return []
@@ -351,37 +468,49 @@ function connectHomeAssistant() {
   haConnectionState.value = 'connecting'
 
   try {
-    $HA = new Homeassistant(serverUrl.value, accessToken.value, () => {
+    $HA = new Homeassistant(
+      serverUrl.value,
+      accessToken.value,
+      () => {
         haConnectionState.value = 'connected'
         $HA.getStates((states) => {
-          availableEntityDomains.value = Array.from(states
-            .map(state => state.entity_id.split('.')[0])
-            .reduce((acc, curr) => acc.add(curr), new Set()))
-            .sort()
+          availableEntityDomains.value = Array.from(
+            states
+              .map((state) => state.entity_id.split('.')[0])
+              .reduce((acc, curr) => acc.add(curr), new Set())
+          ).sort()
 
           availableEntities.value = states
             .map((state) => {
-                let splittedId = state.entity_id.split('.')
-                return new Entity(splittedId[0], splittedId[1], state.attributes.friendly_name || state.entity_id)
-              }
-            )
-            .sort((a, b) => (a.title.toLowerCase() > b.title.toLowerCase()) ? 1 : ((b.title.toLowerCase() > a.title.toLowerCase()) ? -1 : 0))
-
-          currentStates.value = states
-            .map((state) => {
-              return {
-                entityId: state.entity_id,
-                attributes: ObjectUtils.paths(state.attributes)
-              }
+              let splittedId = state.entity_id.split('.')
+              return new Entity(
+                splittedId[0],
+                splittedId[1],
+                state.attributes.friendly_name || state.entity_id
+              )
             })
+            .sort((a, b) =>
+              a.title.toLowerCase() > b.title.toLowerCase()
+                ? 1
+                : b.title.toLowerCase() > a.title.toLowerCase()
+                  ? -1
+                  : 0
+            )
+
+          currentStates.value = states.map((state) => {
+            return {
+              entityId: state.entity_id,
+              attributes: ObjectUtils.paths(state.attributes)
+            }
+          })
         })
         $HA.getServices((services) => {
-          availableServices.value = Object.entries(services).flatMap(domainServices => {
+          availableServices.value = Object.entries(services).flatMap((domainServices) => {
             const domain = domainServices[0]
-            return Object.entries(domainServices[1]).map(services => {
+            return Object.entries(domainServices[1]).map((services) => {
               let serviceName = services[0]
               let serviceData = services[1]
-              return new Service(domain, serviceName,  serviceData.fields, serviceData.target)
+              return new Service(domain, serviceName, serviceData.fields, serviceData.target)
             })
           })
           availableServiceDomains.value = Object.keys(services).sort()
@@ -401,7 +530,6 @@ function connectHomeAssistant() {
   }
 }
 
-
 function saveGlobalSettings() {
   haError.value = ''
 
@@ -409,22 +537,22 @@ function saveGlobalSettings() {
 
   // validate custom config
   if (displayConfigurationUrlOverride.value) {
-    axios.get(displayConfigurationUrlOverride.value)
+    axios
+      .get(displayConfigurationUrlOverride.value)
       .then()
-      .catch(error => haError.value = `Could not read custom display configuration: ${error}`)
+      .catch((error) => (haError.value = `Could not read custom display configuration: ${error}`))
 
     displayConfigurationsSettings.urlOverride = displayConfigurationUrlOverride.value
   }
 
   $SD.saveGlobalSettings({
-    'serverUrl': serverUrl.value,
-    'accessToken': accessToken.value,
-    'displayConfiguration': displayConfigurationsSettings
+    serverUrl: serverUrl.value,
+    accessToken: accessToken.value,
+    displayConfiguration: displayConfigurationsSettings
   })
 
   connectHomeAssistant()
 }
-
 
 function saveSettings() {
   let settings = {
@@ -452,10 +580,8 @@ function saveSettings() {
 
     rotationTickMultiplier: rotationTickMultiplier.value,
     rotationTickBucketSizeMs: rotationTickBucketSizeMs.value
-
   }
 
   $SD.saveSettings(settings)
 }
-
 </script>
