@@ -7,9 +7,9 @@ export default function RestartStreamDeck() {
     closeBundle() {
       exec('streamdeck restart de.perdoctus.streamdeck.homeassistant', (err, stdout, stderr) => {
         if (err) {
-          console.error(`Error restarting Streamdeck: ${stderr}`)
+          console.warn('Stream Deck restart failed. Ensure the Elgato Stream Deck app and CLI are installed and accessible.')
         } else {
-          console.log(`Restarted Streamdeck: ${stdout}`)
+          console.log(`Restarted Stream Deck: ${stdout}`)
         }
       })
     }

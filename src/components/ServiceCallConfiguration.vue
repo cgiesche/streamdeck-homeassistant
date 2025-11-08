@@ -7,10 +7,7 @@
           id="domain"
           v-model="selectedDomain"
           class="form-select form-select-sm"
-          @change="
-            update('serviceId', null)
-            update('entityId', null)
-          "
+          @change="(update('serviceId', null), update('entityId', null))"
         >
           <option
             v-for="availableDomain in availableDomains"
@@ -23,10 +20,7 @@
         <button
           class="btn btn-sm btn-outline-secondary"
           type="button"
-          @click="
-            selectedDomain = ''
-            clear('serviceId', 'entityId', 'serviceData')
-          "
+          @click="(selectedDomain = '', clear('serviceId', 'entityId', 'serviceData'))"
         >
           Clear
         </button>
