@@ -326,3 +326,25 @@ fan:
   states:
     off:
       icon: mdi:fan-off
+
+media_player:
+  icon: mdi:play-circle
+  color: '#AAAAAA'
+  labelTemplates:
+    - ''
+    - ''
+    - '{{ media_title }}'
+    - '{{ media_artist}}'
+  states:
+    playing:
+      color: '#00C937'
+      icon: mdi:play
+    paused:
+      color: '#F9F871'
+      icon: mdi:pause
+    idle:
+      color: '#505050'
+      icon: mdi:stop
+    off:
+      color: '#505050'
+      icon: mdi:television-off
