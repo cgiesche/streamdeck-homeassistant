@@ -141,6 +141,17 @@ cover:
 
 sensor:
   classes:
+    carbon_dioxide:
+      icon: mdi:molecule-co2
+      color: |
+        {% set numState = state | int %}
+        {% if numState <= 1000 %}
+          #00FF00
+        {% elif numState <= 2000 %}
+          #FFA500
+        {% else %}
+          #FF0000
+        {% endif %}
     humidity:
       icon: mdi:water-percent
       color: '#2C73D2'
