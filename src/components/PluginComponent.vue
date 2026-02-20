@@ -61,6 +61,9 @@ onMounted(async () => {
       rotationAmount[context] = 0
       rotationPercent[context] = 0
       actionSettings.value[context] = Settings.parse(message.payload.settings)
+      if (message.payload.controller) {
+        actionSettings.value[context].controllerType = message.payload.controller
+      }
       if ($HA.value) {
         $HA.value.getStatesDebounced(entityStatesChanged)
       }
