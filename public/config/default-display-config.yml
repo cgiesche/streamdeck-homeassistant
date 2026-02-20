@@ -68,6 +68,10 @@ light:
   icon: mdi:lightbulb
   color: '#888888'
   feedbackLayout: '$B1'
+  rotationPercent: |
+    {% set defaultBrightness = (255 if state === 'on' else 0) %}
+    {% set brightness = attributes.brightness | default(defaultBrightness, true) %}
+    {{ brightness / 255 * 100 }}
   feedback: |
     {% set defaultBrightness = (255 if state === 'on' else 0) %}
     {% set brightness = attributes.brightness | default(defaultBrightness, true) %}
