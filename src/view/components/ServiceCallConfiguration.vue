@@ -54,47 +54,64 @@
       </div>
     </div>
 
-    <div v-if="domainEntities.length > 0" class="mb-3">
-      <EntitySelection
-        class="mb-3"
-        :available-entities="domainEntities"
-        @change="update('entityId', $event.target.value)"
-        :model-value="props.modelValue.entityId ?? ''"
-      />
-      <button class="btn btn-sm btn-outline-secondary" type="button" @click="clear('entityId')">Clear</button>
-    </div>
+    <template v-if="isOpenUrlService">
+      <div class="mb-3">
+        <label class="form-label" for="openUrl">URL</label>
+        <input
+          id="openUrl"
+          :value="props.modelValue.entityId"
+          class="form-control form-control-sm"
+          type="url"
+          placeholder="homeassistant://navigate/dashboard-floorplan/printer"
+          @input="update('entityId', ($event.target as HTMLInputElement).value)"
+        />
+        <div class="form-text">Full URL to open (e.g., homeassistant://navigate/dashboard-floorplan/printer)</div>
+      </div>
+    </template>
 
-    <template v-if="props.modelValue.serviceId">
-      <label class="form-label" for="serviceData">Service Data JSON (Optional)</label>
-      <textarea
-        id="serviceData"
-        :class="{ 'is-invalid': serviceDataInvalidFeedback }"
-        :value="props.modelValue.serviceData"
-        class="form-control form-control-sm font-monospace"
-        placeholder='{
-  "option": "value"
-}'
-        rows="5"
-        @input="update('serviceData', ($event.target as HTMLTextAreaElement).value)"
-      />
-      <div class="invalid-feedback" v-if="serviceDataInvalidFeedback">
-        {{ serviceDataInvalidFeedback }}
+    <template v-else>
+      <div v-if="domainEntities.length > 0" class="mb-3">
+        <EntitySelection
+          class="mb-3"
+          :available-entities="domainEntities"
+          @change="update('entityId', $event.target.value)"
+          :model-value="props.modelValue.entityId ?? ''"
+        />
+        <button class="btn btn-sm btn-outline-secondary" type="button" @click="clear('entityId')">Clear</button>
       </div>
 
-      <details v-if="dataProperties && dataProperties.length > 0">
-        <summary>Available options</summary>
-        <div v-for="item in dataProperties" v-bind:key="item.name" class="form-text">
-          <span class="text-info font-monospace">{{ item.name }}&nbsp;</span>
-          <span class="text-warning font-monospace" v-if="item.info.required">(required) </span
-          >{{ item.info.description }}
-          <template v-if="item.info.example">
-            <br />
-            <span class="ml-2">
-              Example: <i>{{ item.info.example }}</i>
-            </span>
-          </template>
+      <template v-if="props.modelValue.serviceId">
+        <label class="form-label" for="serviceData">Service Data JSON (Optional)</label>
+        <textarea
+          id="serviceData"
+          :class="{ 'is-invalid': serviceDataInvalidFeedback }"
+          :value="props.modelValue.serviceData"
+          class="form-control form-control-sm font-monospace"
+          placeholder='{
+  "option": "value"
+}'
+          rows="5"
+          @input="update('serviceData', ($event.target as HTMLTextAreaElement).value)"
+        />
+        <div class="invalid-feedback" v-if="serviceDataInvalidFeedback">
+          {{ serviceDataInvalidFeedback }}
         </div>
-      </details>
+
+        <details v-if="dataProperties && dataProperties.length > 0">
+          <summary>Available options</summary>
+          <div v-for="item in dataProperties" v-bind:key="item.name" class="form-text">
+            <span class="text-info font-monospace">{{ item.name }}&nbsp;</span>
+            <span class="text-warning font-monospace" v-if="item.info.required">(required) </span
+            >{{ item.info.description }}
+            <template v-if="item.info.example">
+              <br />
+              <span class="ml-2">
+                Example: <i>{{ item.info.example }}</i>
+              </span>
+            </template>
+          </div>
+        </details>
+      </template>
     </template>
   </div>
 </template>
@@ -181,6 +198,8 @@ const serviceDataInvalidFeedback = computed(() => {
     return 'Invalid JSON string: ' + e
   }
 })
+
+const isOpenUrlService = computed(() => props.modelValue.serviceId === 'streamdeck.open_url')
 
 const dataProperties = computed(() => {
   const selectedService = props.availableServices.find((service) => service.serviceId === props.modelValue?.serviceId)

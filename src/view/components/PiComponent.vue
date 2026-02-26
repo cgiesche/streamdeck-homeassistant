@@ -520,7 +520,18 @@ function handlePluginEvents(event: SendToPropertyInspectorEvent) {
   } else if (event.payload.event == 'getEntityAttributes') {
     entityAttributes.value = ['{{state}}', ...event.payload.attributes.map((attr) => `{{${attr}}}`)]
   } else if (event.payload.event == 'getServices') {
-    availableServices.value = event.payload.services
+    availableServices.value = [
+      ...event.payload.services,
+      {
+        serviceId: 'streamdeck.open_url',
+        domain: 'streamdeck',
+        name: 'open_url',
+        title: 'Open URL',
+        description: 'Opens a URL in the default browser',
+        dataFields: [],
+        domains: []
+      }
+    ].sort((a, b) => a.serviceId.toLowerCase().localeCompare(b.serviceId.toLowerCase()))
   }
 }
 </script>
