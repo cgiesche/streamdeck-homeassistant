@@ -1,3 +1,5 @@
+import { exec } from 'node:child_process'
+
 import {
   type DialAction,
   type DialDownEvent,
@@ -29,7 +31,7 @@ import type {
 import type { SendToPropertyInspectorEventData } from '@/models/events/sendToPropertyInspectorEvents'
 import type { RenderingConfig } from '@/models/renderConfig'
 import type { Service } from '@/models/service'
-import type { LegacySettings, Settings } from '@/models/settings/settings'
+import type { ActionSettings, LegacySettings, Settings } from '@/models/settings/settings'
 import { latestSettingsVersion, migrateSettings } from '@/models/settings/settings'
 import type { EntityConfigFactory } from '@/render/entityConfigFactoryNg'
 import { SvgUtils } from '@/render/svgUtils'
@@ -190,25 +192,70 @@ export class GenericEntityAction extends SingletonAction<Settings> {
     }
   }
 
+  private async executeAction(actionSettings: ActionSettings): Promise<boolean> {
+    if (actionSettings.serviceId === 'streamdeck.open_url') {
+      if (!actionSettings.entityId) return true
+      try {
+        await this.openUrl(actionSettings.entityId)
+        return true
+      } catch {
+        return false
+      }
+    }
+    return await this.homeAssistant.callService(actionSettings)
+  }
+
+  private async openUrl(url: string): Promise<void> {
+    // streamDeck.system.openUrl only supports http/https URLs.
+    // For custom schemes (e.g. homeassistant://), use the OS native opener.
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      await streamDeck.system.openUrl(url)
+    } else {
+      await this.openUrlNative(url)
+    }
+  }
+
+  private openUrlNative(url: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      let command: string
+      switch (process.platform) {
+        case 'darwin':
+          command = `open ${JSON.stringify(url)}`
+          break
+        case 'win32':
+          command = `start "" ${JSON.stringify(url)}`
+          break
+        default:
+          command = `xdg-open ${JSON.stringify(url)}`
+      }
+      exec(command, (error) => {
+        if (error) {
+          streamDeck.logger.error('Error opening URL natively:', error)
+          reject(error)
+        } else {
+          resolve()
+        }
+      })
+    })
+  }
+
   private async onButtonLongPress(actionId: string, settings: Settings) {
     this.buttonLongPressTimeouts.delete(actionId)
-    const callSuccessful = await this.homeAssistant.callService(settings.button.serviceLongPress)
+    const callSuccessful = await this.executeAction(settings.button.serviceLongPress)
     if (!callSuccessful) {
       await streamDeck.actions.getActionById(actionId)?.showAlert()
     }
   }
 
   private async onButtonShortPress(actionId: string, settings: Settings) {
-    const callSuccessful = await this.homeAssistant.callService(settings.button.serviceShortPress)
+    const callSuccessful = await this.executeAction(settings.button.serviceShortPress)
     if (!callSuccessful) {
       await streamDeck.actions.getActionById(actionId)?.showAlert()
     }
   }
 
   override async onTouchTap(ev: TouchTapEvent<Settings>) {
-    const callSuccessful = await this.homeAssistant.callService(
-      ev.payload.settings.button.serviceTap
-    )
+    const callSuccessful = await this.executeAction(ev.payload.settings.button.serviceTap)
     if (!callSuccessful) {
       await ev.action.showAlert()
     }
