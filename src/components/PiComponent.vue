@@ -173,6 +173,21 @@
       </div>
 
       <template v-if="controllerType !== 'Encoder'">
+        <div class="mb-3">
+          <label class="form-label" for="labelFontSize"
+            >Label font size ({{ labelFontSize }}px)</label
+          >
+          <input
+            id="labelFontSize"
+            v-model.number="labelFontSize"
+            class="form-range"
+            max="96"
+            min="16"
+            step="2"
+            type="range"
+          />
+        </div>
+
         <div class="form-check form-switch">
           <input
             id="chkEnableServiceIndicator"
@@ -363,6 +378,7 @@ const buttonTitle = ref('{{friendly_name}}')
 const useStateImagesForOnOffStates = ref(false) // determined by action ID (manifest)
 const useCustomButtonLabels = ref(false)
 const buttonLabels = ref('')
+const labelFontSize = ref(48)
 const enableServiceIndicator = ref(true)
 const iconSettings = ref('PREFER_PLUGIN')
 const availableEntityDomains = ref([])
@@ -422,6 +438,7 @@ onMounted(() => {
       enableServiceIndicator.value =
         settings['display']['enableServiceIndicator'] ||
         settings['display']['enableServiceIndicator'] === undefined
+      labelFontSize.value = settings['display']['labelFontSize'] || 48
       iconSettings.value = settings['display']['iconSettings']
       useCustomTitle.value = settings['display']['useCustomTitle']
       buttonTitle.value = settings['display']['buttonTitle'] || '{{friendly_name}}'
@@ -556,7 +573,7 @@ function saveGlobalSettings() {
 
 function saveSettings() {
   let settings = {
-    version: 5,
+    version: 6,
 
     controllerType: controllerType.value,
 
@@ -565,6 +582,7 @@ function saveSettings() {
       useCustomTitle: useCustomTitle.value,
       buttonTitle: buttonTitle.value,
       enableServiceIndicator: enableServiceIndicator.value,
+      labelFontSize: labelFontSize.value,
       iconSettings: iconSettings.value,
       useCustomButtonLabels: useCustomButtonLabels.value,
       buttonLabels: buttonLabels.value,

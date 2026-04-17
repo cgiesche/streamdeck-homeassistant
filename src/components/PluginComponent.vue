@@ -318,6 +318,7 @@ function updateContextState(currentContext, domain, stateObject) {
           : entityConfigFactory.colors.neutral
     }
 
+    renderingConfig.fontSize = contextSettings.display.labelFontSize
     const buttonSVG = svgUtils.renderButtonSVG(renderingConfig, stateObject)
     setButtonSVG(buttonSVG, currentContext)
   }
