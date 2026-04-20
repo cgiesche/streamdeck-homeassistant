@@ -173,19 +173,18 @@
       </div>
 
       <template v-if="controllerType !== 'Encoder'">
-        <div class="mb-3">
-          <label class="form-label" for="labelFontSize"
-            >Label font size ({{ labelFontSize }}px)</label
-          >
-          <input
+        <div class="d-flex align-items-center mb-2">
+          <label class="form-label mb-0 me-2 text-nowrap" for="labelFontSize">Label font size</label>
+          <select
             id="labelFontSize"
             v-model.number="labelFontSize"
-            class="form-range"
-            max="96"
-            min="16"
-            step="2"
-            type="range"
-          />
+            class="form-select form-select-sm"
+            style="width: auto"
+          >
+            <option v-for="size in [24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64, 72, 80, 96]" :key="size" :value="size">
+              {{ size }}px
+            </option>
+          </select>
         </div>
 
         <div class="form-check form-switch">
