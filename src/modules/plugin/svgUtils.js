@@ -30,12 +30,14 @@ export class SvgUtils {
       ...stateObject.attributes,
       ...{ state: stateObject.state }
     })
+    const fontSize = renderingConfig.fontSize || this.fontSize
     return this.#generateButtonSVG(
       buttonLabels,
       renderingConfig.icon,
       renderingConfig.color,
       renderingConfig.isAction,
-      renderingConfig.isMultiAction
+      renderingConfig.isMultiAction,
+      fontSize
     )
   }
 
@@ -76,7 +78,7 @@ export class SvgUtils {
     return outerSVG
   }
 
-  #generateButtonSVG(labels, mdiIconName, iconColor, isAction = false, isMultiAction = false) {
+  #generateButtonSVG(labels, mdiIconName, iconColor, isAction = false, isMultiAction = false, fontSize = this.fontSize) {
     let iconData = null
     if (mdiIconName) {
       iconData = Mdi[this.#toPascalCase(mdiIconName)]
@@ -105,7 +107,7 @@ export class SvgUtils {
     for (let i = 0; i < labels.length; i++) {
       let lines = labels[i].split('\n')
       for (let i = currentLineNumber; i < lines.length + currentLineNumber; i++) {
-        this.#drawText(lines[i - currentLineNumber], i)
+        this.#drawText(lines[i - currentLineNumber], i, fontSize)
       }
       currentLineNumber += lines.length
     }
@@ -123,16 +125,17 @@ export class SvgUtils {
     return outerSVG
   }
 
-  #drawText(text, lineNr) {
+  #drawText(text, lineNr, fontSize = this.fontSize) {
     const escapedText = urlencode(text)
     const quarterHeight = this.buttonRes.height / 4
+    const attr = { ...this.lineAttr, 'font-size': `${fontSize}px` }
     this.snap
       .text(
         0,
-        quarterHeight - (quarterHeight * 1.2 - this.fontSize) / 2 + lineNr * quarterHeight,
+        quarterHeight - (quarterHeight * 1.2 - fontSize) / 2 + lineNr * quarterHeight,
         escapedText
       )
-      .attr(this.lineAttr)
+      .attr(attr)
       .transform(`translateX(${this.halfRes.width})`)
   }
 

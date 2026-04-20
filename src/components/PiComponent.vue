@@ -173,6 +173,20 @@
       </div>
 
       <template v-if="controllerType !== 'Encoder'">
+        <div class="d-flex align-items-center mb-2">
+          <label class="form-label mb-0 me-2 text-nowrap" for="labelFontSize">Label font size</label>
+          <select
+            id="labelFontSize"
+            v-model.number="labelFontSize"
+            class="form-select form-select-sm"
+            style="width: auto"
+          >
+            <option v-for="size in [24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64, 72, 80, 96]" :key="size" :value="size">
+              {{ size }}px
+            </option>
+          </select>
+        </div>
+
         <div class="form-check form-switch">
           <input
             id="chkEnableServiceIndicator"
@@ -363,6 +377,7 @@ const buttonTitle = ref('{{friendly_name}}')
 const useStateImagesForOnOffStates = ref(false) // determined by action ID (manifest)
 const useCustomButtonLabels = ref(false)
 const buttonLabels = ref('')
+const labelFontSize = ref(48)
 const enableServiceIndicator = ref(true)
 const iconSettings = ref('PREFER_PLUGIN')
 const availableEntityDomains = ref([])
@@ -422,6 +437,7 @@ onMounted(() => {
       enableServiceIndicator.value =
         settings['display']['enableServiceIndicator'] ||
         settings['display']['enableServiceIndicator'] === undefined
+      labelFontSize.value = settings['display']['labelFontSize'] || 48
       iconSettings.value = settings['display']['iconSettings']
       useCustomTitle.value = settings['display']['useCustomTitle']
       buttonTitle.value = settings['display']['buttonTitle'] || '{{friendly_name}}'
@@ -556,7 +572,7 @@ function saveGlobalSettings() {
 
 function saveSettings() {
   let settings = {
-    version: 5,
+    version: 6,
 
     controllerType: controllerType.value,
 
@@ -565,6 +581,7 @@ function saveSettings() {
       useCustomTitle: useCustomTitle.value,
       buttonTitle: buttonTitle.value,
       enableServiceIndicator: enableServiceIndicator.value,
+      labelFontSize: labelFontSize.value,
       iconSettings: iconSettings.value,
       useCustomButtonLabels: useCustomButtonLabels.value,
       buttonLabels: buttonLabels.value,
