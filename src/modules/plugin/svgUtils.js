@@ -35,7 +35,8 @@ export class SvgUtils {
       renderingConfig.icon,
       renderingConfig.color,
       renderingConfig.isAction,
-      renderingConfig.isMultiAction
+      renderingConfig.isMultiAction,
+      renderingConfig.backgroundColor
     )
   }
 
@@ -76,7 +77,11 @@ export class SvgUtils {
     return outerSVG
   }
 
-  #generateButtonSVG(labels, mdiIconName, iconColor, isAction = false, isMultiAction = false) {
+  #generateButtonSVG(labels, mdiIconName, iconColor, isAction = false, isMultiAction = false, backgroundColor = null) {
+    if (backgroundColor) {
+      this.snap.rect(0, 0, this.buttonRes.width, this.buttonRes.height).attr('fill', backgroundColor)
+    }
+
     let iconData = null
     if (mdiIconName) {
       iconData = Mdi[this.#toPascalCase(mdiIconName)]

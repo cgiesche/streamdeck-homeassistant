@@ -75,6 +75,7 @@ export class EntityConfigFactory {
     const feedbackValueString = this.resolve('feedback', resolvers)
     const iconString = this.resolve('icon', resolvers)
     const colorString = this.resolve('color', resolvers)
+    const backgroundColorString = this.resolve('backgroundColor', resolvers)
     const labelTemplates = this.resolve('labelTemplates', resolvers)
 
     const feedbackLayout = this.render(feedbackLayoutString, stateObject)
@@ -83,12 +84,14 @@ export class EntityConfigFactory {
 
     const icon = this.render(iconString, stateObject)
     const color = this.render(colorString, stateObject)
+    const backgroundColor = this.render(backgroundColorString, stateObject)
 
     return {
       feedbackLayout: feedbackLayout,
       feedback: feedback,
       icon: icon,
       color: color,
+      backgroundColor: backgroundColor,
       labelTemplates: labelTemplates
     }
   }
@@ -99,6 +102,7 @@ export class EntityConfigFactory {
     const defaultConfig = {}
     if (config._icon) defaultConfig.icon = config._icon
     if (config._color) defaultConfig.color = config._color
+    if (config._backgroundColor) defaultConfig.backgroundColor = config._backgroundColor
     if (config._labelTemplates) defaultConfig.labelTemplates = config._labelTemplates
     resolvers.push(defaultConfig)
 
