@@ -5,9 +5,10 @@
 <script setup>
 import { GlobalSettings, Settings } from '@/modules/common/settings'
 import { StreamDeck } from '@/modules/common/streamdeck'
+import { LruCache } from '@/modules/common/lruCache'
 import { Homeassistant } from '@/modules/homeassistant/homeassistant'
 import { EntityConfigFactory } from '@/modules/plugin/entityConfigFactoryNg'
-import { SvgUtils } from '@/modules/plugin/svgUtils'
+import { SvgUtils, WIDTH, HEIGHT } from '@/modules/plugin/svgUtils'
 import axios from 'axios'
 import yaml from 'js-yaml'
 import nunjucks from 'nunjucks'
@@ -17,30 +18,14 @@ import defaultActiveStates from '../../public/config/active-states.yml'
 let entityConfigFactory
 const svgUtils = new SvgUtils()
 
-const IMAGE_CACHE_MAX = 30
-const imageCache = new Map()
-
-function getCachedImage(url) {
-  if (!imageCache.has(url)) return null
-  const value = imageCache.get(url)
-  imageCache.delete(url)
-  imageCache.set(url, value)
-  return value
-}
-
-function setCachedImage(url, dataUri) {
-  if (imageCache.size >= IMAGE_CACHE_MAX) {
-    imageCache.delete(imageCache.keys().next().value)
-  }
-  imageCache.set(url, dataUri)
-}
+const imageCache = new LruCache(30)
 
 async function fetchEntityPictureAsDataUri(entityPictureUrl, serverUrl) {
   const fullUrl = entityPictureUrl.startsWith('http')
     ? entityPictureUrl
     : serverUrl.replace(/\/$/, '') + entityPictureUrl
 
-  const cached = getCachedImage(fullUrl)
+  const cached = imageCache.get(fullUrl)
   if (cached) return cached
 
   try {
@@ -53,17 +38,17 @@ async function fetchEntityPictureAsDataUri(entityPictureUrl, serverUrl) {
       img.onload = () => {
         URL.revokeObjectURL(blobUrl)
         const canvas = document.createElement('canvas')
-        canvas.width = 288
-        canvas.height = 288
+        canvas.width = WIDTH
+        canvas.height = HEIGHT
         const ctx = canvas.getContext('2d')
         ctx.fillStyle = '#000'
-        ctx.fillRect(0, 0, 288, 288)
-        const scale = Math.max(288 / img.width, 288 / img.height)
+        ctx.fillRect(0, 0, WIDTH, HEIGHT)
+        const scale = Math.max(WIDTH / img.width, HEIGHT / img.height)
         const w = img.width * scale
         const h = img.height * scale
-        ctx.drawImage(img, (288 - w) / 2, 0, w, h)
+        ctx.drawImage(img, (WIDTH - w) / 2, 0, w, h)
         const dataUri = canvas.toDataURL('image/jpeg', 0.2)
-        setCachedImage(fullUrl, dataUri)
+        imageCache.set(fullUrl, dataUri)
         resolve(dataUri)
       }
       img.onerror = () => {
@@ -103,9 +88,11 @@ onMounted(async () => {
         $SD.value.saveGlobalSettings(migratedSettings)
       }
       globalSettings.value = migratedSettings
-      entityConfigFactory = new EntityConfigFactory(
+      const configUrl =
         migratedSettings.displayConfiguration?.urlOverride ||
-          migratedSettings.displayConfiguration?.url
+        migratedSettings.displayConfiguration?.url
+      entityConfigFactory = new EntityConfigFactory(
+        configUrl ? () => axios.get(configUrl).then((r) => yaml.load(r.data)) : null
       )
       connectHomeAssistant()
     })
@@ -202,14 +189,12 @@ onMounted(async () => {
 
 async function fetchActiveStates() {
   try {
-    axios
-      .get(
-        'https://cdn.jsdelivr.net/gh/cgiesche/streamdeck-homeassistant@master/public/config/active-states.yml'
-      )
-      .then((response) => (activeStates.value = yaml.load(response.data)))
-      .catch((error) => console.log(`Failed to download updated active-states.json: ${error}`))
+    const response = await axios.get(
+      'https://cdn.jsdelivr.net/gh/cgiesche/streamdeck-homeassistant@master/public/config/active-states.yml'
+    )
+    activeStates.value = yaml.load(response.data)
   } catch (error) {
-    console.log(`Failed to download updated active-states.json: ${error}`)
+    console.log(`Failed to download updated active-states.yml: ${error}`)
   }
 }
 
@@ -239,7 +224,7 @@ function onHAError(msg) {
   haEntitySubscription = null
   showAlert()
   console.log(`Home Assistant connection error: ${msg}`)
-  window.clearTimeout($reconnectTimeout)
+  window.clearTimeout($reconnectTimeout.value)
   $reconnectTimeout.value = window.setTimeout(connectHomeAssistant, 5000)
 }
 
@@ -247,7 +232,7 @@ function onHAClosed(msg) {
   haEntitySubscription = null
   showAlert()
   console.log(`Home Assistant connection closed, trying to reopen connection: ${msg}`)
-  window.clearTimeout($reconnectTimeout)
+  window.clearTimeout($reconnectTimeout.value)
   $reconnectTimeout.value = window.setTimeout(connectHomeAssistant, 5000)
 }
 
@@ -299,18 +284,18 @@ function updateState(stateMessage) {
     (key) => actionSettings.value[key].display.entityId === stateMessage.entity_id
   )
 
+  const enrichedState = {
+    ...stateMessage,
+    attributes: { ...stateMessage.attributes }
+  }
+  if (enrichedState.last_updated != null)
+    enrichedState.attributes['last_updated'] = new Date(enrichedState.last_updated).toLocaleTimeString()
+  if (enrichedState.last_changed != null)
+    enrichedState.attributes['last_changed'] = new Date(enrichedState.last_changed).toLocaleTimeString()
+
   changedContexts.forEach((context) => {
     try {
-      if (stateMessage.last_updated != null)
-        stateMessage.attributes['last_updated'] = new Date(
-          stateMessage.last_updated
-        ).toLocaleTimeString()
-      if (stateMessage.last_changed != null)
-        stateMessage.attributes['last_changed'] = new Date(
-          stateMessage.last_changed
-        ).toLocaleTimeString()
-
-      updateContextState(context, domain, stateMessage)
+      updateContextState(context, domain, enrichedState)
     } catch (e) {
       console.error(e)
       $SD.value.setImage(context, null)
@@ -356,7 +341,7 @@ async function updateContextState(currentContext, domain, stateObject) {
 
   if (!renderingConfig.color) {
     renderingConfig.color =
-      activeStates.value.indexOf(stateObject.state) !== -1
+      activeStates.value.includes(stateObject.state)
         ? entityConfigFactory.colors.active
         : entityConfigFactory.colors.neutral
   }
@@ -387,7 +372,7 @@ async function updateContextState(currentContext, domain, stateObject) {
         })
         .join(' ')
     }
-    renderingConfig.feedback.icon = await svgToJpegDataUri(
+    renderingConfig.feedback.icon = await svgUtils.svgToJpegDataUri(
       svgUtils.renderButtonSVG({ ...renderingConfig, labelTemplates: [] }, stateObject)
     )
     $SD.value.setFeedback(currentContext, renderingConfig.feedback)
@@ -395,7 +380,7 @@ async function updateContextState(currentContext, domain, stateObject) {
     if (renderingConfig.customTitle) {
       $SD.value.setTitle(currentContext, renderingConfig.customTitle)
     }
-    if (activeStates.value.indexOf(stateObject.state) !== -1) {
+    if (activeStates.value.includes(stateObject.state)) {
       console.log('Setting state of ' + currentContext + ' to 1')
       $SD.value.setState(currentContext, 1)
     } else {
@@ -410,29 +395,8 @@ async function updateContextState(currentContext, domain, stateObject) {
   }
 }
 
-async function svgToJpegDataUri(svg) {
-  const svgBlob = new Blob([svg], { type: 'image/svg+xml' })
-  const blobUrl = URL.createObjectURL(svgBlob)
-  return new Promise((resolve) => {
-    const img = new Image()
-    img.onload = () => {
-      URL.revokeObjectURL(blobUrl)
-      const canvas = document.createElement('canvas')
-      canvas.width = 288
-      canvas.height = 288
-      canvas.getContext('2d').drawImage(img, 0, 0)
-      resolve(canvas.toDataURL('image/jpeg', 0.92))
-    }
-    img.onerror = () => {
-      URL.revokeObjectURL(blobUrl)
-      resolve('data:image/svg+xml;,' + svg)
-    }
-    img.src = blobUrl
-  })
-}
-
 async function setButtonSVG(svg, changedContext) {
-  $SD.value.setImage(changedContext, await svgToJpegDataUri(svg))
+  $SD.value.setImage(changedContext, await svgUtils.svgToJpegDataUri(svg))
 }
 
 function buttonDown(context) {

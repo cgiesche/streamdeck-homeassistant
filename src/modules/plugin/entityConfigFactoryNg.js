@@ -1,7 +1,5 @@
 import defaultDisplayConfiguration from '../../../public/config/default-display-config.yml'
-import axios from 'axios'
 import nunjucks from 'nunjucks'
-import yaml from 'js-yaml'
 
 export class EntityConfigFactory {
   displayConfiguration = defaultDisplayConfiguration
@@ -19,19 +17,13 @@ export class EntityConfigFactory {
   }
 
   /**
-   * @param displayConfigurationURL : String
+   * @param {(() => Promise<object>) | null} configLoader - async function that resolves to parsed config object
    */
-  constructor(displayConfigurationURL) {
-    if (displayConfigurationURL) {
-      console.log(`Loading display configuration from ${displayConfigurationURL}`)
-      axios
-        .get(displayConfigurationURL)
-        .then((response) => (this.displayConfiguration = yaml.load(response.data)))
-        .catch((error) =>
-          console.log(
-            `Failed to download display configuration from ${displayConfigurationURL}: ${error}`
-          )
-        )
+  constructor(configLoader = null) {
+    if (configLoader) {
+      configLoader()
+        .then((config) => (this.displayConfiguration = config))
+        .catch((error) => console.log(`Failed to load display configuration: ${error}`))
     }
   }
 

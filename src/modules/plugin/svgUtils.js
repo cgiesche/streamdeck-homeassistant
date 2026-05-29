@@ -1,9 +1,8 @@
 import * as Mdi from '@mdi/js'
 import nunjucks from 'nunjucks'
 
-
-const WIDTH = 288
-const HEIGHT = 288
+export const WIDTH = 288
+export const HEIGHT = 288
 const BG_OVERLAY_OPACITY = 0.55
 
 export class SvgUtils {
@@ -108,6 +107,27 @@ export class SvgUtils {
     return (
       'mdi' + iconName.substring(4).replace(/(^\w|-\w)/g, (s) => s.replace(/-/, '').toUpperCase())
     )
+  }
+
+  svgToJpegDataUri(svg) {
+    return new Promise((resolve) => {
+      const svgBlob = new Blob([svg], { type: 'image/svg+xml' })
+      const blobUrl = URL.createObjectURL(svgBlob)
+      const img = new Image()
+      img.onload = () => {
+        URL.revokeObjectURL(blobUrl)
+        const canvas = document.createElement('canvas')
+        canvas.width = WIDTH
+        canvas.height = HEIGHT
+        canvas.getContext('2d').drawImage(img, 0, 0)
+        resolve(canvas.toDataURL('image/jpeg', 0.92))
+      }
+      img.onerror = () => {
+        URL.revokeObjectURL(blobUrl)
+        resolve('data:image/svg+xml;,' + svg)
+      }
+      img.src = blobUrl
+    })
   }
 
   #escapeXml(text) {
