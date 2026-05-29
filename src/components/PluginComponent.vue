@@ -64,17 +64,17 @@ async function fetchEntityPictureAsDataUri(entityPictureUrl, serverUrl) {
 
 const $SD = ref(null)
 const $HA = ref(null)
-const $reconnectTimeout = ref({})
+let reconnectTimeout = null
 const globalSettings = ref({})
-const actionSettings = ref([])
-const buttonLongpressTimeouts = ref(new Map()) //context, timeout
+const actionSettings = ref({})
+const buttonLongpressTimeouts = new Map()
 let haEntitySubscription = null
 
 const activeStates = ref(defaultActiveStates)
 
-let rotationTimeout = []
-let rotationAmount = []
-let rotationPercent = []
+const rotationTimeout = {}
+const rotationAmount = {}
+const rotationPercent = {}
 
 onMounted(async () => {
   window.connectElgatoStreamDeckSocket = (inPort, inPluginUUID, inRegisterEvent, inInfo) => {
@@ -224,16 +224,16 @@ function onHAError(msg) {
   haEntitySubscription = null
   showAlert()
   console.log(`Home Assistant connection error: ${msg}`)
-  window.clearTimeout($reconnectTimeout.value)
-  $reconnectTimeout.value = window.setTimeout(connectHomeAssistant, 5000)
+  window.clearTimeout(reconnectTimeout)
+  reconnectTimeout = window.setTimeout(connectHomeAssistant, 5000)
 }
 
 function onHAClosed(msg) {
   haEntitySubscription = null
   showAlert()
   console.log(`Home Assistant connection closed, trying to reopen connection: ${msg}`)
-  window.clearTimeout($reconnectTimeout.value)
-  $reconnectTimeout.value = window.setTimeout(connectHomeAssistant, 5000)
+  window.clearTimeout(reconnectTimeout)
+  reconnectTimeout = window.setTimeout(connectHomeAssistant, 5000)
 }
 
 function getConfiguredEntityIds() {
@@ -401,15 +401,15 @@ async function setButtonSVG(svg, changedContext) {
 
 function buttonDown(context) {
   const timeout = setTimeout(buttonLongPress, 300, context)
-  buttonLongpressTimeouts.value.set(context, timeout)
+  buttonLongpressTimeouts.set(context, timeout)
 }
 
 function buttonUp(context) {
   // If "long press timeout" is still present, we perform a normal press
-  const lpTimeout = buttonLongpressTimeouts.value.get(context)
+  const lpTimeout = buttonLongpressTimeouts.get(context)
   if (lpTimeout) {
     clearTimeout(lpTimeout)
-    buttonLongpressTimeouts.value.delete(context)
+    buttonLongpressTimeouts.delete(context)
     buttonShortPress(context)
   }
 }
@@ -420,7 +420,7 @@ function buttonShortPress(context) {
 }
 
 function buttonLongPress(context) {
-  buttonLongpressTimeouts.value.delete(context)
+  buttonLongpressTimeouts.delete(context)
   let settings = actionSettings.value[context]
   if (settings.button.serviceLongPress.serviceId) {
     callService(context, settings.button.serviceLongPress)

@@ -55,14 +55,17 @@ export class Homeassistant {
   }
 
   getStates(callback) {
+    if (!this._connection) return
     this._connection.sendMessagePromise({ type: 'get_states' }).then(callback)
   }
 
   getServices(callback) {
+    if (!this._connection) return
     this._connection.sendMessagePromise({ type: 'get_services' }).then(callback)
   }
 
   subscribeEntitiesChanged(entityIds, callback) {
+    if (!this._connection) return Promise.resolve(null)
     return this._connection.subscribeMessage(callback, {
       type: 'subscribe_trigger',
       trigger: {

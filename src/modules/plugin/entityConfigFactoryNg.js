@@ -72,7 +72,14 @@ export class EntityConfigFactory {
 
     const feedbackLayout = this.render(feedbackLayoutString, stateObject)
     const renderedFeedback = this.render(feedbackValueString, stateObject)
-    const feedback = feedbackValueString ? JSON.parse(renderedFeedback) : {}
+    let feedback = {}
+    if (feedbackValueString) {
+      try {
+        feedback = JSON.parse(renderedFeedback)
+      } catch {
+        console.error(`Failed to parse feedback JSON for entity ${stateObject.entity_id}: ${renderedFeedback}`)
+      }
+    }
 
     const icon = this.render(iconString, stateObject)
     const color = this.render(colorString, stateObject)

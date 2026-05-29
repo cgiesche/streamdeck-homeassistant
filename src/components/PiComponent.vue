@@ -393,7 +393,7 @@ import PiToggleRow from '@/components/ui/PiToggleRow.vue'
 import axios from 'axios'
 import yaml from 'js-yaml'
 
-let manifest = ref(defaultManifest)
+const manifest = ref(defaultManifest)
 
 const globalSettingsExpanded = ref(true)
 const activeTab = ref('appearance')
@@ -615,18 +615,18 @@ function connectHomeAssistant() {
   }
 }
 
-function saveGlobalSettings() {
+async function saveGlobalSettings() {
   haError.value = ''
 
-  let displayConfigurationsSettings = displayConfiguration.value
+  let displayConfigurationsSettings = { ...displayConfiguration.value }
 
-  // validate custom config
   if (displayConfigurationUrlOverride.value) {
-    axios
-      .get(displayConfigurationUrlOverride.value)
-      .then()
-      .catch((error) => (haError.value = `Could not read custom display configuration: ${error}`))
-
+    try {
+      await axios.get(displayConfigurationUrlOverride.value)
+    } catch (error) {
+      haError.value = `Could not read custom display configuration: ${error}`
+      return
+    }
     displayConfigurationsSettings.urlOverride = displayConfigurationUrlOverride.value
   }
 
