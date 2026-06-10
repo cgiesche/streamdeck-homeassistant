@@ -194,18 +194,23 @@
         <!-- Icon layout -->
         <div v-if="iconSettings !== 'HIDE'" class="mb-3">
           <label class="pi-label">Icon layout</label>
-          <div class="pi-seg">
-            <input id="iconLayoutStandard" v-model="iconLayout" type="radio" value="STANDARD" />
-            <label for="iconLayoutStandard">Standard</label>
-            <input id="iconLayoutBottom" v-model="iconLayout" type="radio" value="BOTTOM" />
-            <label for="iconLayoutBottom">Bottom</label>
-            <input id="iconLayoutFull" v-model="iconLayout" type="radio" value="FULL" />
-            <label for="iconLayoutFull">Full</label>
+          <div class="pi-radio-group">
+            <label class="pi-radio-label">
+              <input v-model="iconLayout" type="radio" value="STANDARD" />
+              Standard
+              <span class="pi-hint">Icon top, 2 labels below.</span>
+            </label>
+            <label class="pi-radio-label">
+              <input v-model="iconLayout" type="radio" value="BOTTOM" />
+              Bottom
+              <span class="pi-hint">Icon bottom, 2 labels above.</span>
+            </label>
+            <label class="pi-radio-label">
+              <input v-model="iconLayout" type="radio" value="FULL" />
+              Full
+              <span class="pi-hint">Icon fills button, 4 labels overlaid.</span>
+            </label>
           </div>
-          <span class="pi-hint"
-            >Standard: icon top, 2 labels below. Bottom: icon bottom, 2 labels above. Full: icon
-            fills button, 4 labels overlaid.</span
-          >
         </div>
 
         <!-- Service indicator (Keypad only) -->

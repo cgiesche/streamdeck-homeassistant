@@ -18,7 +18,7 @@ export default defineConfig(({ mode }) => ({
     }
   },
   build: {
-    outDir: 'de.perdoctus.streamdeck.homeassistant.sdPlugin',
+    outDir: 'build/de.perdoctus.streamdeck.homeassistant.sdPlugin',
     rollupOptions: {
       input: {
         pi: 'pi.html',

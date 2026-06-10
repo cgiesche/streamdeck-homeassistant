@@ -1,37 +1,37 @@
 // ── Design Tokens ────────────────────────────────────────────────────────
 :root {
   /* Backgrounds */
-  --pi-bg-base: #111214;
-  --pi-bg-raised: #1c1d1f;
-  --pi-bg-sunken: #0d0e0f;
-  --pi-bg-overlay: #252729;
+  --pi-bg-base:    #0b0d12;
+  --pi-bg-raised:  #10131b;
+  --pi-bg-sunken:  #07080c;
+  --pi-bg-overlay: #171b26;
 
   /* Text */
-  --pi-text-primary: #e8e9ea;
-  --pi-text-secondary: #9a9b9d;
-  --pi-text-muted: #848587;
-  --pi-text-link: #5b9bd5;
+  --pi-text-primary:   #dde2ee;
+  --pi-text-secondary: #9fa9c2;
+  --pi-text-muted:     #717c96;
+  --pi-text-link:      #1ecfb0;
 
-  /* Accent */
-  --pi-accent: #4a90d9;
-  --pi-accent-hover: #5fa0e8;
-  --pi-accent-dim: rgba(74, 144, 217, 0.18);
+  /* Accent — amber */
+  --pi-accent:       #f5a623;
+  --pi-accent-hover: #f7b84a;
+  --pi-accent-dim:   rgba(245, 166, 35, 0.15);
 
   /* Semantic */
-  --pi-success: #3fb950;
-  --pi-success-dim: rgba(63, 185, 80, 0.18);
-  --pi-warning: #d29922;
-  --pi-danger: #c9393e;
-  --pi-danger-dim: rgba(201, 57, 62, 0.18);
-  --pi-info: #58a6ff;
+  --pi-success:     #3fb950;
+  --pi-success-dim: rgba(63, 185, 80, 0.15);
+  --pi-warning:     #e8940e;
+  --pi-danger:      #e05c5c;
+  --pi-danger-dim:  rgba(224, 92, 92, 0.12);
+  --pi-info:        #1ecfb0;
 
   /* Borders */
-  --pi-border: #2d2f32;
-  --pi-border-strong: #3d3f43;
+  --pi-border:        rgba(255, 255, 255, 0.08);
+  --pi-border-strong: rgba(255, 255, 255, 0.14);
 
   /* Shape */
   --pi-radius-sm: 4px;
-  --pi-radius: 6px;
+  --pi-radius:    6px;
   --pi-radius-lg: 8px;
 
   /* Typography */
@@ -48,11 +48,9 @@
 body {
   background: var(--pi-bg-base);
   color: var(--pi-text-primary);
-  font-family:
-    system-ui,
-    -apple-system,
-    sans-serif;
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
   font-size: 13px;
+  font-weight: 400;
   margin: 0;
   line-height: 1.4;
 }
@@ -78,8 +76,8 @@ a {
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: var(--pi-text-secondary);
+  letter-spacing: 0.14em;
+  color: var(--pi-text-muted);
   margin-bottom: 5px;
 }
 
@@ -101,8 +99,8 @@ a {
   color: var(--pi-text-primary);
   border: 1px solid var(--pi-border);
   border-radius: var(--pi-radius);
-  padding: 5px 8px;
-  font-size: 13px;
+  padding: 6px 8px;
+  font-size: 14px;
   font-family: inherit;
   outline: none;
   transition:
@@ -126,7 +124,7 @@ a {
 .pi-select {
   appearance: none;
   -webkit-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%239a9b9d' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23717c96' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 8px center;
   padding-right: 28px;
@@ -141,7 +139,7 @@ a {
 .pi-textarea {
   resize: vertical;
   font-family: var(--pi-font-mono);
-  font-size: 12px;
+  font-size: 12.5px;
   line-height: 1.5;
 
   &.is-invalid {
@@ -189,14 +187,16 @@ a {
 }
 
 .pi-btn-primary {
-  background: var(--pi-accent);
-  color: #fff;
+  background: var(--pi-accent-dim);
+  color: var(--pi-accent);
+  border: 1px solid rgba(245, 166, 35, 0.35);
 
   &:hover:not(:disabled) {
-    background: var(--pi-accent-hover);
+    background: rgba(245, 166, 35, 0.22);
+    border-color: rgba(245, 166, 35, 0.55);
   }
   &:disabled {
-    opacity: 0.5;
+    opacity: 0.4;
     cursor: not-allowed;
   }
 }
@@ -349,8 +349,8 @@ a {
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: var(--pi-text-secondary);
+  letter-spacing: 0.16em;
+  color: var(--pi-text-muted);
   margin: 0 0 8px 0;
   display: flex;
   align-items: center;
@@ -378,7 +378,7 @@ a {
   background: transparent;
   border: none;
   border-bottom: 2px solid transparent;
-  padding: 6px 12px;
+  padding: 7px 12px;
   margin-bottom: -1px;
   font-size: 12px;
   font-family: inherit;
@@ -417,7 +417,7 @@ a {
 
 .pi-toggle-label {
   flex: 1;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--pi-text-primary);
   cursor: pointer;
   user-select: none;
@@ -531,7 +531,7 @@ a {
   grid-template-columns: auto 1fr;
   align-items: baseline;
   column-gap: 6px;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--pi-text-primary);
   cursor: pointer;
 
@@ -579,7 +579,7 @@ a {
     border: none;
     outline: none;
     color: var(--pi-text-primary);
-    font-size: 12px;
+    font-size: 13px;
     padding: 7px 2px;
     font-family: inherit;
     cursor: pointer;
@@ -675,7 +675,7 @@ a {
 }
 
 .pi-entity-name {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--pi-text-primary);
   overflow: hidden;
   text-overflow: ellipsis;

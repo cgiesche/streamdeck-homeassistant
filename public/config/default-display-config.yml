@@ -138,6 +138,7 @@ cover:
       icon: mdi:arrow-up-box
 
 sensor:
+  icon: mdi:gauge
   classes:
     carbon_dioxide:
       icon: mdi:molecule-co2
@@ -258,6 +259,7 @@ sensor:
       color: '#2C73D2'
 
 weather:
+  icon: mdi:weather-partly-cloudy
   labelTemplates:
     - '{{temperature}}{{temperature_unit}}'
     - '{{humidity}}%'
@@ -277,7 +279,7 @@ weather:
     partlycloudy:
       icon: mdi:weather-partly-cloudy
     pouring:
-      icon: mdi:weather-puring
+      icon: mdi:weather-pouring
     rainy:
       icon: mdi:weather-rainy
     snowy:
@@ -339,7 +341,7 @@ media_player:
     - ''
     - ''
     - '{{ media_title }}'
-    - '{{ media_artist}}'
+    - '{{ media_artist }}'
   states:
     playing:
       color: '#00C937'

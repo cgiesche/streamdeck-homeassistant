@@ -95,7 +95,7 @@ export class SvgUtils {
         return `<text ${baseAttrs} fill="#FFF">${escaped}</text>`
       })
 
-    return `<svg xmlns="http://www.w3.org/2000/svg" width="${WIDTH}" height="${HEIGHT}">${backgroundSvg}${iconSvg}${indicator}${textLines.join('')}</svg>`
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${WIDTH}" height="${HEIGHT}" viewBox="0 0 ${WIDTH} ${HEIGHT}">${backgroundSvg}${iconSvg}${indicator}${textLines.join('')}</svg>`
   }
 
   #getMdiPath(mdiIconName) {
