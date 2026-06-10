@@ -9,8 +9,7 @@ import { LruCache } from '@/modules/common/lruCache'
 import { Homeassistant } from '@/modules/homeassistant/homeassistant'
 import { EntityConfigFactory } from '@/modules/plugin/entityConfigFactoryNg'
 import { SvgUtils, WIDTH, HEIGHT } from '@/modules/plugin/svgUtils'
-import axios from 'axios'
-import yaml from 'js-yaml'
+import { fetchRemoteYaml } from '@/modules/common/remoteConfig'
 import nunjucks from 'nunjucks'
 import { onMounted, ref } from 'vue'
 import defaultActiveStates from '../../public/config/active-states.yml'
@@ -96,7 +95,7 @@ onMounted(async () => {
         migratedSettings.displayConfiguration?.urlOverride ||
         migratedSettings.displayConfiguration?.url
       entityConfigFactory = new EntityConfigFactory(
-        configUrl ? () => axios.get(configUrl).then((r) => yaml.load(r.data)) : null
+        configUrl ? () => fetchRemoteYaml(configUrl) : null
       )
       reconnectDelayMs = RECONNECT_BASE_DELAY_MS
       connectHomeAssistant()
@@ -198,10 +197,9 @@ onMounted(async () => {
 
 async function fetchActiveStates() {
   try {
-    const response = await axios.get(
+    activeStates.value = await fetchRemoteYaml(
       'https://cdn.jsdelivr.net/gh/cgiesche/streamdeck-homeassistant@master/public/config/active-states.yml'
     )
-    activeStates.value = yaml.load(response.data)
   } catch (error) {
     console.log(`Failed to download updated active-states.yml: ${error}`)
   }
