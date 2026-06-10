@@ -98,6 +98,7 @@ onMounted(async () => {
       entityConfigFactory = new EntityConfigFactory(
         configUrl ? () => axios.get(configUrl).then((r) => yaml.load(r.data)) : null
       )
+      reconnectDelayMs = RECONNECT_BASE_DELAY_MS
       connectHomeAssistant()
     })
 
@@ -223,25 +224,39 @@ function connectHomeAssistant() {
   }
 }
 
+const RECONNECT_BASE_DELAY_MS = 5000
+const RECONNECT_MAX_DELAY_MS = 60000
+let reconnectDelayMs = RECONNECT_BASE_DELAY_MS
+
 const onHAConnected = () => {
+  reconnectDelayMs = RECONNECT_BASE_DELAY_MS
   $HA.value.getStatesDebounced(entityStatesChanged)
   resubscribeEntities()
 }
 
-function onHAError(msg) {
-  haEntitySubscription = null
-  showAlert()
+function onHAError(msg, { isAuthError = false } = {}) {
   console.log(`Home Assistant connection error: ${msg}`)
-  window.clearTimeout(reconnectTimeout)
-  reconnectTimeout = window.setTimeout(connectHomeAssistant, 5000)
+  if (isAuthError) {
+    // Retrying cannot fix an invalid token; wait for new global settings.
+    haEntitySubscription = null
+    showAlert()
+    window.clearTimeout(reconnectTimeout)
+    return
+  }
+  scheduleReconnect()
 }
 
 function onHAClosed(msg) {
+  console.log(`Home Assistant connection closed, trying to reopen connection: ${msg}`)
+  scheduleReconnect()
+}
+
+function scheduleReconnect() {
   haEntitySubscription = null
   showAlert()
-  console.log(`Home Assistant connection closed, trying to reopen connection: ${msg}`)
   window.clearTimeout(reconnectTimeout)
-  reconnectTimeout = window.setTimeout(connectHomeAssistant, 5000)
+  reconnectTimeout = window.setTimeout(connectHomeAssistant, reconnectDelayMs)
+  reconnectDelayMs = Math.min(reconnectDelayMs * 2, RECONNECT_MAX_DELAY_MS)
 }
 
 function getConfiguredEntityIds() {
