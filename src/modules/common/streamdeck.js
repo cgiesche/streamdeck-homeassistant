@@ -1,3 +1,17 @@
+const FORWARDED_EVENTS = new Set([
+  'keyDown',
+  'keyUp',
+  'dialDown',
+  'dialUp',
+  'dialRotate',
+  'touchTap',
+  'systemDidWakeUp',
+  'willAppear',
+  'willDisappear',
+  'didReceiveSettings',
+  'sendToPlugin'
+])
+
 export class StreamDeck {
   constructor(inPort, inPropertyInspectorUUID, inRegisterEvent, inInfo, inActionInfo) {
     let actionInfo = JSON.parse(inActionInfo)
@@ -7,182 +21,77 @@ export class StreamDeck {
 
     this.streamDeckWebsocket = new WebSocket('ws://localhost:' + inPort)
     this.streamDeckWebsocket.onopen = () => {
-      let json = {
+      this.#send({
         event: inRegisterEvent,
         uuid: inPropertyInspectorUUID
-      }
-      this.streamDeckWebsocket.send(JSON.stringify(json))
+      })
       this.events.emit('connected', actionInfo)
     }
 
     this.on = (evt, fn) => this.events.on(evt, fn)
 
     this.streamDeckWebsocket.onmessage = (evt) => {
-      let incomingEvent = JSON.parse(evt.data)
-      switch (incomingEvent.event) {
-        case 'didReceiveGlobalSettings':
-          this.events.emit('globalsettings', incomingEvent.payload['settings'])
-          break
-        case 'keyDown':
-          this.events.emit('keyDown', incomingEvent)
-          break
-        case 'keyUp':
-          this.events.emit('keyUp', incomingEvent)
-          break
-        case 'dialDown':
-          this.events.emit('dialDown', incomingEvent)
-          break
-        case 'dialUp':
-          this.events.emit('dialUp', incomingEvent)
-          break
-        case 'dialRotate':
-          this.events.emit('dialRotate', incomingEvent)
-          break
-        case 'touchTap':
-          this.events.emit('touchTap', incomingEvent)
-          break
-        case 'systemDidWakeUp':
-          this.events.emit('systemDidWakeUp', incomingEvent)
-          break
-        case 'willAppear':
-          this.events.emit('willAppear', incomingEvent)
-          break
-        case 'willDisappear':
-          this.events.emit('willDisappear', incomingEvent)
-          break
-        case 'didReceiveSettings':
-          this.events.emit('didReceiveSettings', incomingEvent)
-          break
-        case 'sendToPlugin':
-          this.events.emit('sendToPlugin', incomingEvent)
-          break
-        default:
-          console.log(`Unhandled Event: ${incomingEvent.event}`)
-          break
+      const incomingEvent = JSON.parse(evt.data)
+      if (incomingEvent.event === 'didReceiveGlobalSettings') {
+        this.events.emit('globalsettings', incomingEvent.payload['settings'])
+      } else if (FORWARDED_EVENTS.has(incomingEvent.event)) {
+        this.events.emit(incomingEvent.event, incomingEvent)
+      } else {
+        console.log(`Unhandled Event: ${incomingEvent.event}`)
       }
     }
+  }
+
+  #send(message) {
+    this.streamDeckWebsocket.send(JSON.stringify(message))
   }
 
   requestGlobalSettings() {
-    let getGlobalSettingsMessage = {
-      event: 'getGlobalSettings',
-      context: this.propertyInspectorUUID
-    }
-    this.streamDeckWebsocket.send(JSON.stringify(getGlobalSettingsMessage))
+    this.#send({ event: 'getGlobalSettings', context: this.propertyInspectorUUID })
   }
 
   saveGlobalSettings(payload) {
-    let message = {
-      event: 'setGlobalSettings',
-      context: this.propertyInspectorUUID,
-      payload: payload
-    }
-
-    this.streamDeckWebsocket.send(JSON.stringify(message))
+    this.#send({ event: 'setGlobalSettings', context: this.propertyInspectorUUID, payload })
   }
 
   saveSettings(actionSettings) {
-    let message = {
-      event: 'setSettings',
-      context: this.propertyInspectorUUID,
-      payload: actionSettings
-    }
-    this.streamDeckWebsocket.send(JSON.stringify(message))
+    this.#send({ event: 'setSettings', context: this.propertyInspectorUUID, payload: actionSettings })
   }
 
   setTitle(context, title) {
-    let message = {
-      event: 'setTitle',
-      context: context,
-      payload: {
-        title: title,
-        target: 0
-      }
-    }
-    this.streamDeckWebsocket.send(JSON.stringify(message))
+    this.#send({ event: 'setTitle', context, payload: { title, target: 0 } })
   }
 
   setImage(context, image) {
-    let message = {
-      event: 'setImage',
-      context: context,
-      payload: {
-        image: image,
-        target: 0,
-        state: 0
-      }
-    }
-
-    this.streamDeckWebsocket.send(JSON.stringify(message))
+    this.#send({ event: 'setImage', context, payload: { image, target: 0, state: 0 } })
   }
 
   setFeedback(context, payload) {
-    let message = {
-      event: 'setFeedback',
-      context: context,
-      payload: payload
-    }
-
-    this.streamDeckWebsocket.send(JSON.stringify(message))
+    this.#send({ event: 'setFeedback', context, payload })
   }
 
   setFeedbackLayout(context, payload) {
-    let message = {
-      event: 'setFeedbackLayout',
-      context: context,
-      payload: payload
-    }
-
-    this.streamDeckWebsocket.send(JSON.stringify(message))
+    this.#send({ event: 'setFeedbackLayout', context, payload })
   }
 
   showAlert(context) {
-    let message = {
-      event: 'showAlert',
-      context: context
-    }
-
-    this.streamDeckWebsocket.send(JSON.stringify(message))
+    this.#send({ event: 'showAlert', context })
   }
 
   showOk(context) {
-    let message = {
-      event: 'showOk',
-      context: context
-    }
-
-    this.streamDeckWebsocket.send(JSON.stringify(message))
+    this.#send({ event: 'showOk', context })
   }
 
   setState(context, number) {
-    let message = {
-      event: 'setState',
-      context: context,
-      payload: {
-        state: number
-      }
-    }
-
-    this.streamDeckWebsocket.send(JSON.stringify(message))
+    this.#send({ event: 'setState', context, payload: { state: number } })
   }
 
   log(message) {
-    let messageEvent = {
-      event: 'logMessage',
-      payload: {
-        message: message
-      }
-    }
-
-    this.streamDeckWebsocket.send(JSON.stringify(messageEvent))
+    this.#send({ event: 'logMessage', payload: { message } })
   }
 
   openUrl(url) {
-    let message = {
-      event: 'openUrl',
-      payload: { url }
-    }
-    this.streamDeckWebsocket.send(JSON.stringify(message))
+    this.#send({ event: 'openUrl', payload: { url } })
   }
 }
 
