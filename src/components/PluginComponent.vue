@@ -11,7 +11,7 @@ import { EntityConfigFactory } from '@/modules/plugin/entityConfigFactoryNg'
 import { SvgUtils, WIDTH, HEIGHT } from '@/modules/plugin/svgUtils'
 import { fetchRemoteYaml } from '@/modules/common/remoteConfig'
 import nunjucks from 'nunjucks'
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, shallowRef } from 'vue'
 import defaultActiveStates from '../../public/config/active-states.yml'
 
 let entityConfigFactory
@@ -61,8 +61,11 @@ async function fetchEntityPictureAsDataUri(entityPictureUrl, serverUrl) {
   }
 }
 
-const $SD = ref(null)
-const $HA = ref(null)
+// shallowRef: a deep ref would wrap the instances in reactive proxies,
+// which breaks classes with private (#) members — private-field brand
+// checks fail when `this` is the proxy instead of the raw instance.
+const $SD = shallowRef(null)
+const $HA = shallowRef(null)
 let reconnectTimeout = null
 const globalSettings = ref({})
 const actionSettings = ref({})
