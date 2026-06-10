@@ -100,7 +100,10 @@ const MIGRATIONS = {
 export class Settings {
   // Pure: never mutates the passed-in settings object.
   static parse(settings) {
-    let current = structuredClone(settings ?? {})
+    // JSON round-trip instead of structuredClone: settings always originate
+    // from JSON, and the Stream Deck runtime's Chromium may predate
+    // structuredClone (Chrome 98).
+    let current = settings ? JSON.parse(JSON.stringify(settings)) : {}
     if (!current.version) current.version = 1
     while (current.version < CURRENT_VERSION) {
       const migrate = MIGRATIONS[current.version]
