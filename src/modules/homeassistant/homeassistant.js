@@ -22,6 +22,8 @@ export class Homeassistant {
     this._connection = null
     this._lastFullSync = null
     this._closed = false
+    this._statesDebounceTimer = null
+    this._pendingStateCallbacks = new Set()
 
     const auth = createLongLivedTokenAuth(url, accessToken)
 
@@ -33,25 +35,44 @@ export class Homeassistant {
         }
         this._connection = conn
         conn.addEventListener('disconnected', () => !this._closed && onClose?.())
-        conn.addEventListener('reconnect-error', () => onError?.('Reconnection failed'))
+        conn.addEventListener(
+          'reconnect-error',
+          () => !this._closed && onError?.('Reconnection failed')
+        )
         onReady?.()
       })
       .catch((err) => {
-        if (!this._closed) onError?.(HA_ERROR_MESSAGES[err] ?? `Connection error (${err})`)
+        if (!this._closed)
+          onError?.(HA_ERROR_MESSAGES[err] ?? `Connection error (${err})`, {
+            isAuthError: err === ERR_INVALID_AUTH
+          })
       })
   }
 
   close() {
     this._closed = true
+    clearTimeout(this._statesDebounceTimer)
+    this._statesDebounceTimer = null
+    this._pendingStateCallbacks.clear()
     this._connection?.close()
     this._connection = null
   }
 
+  // Coalesces bursts of calls into one get_states request, but every callback
+  // is eventually invoked (trailing-edge debounce, max one sync per 2s).
   getStatesDebounced(callback) {
-    if (!this._lastFullSync || Date.now() - this._lastFullSync > 2000) {
+    this._pendingStateCallbacks.add(callback)
+    if (this._statesDebounceTimer) return
+
+    const elapsed = Date.now() - (this._lastFullSync ?? 0)
+    const delay = Math.max(0, 2000 - elapsed)
+    this._statesDebounceTimer = setTimeout(() => {
+      this._statesDebounceTimer = null
       this._lastFullSync = Date.now()
-      this.getStates(callback)
-    }
+      const callbacks = [...this._pendingStateCallbacks]
+      this._pendingStateCallbacks.clear()
+      this.getStates((states) => callbacks.forEach((cb) => cb(states)))
+    }, delay)
   }
 
   getStates(callback) {
@@ -76,7 +97,10 @@ export class Homeassistant {
   }
 
   callService(domain, service, entity_id = null, serviceData = {}) {
+    if (!this._connection) {
+      return Promise.reject(new Error('Not connected to Home Assistant'))
+    }
     const target = entity_id ? { entity_id } : undefined
-    haCallService(this._connection, domain, service, serviceData, target)
+    return haCallService(this._connection, domain, service, serviceData, target)
   }
 }
