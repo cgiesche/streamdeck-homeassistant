@@ -46,7 +46,7 @@ async function fetchEntityPictureAsDataUri(entityPictureUrl, serverUrl) {
         const scale = Math.max(WIDTH / img.width, HEIGHT / img.height)
         const w = img.width * scale
         const h = img.height * scale
-        ctx.drawImage(img, (WIDTH - w) / 2, 0, w, h)
+        ctx.drawImage(img, (WIDTH - w) / 2, (HEIGHT - h) / 2, w, h)
         const dataUri = canvas.toDataURL('image/jpeg', 0.2)
         imageCache.set(fullUrl, dataUri)
         resolve(dataUri)
@@ -134,6 +134,7 @@ onMounted(async () => {
     $SD.value.on('dialRotate', (message) => {
       let context = message.context
       let settings = actionSettings.value[context]
+      if (!settings) return
       let scaledTicks = message.payload.ticks * (settings.rotationTickMultiplier || 1)
       let tickBucketSizeMs = settings.rotationTickBucketSizeMs || 300
 
@@ -175,12 +176,14 @@ onMounted(async () => {
     $SD.value.on('touchTap', (message) => {
       let context = message.context
       let settings = actionSettings.value[context]
+      if (!settings) return
       callService(context, settings.button.serviceTap)
     })
 
     $SD.value.on('didReceiveSettings', (message) => {
       let context = message.context
       rotationAmount[context] = 0
+      rotationPercent[context] = 0
       actionSettings.value[context] = Settings.parse(message.payload.settings)
       if ($HA.value) {
         $HA.value.getStatesDebounced(entityStatesChanged)
@@ -305,7 +308,7 @@ function entityStateChanged(event) {
 
 function updateState(stateMessage) {
   if (!stateMessage.entity_id) {
-    console.log(`Missing entity_id in updated state: ${stateMessage}`)
+    console.log(`Missing entity_id in updated state: ${JSON.stringify(stateMessage)}`)
     return
   }
 
@@ -450,12 +453,14 @@ function buttonUp(context) {
 
 function buttonShortPress(context) {
   let settings = actionSettings.value[context]
+  if (!settings) return
   callService(context, settings.button.serviceShortPress)
 }
 
 function buttonLongPress(context) {
   buttonLongpressTimeouts.delete(context)
   let settings = actionSettings.value[context]
+  if (!settings) return
   if (settings.button.serviceLongPress.serviceId) {
     callService(context, settings.button.serviceLongPress)
   } else {
