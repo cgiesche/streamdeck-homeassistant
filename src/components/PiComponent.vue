@@ -314,11 +314,11 @@
           <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px">
             <label class="pi-label" for="labelFontSize" style="margin: 0; flex: 1">Label font size: {{ labelFontSize }}px</label>
             <button
-              v-if="labelFontSize !== 48"
+              v-if="labelFontSize !== DEFAULT_LABEL_FONT_SIZE"
               class="pi-btn-icon"
               style="font-size: 11px; padding: 2px 6px"
               title="Reset to default"
-              @click="labelFontSize = 48"
+              @click="labelFontSize = DEFAULT_LABEL_FONT_SIZE"
             >reset</button>
           </div>
           <input
@@ -431,7 +431,12 @@
 <script setup>
 import defaultManifest from '../../public/config/manifest.yml'
 import { StreamDeck } from '@/modules/common/streamdeck'
-import { Settings, GlobalSettings } from '@/modules/common/settings'
+import {
+  Settings,
+  GlobalSettings,
+  CURRENT_VERSION,
+  DEFAULT_LABEL_FONT_SIZE
+} from '@/modules/common/settings'
 import { Homeassistant } from '@/modules/homeassistant/homeassistant'
 import { Entity } from '@/modules/pi/entity'
 import { Service } from '@/modules/pi/service'
@@ -474,7 +479,7 @@ const buttonLabels = ref('')
 const enableServiceIndicator = ref(true)
 const iconSettings = ref('PREFER_PLUGIN')
 const iconLayout = ref('STANDARD')
-const labelFontSize = ref(48)
+const labelFontSize = ref(DEFAULT_LABEL_FONT_SIZE)
 const backgroundMode = ref('NONE') // NONE | SOLID | GRADIENT
 const backgroundColor = ref('#000000')
 const backgroundColorEnd = ref('#000000')
@@ -512,11 +517,11 @@ onMounted(() => {
 
     $SD.on('globalsettings', (globalSettings) => {
       if (globalSettings) {
-        GlobalSettings.migrate(globalSettings)
-        serverUrl.value = globalSettings.serverUrl
-        accessToken.value = globalSettings.accessToken
+        const migrated = GlobalSettings.migrate(globalSettings)
+        serverUrl.value = migrated.serverUrl
+        accessToken.value = migrated.accessToken
 
-        let displayConfigurationFromSettings = globalSettings.displayConfiguration
+        let displayConfigurationFromSettings = migrated.displayConfiguration
         if (displayConfigurationFromSettings) {
           displayConfiguration.value = displayConfigurationFromSettings
           if (displayConfigurationFromSettings.urlOverride) {
@@ -536,12 +541,10 @@ onMounted(() => {
       let settings = Settings.parse(actionInfo.payload.settings)
 
       entity.value = settings['display']['entityId']
-      enableServiceIndicator.value =
-        settings['display']['enableServiceIndicator'] ||
-        settings['display']['enableServiceIndicator'] === undefined
+      enableServiceIndicator.value = settings['display']['enableServiceIndicator']
       iconSettings.value = settings['display']['iconSettings']
       iconLayout.value = settings['display']['iconLayout'] ?? 'STANDARD'
-      labelFontSize.value = settings['display']['labelFontSize'] ?? 48
+      labelFontSize.value = settings['display']['labelFontSize'] ?? DEFAULT_LABEL_FONT_SIZE
       const bgColor = settings['display']['backgroundColor'] ?? ''
       const bgColorEnd = settings['display']['backgroundColorEnd'] ?? ''
       if (bgColor && bgColorEnd) {
@@ -715,7 +718,7 @@ function saveSettings() {
   }
 
   let settings = {
-    version: 8,
+    version: CURRENT_VERSION,
 
     controllerType: controllerType.value,
 

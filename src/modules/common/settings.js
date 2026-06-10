@@ -1,4 +1,5 @@
-const CURRENT_VERSION = 8
+export const CURRENT_VERSION = 8
+export const DEFAULT_LABEL_FONT_SIZE = 48
 
 function migrateV1(s) {
   const v2 = {
@@ -8,7 +9,7 @@ function migrateV1(s) {
       entityId: s['entityId'],
       useCustomTitle: s['useCustomTitle'],
       buttonTitle: s['buttonTitle'] || '{{friendly_name}}',
-      enableServiceIndicator: s['enableServiceIndicator'] || s['enableServiceIndicator'] === undefined,
+      enableServiceIndicator: s['enableServiceIndicator'] !== false,
       hideIcon: s['hideIcon'],
       useCustomButtonLabels: s['useCustomButtonLabels'],
       buttonLabels: s['buttonLabels'],
@@ -75,7 +76,7 @@ function migrateV5(s) {
 
 function migrateV6(s) {
   const v7 = { ...s, display: { ...s.display }, version: 7 }
-  v7.display.labelFontSize = 48
+  v7.display.labelFontSize = DEFAULT_LABEL_FONT_SIZE
   return v7
 }
 
@@ -97,25 +98,34 @@ const MIGRATIONS = {
 }
 
 export class Settings {
+  // Pure: never mutates the passed-in settings object.
   static parse(settings) {
-    if (!settings.version) settings.version = 1
-    let current = settings
+    let current = structuredClone(settings ?? {})
+    if (!current.version) current.version = 1
     while (current.version < CURRENT_VERSION) {
       const migrate = MIGRATIONS[current.version]
       if (!migrate) break
       current = migrate(current)
+    }
+    if (current.display) {
+      // Normalize so consumers can rely on a plain boolean
+      // (legacy settings stored undefined for "enabled").
+      current.display.enableServiceIndicator = current.display.enableServiceIndicator !== false
     }
     return current
   }
 }
 
 export class GlobalSettings {
+  // Pure: returns a new object, never mutates the input.
   static migrate(globalSettings) {
     if (!globalSettings?.serverUrl) return globalSettings
-    globalSettings.serverUrl = globalSettings.serverUrl
-      .replace(/^ws:\/\//, 'http://')
-      .replace(/^wss:\/\//, 'https://')
-      .replace(/\/api\/websocket$/, '')
-    return globalSettings
+    return {
+      ...globalSettings,
+      serverUrl: globalSettings.serverUrl
+        .replace(/^ws:\/\//, 'http://')
+        .replace(/^wss:\/\//, 'https://')
+        .replace(/\/api\/websocket$/, '')
+    }
   }
 }

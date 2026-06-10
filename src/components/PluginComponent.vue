@@ -3,7 +3,7 @@
 </template>
 
 <script setup>
-import { GlobalSettings, Settings } from '@/modules/common/settings'
+import { GlobalSettings, Settings, DEFAULT_LABEL_FONT_SIZE } from '@/modules/common/settings'
 import { StreamDeck } from '@/modules/common/streamdeck'
 import { LruCache } from '@/modules/common/lruCache'
 import { Homeassistant } from '@/modules/homeassistant/homeassistant'
@@ -351,11 +351,11 @@ async function updateContextState(currentContext, domain, stateObject, generatio
     contextSettings.display
   )
 
-  const showIndicators = contextSettings.display.enableServiceIndicator !== false // undefined = on by default
+  const showIndicators = contextSettings.display.enableServiceIndicator
   renderingConfig.isAction = contextSettings.button.serviceShortPress.serviceId && showIndicators
   renderingConfig.isMultiAction =
     contextSettings.button.serviceLongPress.serviceId && showIndicators
-  renderingConfig.labelFontSize = contextSettings.display.labelFontSize ?? 48
+  renderingConfig.labelFontSize = contextSettings.display.labelFontSize ?? DEFAULT_LABEL_FONT_SIZE
 
   if (renderingConfig.rotationPercent !== undefined) {
     rotationPercent[currentContext] = renderingConfig.rotationPercent
