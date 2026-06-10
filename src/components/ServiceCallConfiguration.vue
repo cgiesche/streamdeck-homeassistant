@@ -86,7 +86,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import nunjucks from 'nunjucks'
 import TypeaheadSelect from '@/components/ui/TypeaheadSelect.vue'
 
-const titleSort = (s1, s2) => (s1.name.toLowerCase() > s2.name.toLowerCase() ? 1 : -1)
+const titleSort = (s1, s2) => s1.name.localeCompare(s2.name, undefined, { sensitivity: 'base' })
 
 const props = defineProps({
   modelValue: {
@@ -153,7 +153,9 @@ function onServiceChange(val) {
   if (!val) {
     clear('serviceId', 'entityId', 'serviceData')
   } else {
-    update('serviceId', val)
+    // Clear stale service data so the watcher below can prefill the
+    // required fields of the newly selected service.
+    emit('update:modelValue', { ...props.modelValue, serviceId: val, serviceData: '' })
   }
 }
 
@@ -258,6 +260,9 @@ watch(
   () => props.modelValue.serviceId,
   (newId) => {
     if (!newId) return
+    // Only prefill when there is no service data yet — otherwise saved
+    // settings arriving asynchronously would be overwritten.
+    if (props.modelValue.serviceData) return
     const service = props.availableServices.find((s) => s.serviceId === newId)
     const generated = generateRequiredFieldsJson(service)
     if (generated) update('serviceData', generated)

@@ -392,7 +392,7 @@
         </label>
         <input
           id="rotationTickMultiplier"
-          v-model="rotationTickMultiplier"
+          v-model.number="rotationTickMultiplier"
           class="pi-range"
           max="10"
           min="0.1"
@@ -407,7 +407,7 @@
         </label>
         <input
           id="rotationTickBucketSizeMs"
-          v-model="rotationTickBucketSizeMs"
+          v-model.number="rotationTickBucketSizeMs"
           class="pi-range"
           max="1000"
           min="0"
@@ -483,12 +483,10 @@ const labelFontSize = ref(DEFAULT_LABEL_FONT_SIZE)
 const backgroundMode = ref('NONE') // NONE | SOLID | GRADIENT
 const backgroundColor = ref('#000000')
 const backgroundColorEnd = ref('#000000')
-const availableEntityDomains = ref([])
 const availableEntities = ref([])
 const entityItems = computed(() =>
   availableEntities.value.map((e) => ({ id: e.entityId, label: e.title, group: e.domain }))
 )
-const availableServiceDomains = ref([])
 const availableServices = ref([])
 const currentStates = ref([])
 const haConnectionState = ref('disconnected') // disconnected, connecting, connected
@@ -613,12 +611,6 @@ function connectHomeAssistant() {
       () => {
         haConnectionState.value = 'connected'
         $HA.getStates((states) => {
-          availableEntityDomains.value = Array.from(
-            states
-              .map((state) => state.entity_id.split('.')[0])
-              .reduce((acc, curr) => acc.add(curr), new Set())
-          ).sort()
-
           availableEntities.value = states
             .map((state) => {
               let splittedId = state.entity_id.split('.')
@@ -628,13 +620,7 @@ function connectHomeAssistant() {
                 state.attributes.friendly_name || state.entity_id
               )
             })
-            .sort((a, b) =>
-              a.title.toLowerCase() > b.title.toLowerCase()
-                ? 1
-                : b.title.toLowerCase() > a.title.toLowerCase()
-                  ? -1
-                  : 0
-            )
+            .sort((a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: 'base' }))
 
           currentStates.value = states.map((state) => {
             return {
@@ -666,7 +652,6 @@ function connectHomeAssistant() {
               null
             )
           )
-          availableServiceDomains.value = ['streamdeck', ...Object.keys(services).sort()]
         })
       },
       (message) => {
