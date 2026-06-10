@@ -64,55 +64,42 @@ export class EntityConfigFactory {
     return renderingConfig
   }
 
+  static #TEMPLATED_PROPS = ['feedbackLayout', 'icon', 'color', 'backgroundColor', 'backgroundColorEnd']
+  static #DEFAULT_PROPS = ['icon', 'color', 'backgroundColor', 'backgroundColorEnd', 'labelTemplates']
+
   getConfig(domain, stateObject, deviceClass) {
     const resolvers = []
     this.addResolverConfig(resolvers, stateObject.state, domain, deviceClass)
     resolvers.reverse()
 
-    const feedbackLayoutString = this.resolve('feedbackLayout', resolvers)
-    const feedbackValueString = this.resolve('feedback', resolvers)
-    const iconString = this.resolve('icon', resolvers)
-    const colorString = this.resolve('color', resolvers)
-    const backgroundColorString = this.resolve('backgroundColor', resolvers)
-    const backgroundColorEndString = this.resolve('backgroundColorEnd', resolvers)
-    const labelTemplates = this.resolve('labelTemplates', resolvers)
+    const renderingConfig = {}
+    for (const prop of EntityConfigFactory.#TEMPLATED_PROPS) {
+      renderingConfig[prop] = this.render(this.resolve(prop, resolvers), stateObject)
+    }
+    renderingConfig.labelTemplates = this.resolve('labelTemplates', resolvers)
 
-    const feedbackLayout = this.render(feedbackLayoutString, stateObject)
-    const renderedFeedback = this.render(feedbackValueString, stateObject)
-    let feedback = {}
+    const feedbackValueString = this.resolve('feedback', resolvers)
+    renderingConfig.feedback = {}
     if (feedbackValueString) {
+      const renderedFeedback = this.render(feedbackValueString, stateObject)
       try {
-        feedback = JSON.parse(renderedFeedback)
+        renderingConfig.feedback = JSON.parse(renderedFeedback)
       } catch {
         console.error(`Failed to parse feedback JSON for entity ${stateObject.entity_id}: ${renderedFeedback}`)
       }
     }
 
-    const icon = this.render(iconString, stateObject)
-    const color = this.render(colorString, stateObject)
-    const backgroundColor = this.render(backgroundColorString, stateObject)
-    const backgroundColorEnd = this.render(backgroundColorEndString, stateObject)
-
-    return {
-      feedbackLayout: feedbackLayout,
-      feedback: feedback,
-      icon: icon,
-      color: color,
-      backgroundColor: backgroundColor,
-      backgroundColorEnd: backgroundColorEnd,
-      labelTemplates: labelTemplates
-    }
+    return renderingConfig
   }
 
   addResolverConfig(resolvers, state, domain, deviceClass) {
     let config = this.displayConfiguration
 
     const defaultConfig = {}
-    if (config._icon) defaultConfig.icon = config._icon
-    if (config._color) defaultConfig.color = config._color
-    if (config._backgroundColor) defaultConfig.backgroundColor = config._backgroundColor
-    if (config._backgroundColorEnd) defaultConfig.backgroundColorEnd = config._backgroundColorEnd
-    if (config._labelTemplates) defaultConfig.labelTemplates = config._labelTemplates
+    for (const prop of EntityConfigFactory.#DEFAULT_PROPS) {
+      const value = config[`_${prop}`]
+      if (value) defaultConfig[prop] = value
+    }
     resolvers.push(defaultConfig)
 
     const defaultStateConfig = config._states?.[state]

@@ -13,7 +13,9 @@ export class LruCache {
   }
 
   set(key, value) {
-    if (this._cache.size >= this._max) {
+    if (this._cache.has(key)) {
+      this._cache.delete(key)
+    } else if (this._cache.size >= this._max) {
       this._cache.delete(this._cache.keys().next().value)
     }
     this._cache.set(key, value)
