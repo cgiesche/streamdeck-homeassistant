@@ -279,7 +279,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, defineComponent, h } from 'vue'
+import { ref, reactive, computed, defineComponent, h } from 'vue'
 import * as Mdi from '@mdi/js'
 import jsYaml from 'js-yaml'
 import defaultConfig from '../../public/config/default-display-config.yml'
@@ -462,7 +462,7 @@ function validateAttrs() {
 
 const svgUtils = new SvgUtils()
 
-const previewSvg = computed(() => {
+const preview = computed(() => {
   try {
     const attrs = JSON.parse(test.attributesJson || '{}')
     if (test.deviceClass) attrs.device_class = test.deviceClass
@@ -477,14 +477,20 @@ const previewSvg = computed(() => {
       iconSettings: 'PREFER_PLUGIN',
       iconLayout: 'STANDARD'
     })
-    resolved.value = { icon: renderingConfig.icon, color: renderingConfig.color }
-    return svgUtils.renderButtonSVG(renderingConfig, stateObject)
+    return {
+      svg: svgUtils.renderButtonSVG(renderingConfig, stateObject),
+      resolved: { icon: renderingConfig.icon, color: renderingConfig.color }
+    }
   } catch {
-    return '<svg xmlns="http://www.w3.org/2000/svg" width="144" height="144"><rect width="144" height="144" fill="#300"/><text x="72" y="72" fill="red" text-anchor="middle" font-size="12">Error</text></svg>'
+    return {
+      svg: '<svg xmlns="http://www.w3.org/2000/svg" width="144" height="144"><rect width="144" height="144" fill="#300"/><text x="72" y="72" fill="red" text-anchor="middle" font-size="12">Error</text></svg>',
+      resolved: null
+    }
   }
 })
 
-const resolved = ref(null)
+const previewSvg = computed(() => preview.value.svg)
+const resolved = computed(() => preview.value.resolved)
 
 // ── color/icon helpers ────────────────────────────────────────────────────────
 
