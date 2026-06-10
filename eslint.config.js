@@ -12,6 +12,7 @@ export default [
     ignores: [
       'node_modules/**',
       'dist/**',
+      'build/**',
       'de.perdoctus.streamdeck.homeassistant.sdPlugin/**',
       'logs/**',
       '.eslintrc.cjs'
