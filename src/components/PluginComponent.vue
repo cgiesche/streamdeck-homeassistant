@@ -69,6 +69,10 @@ const globalSettings = ref({})
 const actionSettings = ref({})
 const buttonLongpressTimeouts = new Map()
 let haEntitySubscription = null
+let subscriptionGeneration = 0
+// Tracks the latest render started per context so stale async renders
+// (slow entity picture fetch, SVG rasterization) never overwrite newer ones.
+const renderGeneration = new Map()
 
 const activeStates = ref(defaultActiveStates)
 
@@ -123,6 +127,7 @@ onMounted(async () => {
     $SD.value.on('willDisappear', (message) => {
       let context = message.context
       delete actionSettings.value[context]
+      renderGeneration.delete(context)
       resubscribeEntities()
     })
 
@@ -248,14 +253,39 @@ function getConfiguredEntityIds() {
 
 async function resubscribeEntities() {
   if (!$HA.value) return
+  const generation = ++subscriptionGeneration
+
   if (haEntitySubscription) {
-    haEntitySubscription()
+    const unsubscribe = haEntitySubscription
     haEntitySubscription = null
+    try {
+      await unsubscribe()
+    } catch {
+      // connection may already be gone
+    }
   }
+
   const entityIds = getConfiguredEntityIds()
-  if (entityIds.length > 0) {
-    haEntitySubscription = await $HA.value.subscribeEntitiesChanged(entityIds, entityStateChanged)
+  if (entityIds.length === 0) return
+
+  let subscription = null
+  try {
+    subscription = await $HA.value.subscribeEntitiesChanged(entityIds, entityStateChanged)
+  } catch (e) {
+    console.log(`Failed to subscribe to entity changes: ${e}`)
+    return
   }
+
+  if (generation !== subscriptionGeneration) {
+    // A newer resubscribe started while we were awaiting; discard this one.
+    try {
+      await subscription?.()
+    } catch {
+      // ignore
+    }
+    return
+  }
+  haEntitySubscription = subscription
 }
 
 function showAlert() {
@@ -294,13 +324,13 @@ function updateState(stateMessage) {
     enrichedState.attributes['last_changed'] = new Date(enrichedState.last_changed).toLocaleTimeString()
 
   changedContexts.forEach((context) => {
-    try {
-      updateContextState(context, domain, enrichedState)
-    } catch (e) {
+    const generation = (renderGeneration.get(context) ?? 0) + 1
+    renderGeneration.set(context, generation)
+    updateContextState(context, domain, enrichedState, generation).catch((e) => {
       console.error(e)
       $SD.value.setImage(context, null)
       $SD.value.showAlert(context)
-    }
+    })
   })
 }
 
@@ -308,8 +338,10 @@ function isEncoder(contextSettings) {
   return contextSettings.controllerType === 'Encoder'
 }
 
-async function updateContextState(currentContext, domain, stateObject) {
+async function updateContextState(currentContext, domain, stateObject, generation) {
+  const isStale = () => renderGeneration.get(currentContext) !== generation
   let contextSettings = actionSettings.value[currentContext]
+  if (!contextSettings) return
   let renderingConfig = entityConfigFactory.determineConfig(
     domain,
     stateObject,
@@ -353,6 +385,7 @@ async function updateContextState(currentContext, domain, stateObject) {
       globalSettings.value.serverUrl
     )
   }
+  if (isStale()) return
 
   if (isEncoder(contextSettings)) {
     if (!renderingConfig.feedbackLayout) {
@@ -375,6 +408,7 @@ async function updateContextState(currentContext, domain, stateObject) {
     renderingConfig.feedback.icon = await svgUtils.svgToJpegDataUri(
       svgUtils.renderButtonSVG({ ...renderingConfig, labelTemplates: [] }, stateObject)
     )
+    if (isStale()) return
     $SD.value.setFeedback(currentContext, renderingConfig.feedback)
   } else if (contextSettings.display.useStateImagesForOnOffStates) {
     if (renderingConfig.customTitle) {
@@ -391,12 +425,12 @@ async function updateContextState(currentContext, domain, stateObject) {
     if (renderingConfig.customTitle) {
       $SD.value.setTitle(currentContext, renderingConfig.customTitle)
     }
-    await setButtonSVG(svgUtils.renderButtonSVG(renderingConfig, stateObject), currentContext)
+    const image = await svgUtils.svgToJpegDataUri(
+      svgUtils.renderButtonSVG(renderingConfig, stateObject)
+    )
+    if (isStale()) return
+    $SD.value.setImage(currentContext, image)
   }
-}
-
-async function setButtonSVG(svg, changedContext) {
-  $SD.value.setImage(changedContext, await svgUtils.svgToJpegDataUri(svg))
 }
 
 function buttonDown(context) {
@@ -454,12 +488,12 @@ function callService(context, serviceToCall, serviceDataAttributes = {}) {
 
     const serviceIdParts = serviceToCall.serviceId.split('.')
     if ($HA.value) {
-      $HA.value.callService(
-        serviceIdParts[0],
-        serviceIdParts[1],
-        serviceToCall.entityId,
-        serviceData
-      )
+      $HA.value
+        .callService(serviceIdParts[0], serviceIdParts[1], serviceToCall.entityId, serviceData)
+        .catch((e) => {
+          console.error(e)
+          $SD.value.showAlert(context)
+        })
     }
   } catch (e) {
     console.error(e)
