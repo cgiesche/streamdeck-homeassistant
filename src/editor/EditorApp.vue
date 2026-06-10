@@ -113,9 +113,17 @@
               <div class="fg">
                 <div class="fg-label">DEFAULT COLOR</div>
                 <div class="fg-color-row">
-                  <input type="color" :value="safeColor(node._color)" @input="node._color=$event.target.value" class="fg-swatch" />
-                  <input type="text" v-model="node._color" class="fg-input" />
+                  <input type="color" :value="safeColor(node._color)" class="fg-swatch" @input="node._color=$event.target.value" />
+                  <input v-model="node._color" type="text" class="fg-input" />
                 </div>
+              </div>
+              <div class="fg">
+                <div class="fg-label">DEFAULT BACKGROUND</div>
+                <color-field v-model="node._backgroundColor" />
+              </div>
+              <div class="fg">
+                <div class="fg-label">DEFAULT BACKGROUND EDGE <span class="fg-hint">radial gradient, optional</span></div>
+                <color-field v-model="node._backgroundColorEnd" />
               </div>
               <div class="fg">
                 <div class="fg-label">DEFAULT LABEL TEMPLATES</div>
@@ -128,9 +136,17 @@
               <div class="fg">
                 <div class="fg-label">COLOR</div>
                 <div class="fg-color-row">
-                  <input type="color" :value="safeColor(node.color)" @input="node.color=$event.target.value" class="fg-swatch" />
-                  <input type="text" v-model="node.color" class="fg-input" />
+                  <input type="color" :value="safeColor(node.color)" class="fg-swatch" @input="node.color=$event.target.value" />
+                  <input v-model="node.color" type="text" class="fg-input" />
                 </div>
+              </div>
+              <div class="fg">
+                <div class="fg-label">BACKGROUND</div>
+                <color-field v-model="node.backgroundColor" />
+              </div>
+              <div class="fg">
+                <div class="fg-label">BACKGROUND EDGE <span class="fg-hint">radial gradient, optional</span></div>
+                <color-field v-model="node.backgroundColorEnd" />
               </div>
             </template>
 
@@ -145,12 +161,20 @@
                 <color-field v-model="node.color" />
               </div>
               <div class="fg">
+                <div class="fg-label">BACKGROUND</div>
+                <color-field v-model="node.backgroundColor" />
+              </div>
+              <div class="fg">
+                <div class="fg-label">BACKGROUND EDGE <span class="fg-hint">radial gradient, optional</span></div>
+                <color-field v-model="node.backgroundColorEnd" />
+              </div>
+              <div class="fg">
                 <div class="fg-label">LABEL TEMPLATES</div>
                 <template-list v-model="node.labelTemplates" />
               </div>
               <div class="fg">
                 <div class="fg-label">FEEDBACK LAYOUT <span class="fg-hint">$B1, $A1…</span></div>
-                <input type="text" v-model="node.feedbackLayout" placeholder="$B1" class="fg-input fg-input--sm" />
+                <input v-model="node.feedbackLayout" type="text" placeholder="$B1" class="fg-input fg-input--sm" />
               </div>
               <div class="fg">
                 <div class="fg-label">FEEDBACK <span class="fg-hint">JSON Nunjucks template</span></div>
@@ -167,6 +191,14 @@
               <div class="fg">
                 <div class="fg-label">COLOR <span class="fg-hint">overrides domain</span></div>
                 <color-field v-model="node.color" />
+              </div>
+              <div class="fg">
+                <div class="fg-label">BACKGROUND <span class="fg-hint">overrides domain</span></div>
+                <color-field v-model="node.backgroundColor" />
+              </div>
+              <div class="fg">
+                <div class="fg-label">BACKGROUND EDGE <span class="fg-hint">radial gradient, optional</span></div>
+                <color-field v-model="node.backgroundColorEnd" />
               </div>
             </template>
 

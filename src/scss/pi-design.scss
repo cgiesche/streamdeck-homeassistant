@@ -164,6 +164,27 @@ a {
   }
 }
 
+.pi-color-row {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+
+  .pi-input {
+    flex: 1;
+  }
+}
+
+.pi-color-swatch {
+  flex-shrink: 0;
+  width: 38px;
+  height: 32px;
+  padding: 2px;
+  border: 1px solid var(--pi-border);
+  border-radius: var(--pi-radius);
+  background: var(--pi-bg-sunken);
+  cursor: pointer;
+}
+
 // ── Buttons ───────────────────────────────────────────────────────────────
 .pi-btn {
   display: inline-flex;

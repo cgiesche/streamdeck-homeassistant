@@ -213,6 +213,51 @@
           </div>
         </div>
 
+        <!-- Button background -->
+        <div class="mb-3">
+          <label class="pi-label">Button background</label>
+          <div class="pi-radio-group">
+            <label class="pi-radio-label">
+              <input v-model="backgroundMode" type="radio" value="NONE" />
+              None
+              <span class="pi-hint">Use the theme background.</span>
+            </label>
+            <label class="pi-radio-label">
+              <input v-model="backgroundMode" type="radio" value="SOLID" />
+              Solid
+            </label>
+            <label class="pi-radio-label">
+              <input v-model="backgroundMode" type="radio" value="GRADIENT" />
+              Gradient
+              <span class="pi-hint">Radial, center → edge.</span>
+            </label>
+          </div>
+
+          <template v-if="backgroundMode === 'SOLID'">
+            <div class="pi-color-row mt-2">
+              <input v-model="backgroundColor" type="color" class="pi-color-swatch" />
+              <input v-model="backgroundColor" type="text" class="pi-input" placeholder="#000000" />
+            </div>
+          </template>
+
+          <template v-else-if="backgroundMode === 'GRADIENT'">
+            <label class="pi-label mt-2">Center</label>
+            <div class="pi-color-row">
+              <input v-model="backgroundColor" type="color" class="pi-color-swatch" />
+              <input v-model="backgroundColor" type="text" class="pi-input" placeholder="#000000" />
+            </div>
+            <label class="pi-label mt-2">Edge</label>
+            <div class="pi-color-row">
+              <input v-model="backgroundColorEnd" type="color" class="pi-color-swatch" />
+              <input v-model="backgroundColorEnd" type="text" class="pi-input" placeholder="#000000" />
+            </div>
+          </template>
+
+          <div v-if="backgroundMode !== 'NONE'" class="pi-hint mt-1">
+            Overrides the theme background for this button.
+          </div>
+        </div>
+
         <!-- Service indicator (Keypad only) -->
         <template v-if="controllerType !== 'Encoder'">
           <PiToggleRow
@@ -430,6 +475,9 @@ const enableServiceIndicator = ref(true)
 const iconSettings = ref('PREFER_PLUGIN')
 const iconLayout = ref('STANDARD')
 const labelFontSize = ref(48)
+const backgroundMode = ref('NONE') // NONE | SOLID | GRADIENT
+const backgroundColor = ref('#000000')
+const backgroundColorEnd = ref('#000000')
 const availableEntityDomains = ref([])
 const availableEntities = ref([])
 const entityItems = computed(() =>
@@ -494,6 +542,18 @@ onMounted(() => {
       iconSettings.value = settings['display']['iconSettings']
       iconLayout.value = settings['display']['iconLayout'] ?? 'STANDARD'
       labelFontSize.value = settings['display']['labelFontSize'] ?? 48
+      const bgColor = settings['display']['backgroundColor'] ?? ''
+      const bgColorEnd = settings['display']['backgroundColorEnd'] ?? ''
+      if (bgColor && bgColorEnd) {
+        backgroundMode.value = 'GRADIENT'
+        backgroundColor.value = bgColor
+        backgroundColorEnd.value = bgColorEnd
+      } else if (bgColor) {
+        backgroundMode.value = 'SOLID'
+        backgroundColor.value = bgColor
+      } else {
+        backgroundMode.value = 'NONE'
+      }
       useCustomTitle.value = settings['display']['useCustomTitle']
       buttonTitle.value = settings['display']['buttonTitle'] || '{{friendly_name}}'
       useCustomButtonLabels.value = settings['display']['useCustomButtonLabels']
@@ -645,8 +705,17 @@ async function saveGlobalSettings() {
 }
 
 function saveSettings() {
+  let bgColor = ''
+  let bgColorEnd = ''
+  if (backgroundMode.value === 'SOLID') {
+    bgColor = backgroundColor.value
+  } else if (backgroundMode.value === 'GRADIENT') {
+    bgColor = backgroundColor.value
+    bgColorEnd = backgroundColorEnd.value
+  }
+
   let settings = {
-    version: 7,
+    version: 8,
 
     controllerType: controllerType.value,
 
@@ -658,6 +727,8 @@ function saveSettings() {
       iconSettings: iconSettings.value,
       iconLayout: iconLayout.value,
       labelFontSize: labelFontSize.value,
+      backgroundColor: bgColor,
+      backgroundColorEnd: bgColorEnd,
       useCustomButtonLabels: useCustomButtonLabels.value,
       buttonLabels: buttonLabels.value,
       useStateImagesForOnOffStates: useStateImagesForOnOffStates.value // determined by action ID (manifest)

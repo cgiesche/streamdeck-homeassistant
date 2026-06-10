@@ -5,6 +5,9 @@
 #
 #[domain]:
 #  icon: mdi:lightbulb
+#  color: #FFFFFF
+#  backgroundColor: #1a2b3c       # solid button background
+#  backgroundColorEnd: #000000    # optional; if set -> radial gradient (center -> edge)
 #  labelTemplates:
 #    -
 #    -
@@ -18,6 +21,8 @@
 #        [state]:
 #          icon: mdi:mdi:lightbulb-on
 #          color: #FFFFFF
+#          backgroundColor: #1a2b3c
+#          backgroundColorEnd: #000000
 #          labelTemplates:
 
 _color: '#AAAAAA'

@@ -19,7 +19,9 @@ export class SvgUtils {
       renderingConfig.isMultiAction,
       renderingConfig.iconLayout ?? 'STANDARD',
       renderingConfig.backgroundImage ?? null,
-      renderingConfig.labelFontSize ?? 48
+      renderingConfig.labelFontSize ?? 48,
+      renderingConfig.backgroundColor ?? null,
+      renderingConfig.backgroundColorEnd ?? null
     )
   }
 
@@ -40,8 +42,23 @@ export class SvgUtils {
     isMultiAction = false,
     iconLayout = 'STANDARD',
     backgroundImage = null,
-    fontSize = 48
+    fontSize = 48,
+    backgroundColor = null,
+    backgroundColorEnd = null
   ) {
+    let defsSvg = ''
+    let bgColorSvg = ''
+    if (backgroundColor && backgroundColorEnd) {
+      defsSvg =
+        `<defs><radialGradient id="bgGrad" cx="0%" cy="0%" r="141%">` +
+        `<stop offset="0%" stop-color="${backgroundColor}"/>` +
+        `<stop offset="100%" stop-color="${backgroundColorEnd}"/>` +
+        `</radialGradient></defs>`
+      bgColorSvg = `<rect x="0" y="0" width="${WIDTH}" height="${HEIGHT}" fill="url(#bgGrad)"/>`
+    } else if (backgroundColor) {
+      bgColorSvg = `<rect x="0" y="0" width="${WIDTH}" height="${HEIGHT}" fill="${backgroundColor}"/>`
+    }
+
     const backgroundSvg = backgroundImage
       ? `<image href="${backgroundImage}" x="0" y="0" width="${WIDTH}" height="${HEIGHT}" preserveAspectRatio="xMidYMid slice"/>` +
         `<rect x="0" y="0" width="${WIDTH}" height="${HEIGHT}" fill="rgba(0,0,0,${BG_OVERLAY_OPACITY})"/>`
@@ -95,7 +112,7 @@ export class SvgUtils {
         return `<text ${baseAttrs} fill="#FFF">${escaped}</text>`
       })
 
-    return `<svg xmlns="http://www.w3.org/2000/svg" width="${WIDTH}" height="${HEIGHT}" viewBox="0 0 ${WIDTH} ${HEIGHT}">${backgroundSvg}${iconSvg}${indicator}${textLines.join('')}</svg>`
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${WIDTH}" height="${HEIGHT}" viewBox="0 0 ${WIDTH} ${HEIGHT}">${defsSvg}${bgColorSvg}${backgroundSvg}${iconSvg}${indicator}${textLines.join('')}</svg>`
   }
 
   #getMdiPath(mdiIconName) {

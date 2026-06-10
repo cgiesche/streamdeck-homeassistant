@@ -1,4 +1,4 @@
-const CURRENT_VERSION = 7
+const CURRENT_VERSION = 8
 
 function migrateV1(s) {
   const v2 = {
@@ -79,13 +79,21 @@ function migrateV6(s) {
   return v7
 }
 
+function migrateV7(s) {
+  const v8 = { ...s, display: { ...s.display }, version: 8 }
+  v8.display.backgroundColor = ''
+  v8.display.backgroundColorEnd = ''
+  return v8
+}
+
 const MIGRATIONS = {
   1: migrateV1,
   2: migrateV2,
   3: migrateV3,
   4: migrateV4,
   5: migrateV5,
-  6: migrateV6
+  6: migrateV6,
+  7: migrateV7
 }
 
 export class Settings {
