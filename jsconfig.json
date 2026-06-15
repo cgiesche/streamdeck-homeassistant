@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"]
+    },
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": false,
+    "noEmit": true
+  },
+  "include": ["src/**/*", "*.js", "*.html"],
+  "exclude": ["node_modules", "de.perdoctus.streamdeck.homeassistant.sdPlugin"]
+}

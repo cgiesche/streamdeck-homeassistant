@@ -1,124 +1,233 @@
-# StreamDeck Home-Assistant Plugin
-The aim of this project is to allow owners of an elgato StreamDeck to control their entities or display sensor data via
-their StreamDeck. As the code is very generic, nearly every sensor should work out of the box as well as every
-service that does not need any more information but the entity id.
+# StreamDeck Home Assistant Plugin
 
-![img.png](doc/example.png)
+Control and monitor your Home Assistant entities directly from an Elgato Stream Deck. Buttons display real-time state with dynamic icons, colors, and labels. Works with virtually any HA entity — the plugin automatically picks the right icon and layout for recognized domains and falls back gracefully for everything else.
+
+![Example buttons](doc/example.png)
 
 ## Features
-### Generic functions for any Home Assistant entity
-* Display state and additional attributes via customizable templates
-* Call services when a StreamDeck button is pressed (or hold for some time)
 
-### Entities with background-icons
-* Switches
-* Lights (same icon as switches)
-* Input Boolean (same icon as switches)
-* Binary Sensors
-  * Plugs
-* Temperature
-* Humidity
-* Pressure
-* Power
-* Voltage
-* Battery-Level
-* Weather
-* Vacuum robots (experimental, tested with Roborock S5)
-
-# Installation
-## Prerequisites
-* Installed Stream-Deck application
-* Connected Stream-Deck
+- **Real-time state display** — button icons and colors update instantly as entity states change
+- **Generic entity support** — any HA entity works out of the box, even if its domain has no dedicated icon
+- **Stream Deck Keypad and Encoder (dial) support** — configure short press, long press, screen tap, and dial rotation actions independently
+- **Nunjucks templates** — use live entity attributes in button titles and labels
+- **Jinja2 templates in service data** — call HA script templates with dynamic values
+- **Customizable display themes** — swap or extend the built-in YAML display config to change icons, colors, and labels globally
+- **Icon source control** — choose plugin icons, Home Assistant entity icons, or hide them entirely
+- **Visual service indicators** — colored corner dots on Keypad buttons show which actions are configured
 
 ## Installation
-### Via the official Stream Deck store
-You can find and install this plugin from the [official Stream Deck Store](https://apps.elgato.com/plugins/de.perdoctus.streamdeck.homeassistant)
 
-### Manual installation (not recommended)
-* Download the latest plugin release [here][https://github.com/cgiesche/streamdeck-homeassistant/releases]
-* Open the downloaded .sdplugin file. It will be automatically installed into your Stream-Deck application
-  * Note for MacOS users: [manual installation steps][https://www.reddit.com/r/homeassistant/comments/laq2g4/homeassistant_streamdeck_plugin_dynamic_not_just/glu0zep/?utm_source=share&utm_medium=web2x&context=3]
+### Via the Stream Deck Store
 
-# Configuration
-There are two sections on the plugin's configuration panel:
- * Home Assistant Settings  
-   Contains global settings for your Home Assistant installation. Once saved, the settings are used for all Stream-Deck buttons.
- * Entity Settings
-   Contains settings for an individual button.
+Install directly from the [official Stream Deck Store](https://apps.elgato.com/plugins/de.perdoctus.streamdeck.homeassistant) — search for "Home Assistant".
 
-## Home Assistant Settings
- * Server URL: `ws://your-homeassistant-ip-or-hostname:your-homeassistant-port/api/websocket`, for example (local network) `ws://192.126.0.5:8123/api/websocket` or (public, with ssl enabled on default port 443) `wss://my-secure-homeassistant.com/api/websocket`.
- * Access Token: An long-lived access-token (with admin right) obtained from your Home Assistant. The plugin requires the admin rights, because it uses "execute-script" command that is restricted to admin users.
-   _Long-lived access tokens can be created using the "Long-Lived Access Tokens" section at the bottom of a user's Home Assistant profile page._ (Quote from https://developers.home-assistant.io/docs/auth_api/#long-lived-access-token)
-   
-After you save your Home Assistant Settings, the plugin will automatically try to connect to your Home Assistant installation. If the connection was successful, the Entity Settings section should allow you to see and configure your entities.
+### Manual installation
 
-![img_1.png](doc/ha_settings.png)
+1. Download the latest `.streamDeckPlugin` release from the [GitHub releases page](https://github.com/cgiesche/streamdeck-homeassistant/releases).
+2. Double-click the downloaded file — Stream Deck will install it automatically.
+3. **macOS users:** if the double-click method does not work, see the [manual installation steps on Reddit](https://www.reddit.com/r/homeassistant/comments/laq2g4/homeassistant_streamdeck_plugin_dynamic_not_just/glu0zep/).
 
-## Entity Settings
-### Basic configuration
- * Domain: Home Assistant entities are grouped by domains. Select the domain (for example "switch") of an entity, you want to configure.
- * Entity: This is the actual entity you are going to configure (for example "Kitchen Light")
- * Service: The service will be called when you press the StreamDeck button (green marker at the top right corner).
- * Service (long press): The service that will be called every time you press and hold the StreamDeck button for more than 300ms (blue marker at the top right corner).
- * Service Data JSON: JSON formatted data that is sent with your service call when you press a button.
-   Example:
-   ```
-   {
-     "brightness": 120,
-     "rgb_color": [255, 0, 0]
-   }
-   ```
-   If not specified in the JSON, the attribute `entity_id` is being added automatically containing the selected entity's id. You can also specify the target entity_id manually, for example to switch multiple lights at once:  
-   ```
-   {
-     "entity_id": [
-       "switch.osram_plug_01_bac00b0a_on_off",
-       "switch.osram_plug_01_87c00a0a_on_off"
-     ],
-     "brightness": 120,
-     "rgb_color": [255, 0, 0]
-   }
-   ```
-    You can also use [Jinja2 templates](https://www.home-assistant.io/docs/configuration/templating/) to dynamically process data based on the states or attributes of your Home Assistant entities. See [Using Jinja2 Templates in Service Data JSON](#Advanced-configuration) for more information.
+## Initial Setup (Global Settings)
 
-![img.png](doc/entity_settings.png)
+After adding any plugin button to your Stream Deck, open its Property Inspector and fill in the **Global Settings** section. These settings apply to every button.
 
-### Advanced configuration
-* **Custom Title:** Enable to override the main Title of this button. **You have to clear the main Title field on top to make this work!**
-     * Title Template: A [nunjucks template](https://mozilla.github.io/nunjucks/templating.html) that will be used as the button's title. You can use any of the variables (depending on the selected entity) that are shown below the text-field. For example `{{temperature}}°C` or `{{friendly_name}}` or (this won't fit the button, but you get the idea) `The pressure is {{pressure}} and the wind speed is {{wind_speed}}.`  
-       * The variable `{{state}}` always contains the "main state" of an entity (for example "on" and "off" for buttons or "12.4" for temperature sensors)
-     * The variable `{{unit_of_measurement}}` often contains the ... unit of measurement ... of a sensor's state (for example "°C" for a temperature sensor)
+### Server URL
 
-* **Custom Labels:** Every button can display up to 4 lines of information
-  * Each line in the text-box represents one line on the button
-  * Depending on if there is an icon or a title for the entity, you may need to leave blank lines in order to not mess up the layout :)
-  * You can use [nunjucks template](https://mozilla.github.io/nunjucks/templating.html) for dynamic content (see above).
+The URL of your Home Assistant WebSocket API:
 
-    After you hit the save button, the button should immediately show the new configuration.
-      
-    ![img.png](doc/custom_labels.png)
+- Local network (no SSL): `http://192.168.1.100:8123`
+- Remote / SSL: `https://ha.mydomain.net:8123`
 
-* **Using Jinja2 Templates in Service Data JSON**
-    * **Jinja2 Template Integration:** You can incorporate Jinja2 templates within the Service Data JSON to dynamically
-      process data based on the states or attributes of your Home Assistant entities.
-    * **Encapsulation with Raw Tags:** It's crucial to enclose Jinja2 templates within `{% raw %}` and `{% endraw %}`
-      tags. This encapsulation ensures that the StreamDeck plugin processes these templates as Jinja2, distinct from any
-      Nunjucks templates you might use elsewhere in your configurations.
-    * **Example of Jinja2 Template Usage:**
+### Access Token
 
-      ```json
-        {
-        "temperature": "{% raw %}{{ state_attr('climate.ff_office_heating','temperature') + 0.5 }}{% endraw %}"
-        }
-      ```
+Create a **Long-Lived Access Token** from your Home Assistant profile page (scroll to the bottom of the page under *Security*). The token needs **admin rights** because the plugin uses the `execute_script` command, which is restricted to admin users.
 
-# Happy? Consider donating me a coffee :)
-[![buy me a coffee](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://www.paypal.com/donate?hosted_button_id=3UKRJEJVWV9H4)
+See the [HA documentation](https://developers.home-assistant.io/docs/auth_api/#long-lived-access-token) for step-by-step instructions.
 
+### Display Theme
 
-[https://www.reddit.com/r/homeassistant/comments/laq2g4/homeassistant_streamdeck_plugin_dynamic_not_just/glu0zep/?utm_source=share&utm_medium=web2x&context=3]: https://www.reddit.com/r/homeassistant/comments/laq2g4/homeassistant_streamdeck_plugin_dynamic_not_just/glu0zep/?utm_source=share&utm_medium=web2x&context=3
+Choose from the built-in themes (see [Display Themes](#display-themes--customization)) or point to a custom YAML file. After saving, the plugin connects to Home Assistant and populates the entity and service lists.
 
-[ff]: https://www.reddit.com/r/homeassistant/comments/laq2g4/homeassistant_streamdeck_plugin_dynamic_not_just/glu0zep/?utm_source=share&utm_medium=web2x&context=3
+## Button Configuration
 
-[https://github.com/cgiesche/streamdeck-homeassistant/releases]: https://github.com/cgiesche/streamdeck-homeassistant/releases
+Once connected, the Property Inspector shows two tabs: **Appearance** and **Actions**.
+
+### Appearance Tab
+
+#### Entity
+
+A searchable list of all entities from your Home Assistant installation. Type part of the entity name or ID to filter. The selected entity determines which state is displayed on the button and provides the default target for service calls.
+
+#### Icon Source
+
+Controls which icon is shown on the button:
+
+| Option | Behaviour |
+|---|---|
+| **Plugin** | Uses the plugin's built-in icon for the entity's domain/class/state. Falls back to the HA entity icon if the plugin has none. |
+| **Home Assistant** | Uses the icon configured on the HA entity. Falls back to the plugin icon. |
+| **Hide** | No icon is shown. |
+
+#### Visual Service Indicators *(Keypad only)*
+
+When enabled, small colored dots appear at the corners of the button to indicate which actions are configured (short press, long press, etc.).
+
+#### Custom Title
+
+Override the button's main title with a [Nunjucks template](https://mozilla.github.io/nunjucks/templating.html).
+
+> **Important:** You must also **clear the title field** in the main Stream Deck window for this template to take effect. If the Stream Deck title field is non-empty it takes precedence.
+
+Example templates:
+
+```
+{{friendly_name}}
+{{state}}°C
+{{media_title}} — {{media_artist}}
+```
+
+The list of available variables for the selected entity is shown below the input field (click *Available variables* to expand).
+
+#### Custom Labels
+
+Each button can display up to four lines of text rendered inside the button image itself (independent of the Stream Deck title). Enter one line per text row.
+
+- Lines 1 and 2 overlap the icon area — leave them blank unless you have no icon.
+- Lines 3 and 4 appear in the lower portion of the button.
+- Supports the same [Nunjucks templates](https://mozilla.github.io/nunjucks/templating.html) as Custom Title.
+
+### Actions Tab
+
+Each action card is collapsible. A badge on the **Actions** tab indicates that at least one action is configured.
+
+#### Short Press / Long Press *(Keypad)*
+
+Triggered by a normal button press or a press held for more than ~300 ms respectively.
+
+#### Screen Tap / Rotation *(Encoder / dial only)*
+
+- **Screen Tap** — fires when the touchscreen panel above the dial is tapped.
+- **Rotation** — fires as the dial is turned. Additional variables are available in the service data JSON (see below).
+
+### Configuring a Service Call
+
+Each action shares the same layout:
+
+1. **Domain** — choose the HA service domain (e.g. `light`, `media_player`).
+2. **Service** — choose the service within that domain (e.g. `light.turn_on`).
+3. **Entity** — optionally pick a target entity. If left blank the entity selected on the Appearance tab is used automatically.
+4. **Service Data JSON** — optional JSON object passed with the service call.
+
+#### Service Data JSON
+
+Plain JSON example:
+
+```json
+{
+  "brightness": 120,
+  "rgb_color": [255, 0, 0]
+}
+```
+
+If `entity_id` is not specified in the JSON, it is added automatically using the entity selected in the action or the Appearance tab. To target multiple entities at once, include it explicitly:
+
+```json
+{
+  "entity_id": [
+    "switch.kitchen_plug",
+    "switch.living_room_plug"
+  ]
+}
+```
+
+When a service is selected, any **required fields** are auto-inserted into the JSON. You can also click the **+** button next to any optional field to insert it individually.
+
+#### Jinja2 Templates in Service Data
+
+You can use [Jinja2 templates](https://www.home-assistant.io/docs/configuration/templating/) to compute dynamic values server-side. Wrap Jinja2 expressions in `{% raw %}` / `{% endraw %}` tags so the plugin passes them through to HA instead of evaluating them as Nunjucks:
+
+```json
+{
+  "temperature": "{% raw %}{{ state_attr('climate.office','temperature') + 0.5 }}{% endraw %}"
+}
+```
+
+#### Rotation Variables *(Encoder only)*
+
+The following Nunjucks variables are available inside the **Rotation** service data JSON:
+
+| Variable | Description |
+|---|---|
+| `{{ticks}}` | Number of ticks rotated. Negative = left, positive = right. |
+| `{{rotationPercent}}` | Rotation position as a percentage (0–100). |
+| `{{rotationAbsolute}}` | Rotation position as an absolute value (0–255). |
+
+Example — set a light's brightness from the dial position:
+
+```json
+{
+  "brightness_pct": {{rotationPercent}}
+}
+```
+
+**Tick multiplier** — scales each physical tick before it is added to the running total. Range: 0.1–10.
+
+**Tick bucket size** — aggregates ticks for the specified duration (ms) before firing a single service call. Set to 0 to fire on every tick. Useful for avoiding too many rapid calls when spinning the dial quickly.
+
+## Special Services
+
+### `streamdeck.open_url`
+
+A built-in plugin service (not a Home Assistant service) that opens a URL in the default browser or application when the action fires.
+
+Configure it exactly like a HA service call: select domain **streamdeck**, service **open_url**, and provide the URL in the service data:
+
+```json
+{
+  "url": "https://my-homeassistant.local/lovelace/0"
+}
+```
+
+Any URL scheme registered with the OS works (e.g. `http://`, `https://`, custom app schemes).
+
+## Display Themes & Customization
+
+The visual appearance of every button (icon, color, label templates) is driven by a YAML configuration file. You can switch between built-in themes or supply your own.
+
+### Built-in Themes
+
+| Theme | Description |
+|---|---|
+| **Default (stable)** | The current release theme, updated with each plugin release. |
+| **Default (preview)** | The development branch theme — may contain new domains/states before the next release. |
+
+### Custom Theme
+
+To use your own theme, paste a URL into the **Custom theme URL** field in Global Settings. The file must be accessible by the Stream Deck application (local `file://` paths or a web server both work).
+
+The [default-display-config.yml](https://raw.githubusercontent.com/cgiesche/streamdeck-homeassistant/master/public/config/default-display-config.yml) is a good starting point. The config format supports:
+
+- Per-domain default icon, color, and label templates
+- Per-domain-class overrides (e.g. `binary_sensor` → `plug`)
+- Per-state overrides (e.g. `light` → `on`)
+- Nunjucks / Jinja2 templates in `color`, `icon`, and `labelTemplates` fields
+- `feedback` + `feedbackLayout` for the Encoder touchscreen indicator bar
+
+## Template Variables
+
+All Nunjucks template fields (Custom Title, Custom Labels, and theme `labelTemplates`) have access to the following variables based on the selected entity's current state:
+
+| Variable | Description |
+|---|---|
+| `{{state}}` | The main state string (e.g. `on`, `off`, `12.4`) |
+| `{{unit_of_measurement}}` | Unit string for sensor entities (e.g. `°C`, `%`, `W`) |
+| `{{friendly_name}}` | Human-readable entity name from HA |
+| `{{<attribute>}}` | Any entity attribute (e.g. `{{brightness}}`, `{{media_title}}`) |
+
+The full list of available variables for the currently selected entity is shown in the *Available variables* expander in the Appearance tab.
+
+---
+
+## Happy? Consider buying me a coffee :)
+
+[![Donate via PayPal](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://www.paypal.com/donate?hosted_button_id=3UKRJEJVWV9H4)

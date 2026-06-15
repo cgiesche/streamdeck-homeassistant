@@ -5,28 +5,31 @@
   "type": "module",
   "scripts": {
     "build": "vite build",
-    "validate": "streamdeck validate --no-update-check ./de.perdoctus.streamdeck.homeassistant.sdPlugin",
-    "build-dev": "vite build --watch --sourcemap inline --minify false",
-    "bundle": "streamdeck bundle --no-update-check ./de.perdoctus.streamdeck.homeassistant.sdPlugin",
-    "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix",
+    "build-editor": "vite build --config vite.editor.config.js",
+    "build-editor-dev": "vite build --config vite.editor.config.js --mode development --sourcemap inline --minify false",
+    "validate": "streamdeck validate --no-update-check ./build/de.perdoctus.streamdeck.homeassistant.sdPlugin",
+    "build-dev": "vite build --mode development --sourcemap inline --minify false",
+    "bundle": "streamdeck bundle -f --no-update-check ./build/de.perdoctus.streamdeck.homeassistant.sdPlugin",
+    "bundle-dev": "vite build --mode development --sourcemap inline --minify false && streamdeck bundle -f -o ./build --no-update-check ./build/de.perdoctus.streamdeck.homeassistant.sdPlugin",
+    "lint": "eslint . --fix",
     "format": "prettier --write src/"
   },
   "dependencies": {
     "@mdi/font": "^7.4.47",
     "@mdi/js": "^7.4.47",
-    "@popperjs/core": "^2.11.8",
-    "axios": "1.13.2",
-    "bootstrap": "^5.3.8",
+    "axios": "^1.16.1",
     "core-js": "^3.46.0",
-    "js-yaml": "^4.1.0",
+    "home-assistant-js-websocket": "^9.6.0",
+    "js-yaml": "4.1.1",
     "nunjucks": "3.2.4",
-    "snapsvg-cjs": "^0.0.6",
     "vue": "^3.5.24"
+  },
+  "overrides": {
+    "js-yaml": "4.1.1"
   },
   "devDependencies": {
     "@elgato/cli": "^1.5.1",
     "@modyfi/vite-plugin-yaml": "^1.1.1",
-    "@rushstack/eslint-patch": "^1.14.1",
     "@vitejs/plugin-vue": "^6.0.1",
     "@vue/eslint-config-prettier": "^10.2.0",
     "eslint": "^9.39.1",

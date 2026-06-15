@@ -1,7 +1,5 @@
-.DS_Store
-node_modules
-/de.perdoctus.streamdeck.homeassistant.sdPlugin
-*.streamDeckPlugin
+/node_modules
+/build
 
 # local env files
 .env.local

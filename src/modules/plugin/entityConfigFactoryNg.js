@@ -1,7 +1,5 @@
 import defaultDisplayConfiguration from '../../../public/config/default-display-config.yml'
-import axios from 'axios'
 import nunjucks from 'nunjucks'
-import yaml from 'js-yaml'
 
 export class EntityConfigFactory {
   displayConfiguration = defaultDisplayConfiguration
@@ -19,19 +17,13 @@ export class EntityConfigFactory {
   }
 
   /**
-   * @param displayConfigurationURL : String
+   * @param {(() => Promise<object>) | null} configLoader - async function that resolves to parsed config object
    */
-  constructor(displayConfigurationURL) {
-    if (displayConfigurationURL) {
-      console.log(`Loading display configuration from ${displayConfigurationURL}`)
-      axios
-        .get(displayConfigurationURL)
-        .then((response) => (this.displayConfiguration = yaml.load(response.data)))
-        .catch((error) =>
-          console.log(
-            `Failed to download display configuration from ${displayConfigurationURL}: ${error}`
-          )
-        )
+  constructor(configLoader = null) {
+    if (configLoader) {
+      configLoader()
+        .then((config) => (this.displayConfiguration = config))
+        .catch((error) => console.log(`Failed to load display configuration: ${error}`))
     }
   }
 
@@ -63,43 +55,51 @@ export class EntityConfigFactory {
       renderingConfig.color = this.rgbToHex(rgbColor[0], rgbColor[1], rgbColor[2])
     }
 
+    renderingConfig.iconLayout = displaySettings.iconLayout ?? 'STANDARD'
+
+    if (displaySettings.backgroundColor) {
+      renderingConfig.backgroundColor = displaySettings.backgroundColor
+      renderingConfig.backgroundColorEnd = displaySettings.backgroundColorEnd || null
+    }
     return renderingConfig
   }
+
+  static #TEMPLATED_PROPS = ['feedbackLayout', 'icon', 'color', 'backgroundColor', 'backgroundColorEnd']
+  static #DEFAULT_PROPS = ['icon', 'color', 'backgroundColor', 'backgroundColorEnd', 'labelTemplates']
 
   getConfig(domain, stateObject, deviceClass) {
     const resolvers = []
     this.addResolverConfig(resolvers, stateObject.state, domain, deviceClass)
     resolvers.reverse()
 
-    const feedbackLayoutString = this.resolve('feedbackLayout', resolvers)
-    const feedbackValueString = this.resolve('feedback', resolvers)
-    const iconString = this.resolve('icon', resolvers)
-    const colorString = this.resolve('color', resolvers)
-    const labelTemplates = this.resolve('labelTemplates', resolvers)
-
-    const feedbackLayout = this.render(feedbackLayoutString, stateObject)
-    const renderedFeedback = this.render(feedbackValueString, stateObject)
-    const feedback = feedbackValueString ? JSON.parse(renderedFeedback) : {}
-
-    const icon = this.render(iconString, stateObject)
-    const color = this.render(colorString, stateObject)
-
-    return {
-      feedbackLayout: feedbackLayout,
-      feedback: feedback,
-      icon: icon,
-      color: color,
-      labelTemplates: labelTemplates
+    const renderingConfig = {}
+    for (const prop of EntityConfigFactory.#TEMPLATED_PROPS) {
+      renderingConfig[prop] = this.render(this.resolve(prop, resolvers), stateObject)
     }
+    renderingConfig.labelTemplates = this.resolve('labelTemplates', resolvers)
+
+    const feedbackValueString = this.resolve('feedback', resolvers)
+    renderingConfig.feedback = {}
+    if (feedbackValueString) {
+      const renderedFeedback = this.render(feedbackValueString, stateObject)
+      try {
+        renderingConfig.feedback = JSON.parse(renderedFeedback)
+      } catch {
+        console.error(`Failed to parse feedback JSON for entity ${stateObject.entity_id}: ${renderedFeedback}`)
+      }
+    }
+
+    return renderingConfig
   }
 
   addResolverConfig(resolvers, state, domain, deviceClass) {
     let config = this.displayConfiguration
 
     const defaultConfig = {}
-    if (config._icon) defaultConfig.icon = config._icon
-    if (config._color) defaultConfig.color = config._color
-    if (config._labelTemplates) defaultConfig.labelTemplates = config._labelTemplates
+    for (const prop of EntityConfigFactory.#DEFAULT_PROPS) {
+      const value = config[`_${prop}`]
+      if (value) defaultConfig[prop] = value
+    }
     resolvers.push(defaultConfig)
 
     const defaultStateConfig = config._states?.[state]

@@ -1,100 +1,80 @@
 <template>
   <div>
-    <div class="mb-3">
-      <label class="form-label" for="domain">Domain</label>
-      <div class="input-group">
-        <select
-          id="domain"
-          v-model="selectedDomain"
-          class="form-select form-select-sm"
-          @change="(update('serviceId', null), update('entityId', null))"
-        >
-          <option
-            v-for="availableDomain in availableDomains"
-            :key="availableDomain"
-            :value="availableDomain"
-          >
-            {{ availableDomain }}
-          </option>
-        </select>
-        <button
-          class="btn btn-sm btn-outline-secondary"
-          type="button"
-          @click="(selectedDomain = '', clear('serviceId', 'entityId', 'serviceData'))"
-        >
-          Clear
-        </button>
-      </div>
+    <div class="mb-2">
+      <label class="pi-label">Domain</label>
+      <TypeaheadSelect
+        :model-value="selectedDomain"
+        :items="domainItems"
+        placeholder="No domain selected"
+        @update:model-value="onDomainChange"
+      />
     </div>
 
-    <div v-if="selectedDomain" class="mb-3">
-      <label class="form-label" for="service">Service</label>
-      <div class="input-group">
-        <select
-          id="service"
-          :value="modelValue.serviceId"
-          class="form-select form-select-sm"
-          @change="update('serviceId', $event.target.value)"
-        >
-          <option
-            v-for="domainService in domainServices"
-            v-bind:key="domainService.serviceId"
-            :value="domainService.serviceId"
-          >
-            {{ domainService.name }}
-          </option>
-        </select>
-        <button
-          class="btn btn-sm btn-outline-secondary"
-          type="button"
-          @click="clear('serviceId', 'entityId', 'serviceData')"
-        >
-          Clear
-        </button>
-      </div>
+    <div v-if="selectedDomain" class="mb-2">
+      <label class="pi-label">Service</label>
+      <TypeaheadSelect
+        :model-value="modelValue.serviceId"
+        :items="serviceItems"
+        placeholder="No service selected"
+        @update:model-value="onServiceChange"
+      />
     </div>
 
-    <div v-if="domainEntities.length > 0" class="mb-3">
-      <EntitySelection
-        class="mb-3"
-        :available-entities="domainEntities"
-        @change="update('entityId', $event.target.value)"
+    <div v-if="domainEntities.length > 0" class="mb-2">
+      <label class="pi-label">Entity</label>
+      <TypeaheadSelect
         :model-value="props.modelValue.entityId"
-      ></EntitySelection>
-      <button class="btn btn-sm btn-outline-secondary" type="button" @click="clear('entityId')">
-        Clear
-      </button>
+        :items="entityItems"
+        placeholder="No entity selected"
+        @update:model-value="update('entityId', $event)"
+      />
     </div>
 
     <template v-if="props.modelValue.serviceId">
-      <label class="form-label" for="serviceData">Service Data JSON (Optional)</label>
+      <label class="pi-label" for="serviceData">
+        Service data JSON
+        <span
+          class="text-muted"
+          style="font-weight: normal; text-transform: none; letter-spacing: 0"
+          >(optional)</span
+        >
+      </label>
       <textarea
         id="serviceData"
         :class="{ 'is-invalid': serviceDataInvalidFeedback }"
         :value="props.modelValue.serviceData"
-        class="form-control form-control-sm font-monospace"
+        class="pi-textarea"
         placeholder='{
   "option": "value"
 }'
         rows="5"
         @input="update('serviceData', $event.target.value)"
       ></textarea>
-      <div class="invalid-feedback" v-if="serviceDataInvalidFeedback">
+      <div v-if="serviceDataInvalidFeedback" class="pi-invalid-feedback">
         {{ serviceDataInvalidFeedback }}
       </div>
 
-      <details v-if="dataProperties && dataProperties.length > 0">
+      <details v-if="dataProperties && dataProperties.length > 0" class="pi-vars mt-1">
         <summary>Available options</summary>
-        <div v-for="item in dataProperties" v-bind:key="item.name" class="form-text">
-          <span class="text-info font-monospace">{{ item.name }}&nbsp;</span>
-          <span class="text-warning font-monospace" v-if="item.info.required">(required) </span
-          >{{ item.info.description }}
-          <template v-if="item.info.example">
-            <br />
-            <span class="ml-2"
-              >Example: <i>{{ item.info.example }}</i></span
+        <div class="pi-vars-content">
+          <div v-for="item in dataProperties" :key="item.name" class="pi-var-text">
+            <span class="pi-var-item">{{ item.name }}</span>
+            <button
+              class="pi-btn pi-btn-icon pi-btn-ghost pi-btn-sm"
+              type="button"
+              :aria-label="`Add ${item.name} field`"
+              title="Add field to service data"
+              @click="addField(item.name, item.info)"
             >
-          </template>
+              +
+            </button>
+            <span v-if="item.info.required" class="text-warning"> (required)</span>
+            <template v-if="item.info.example">
+              <br /><span class="text-muted"
+                >Example: <i>{{ item.info.example }}</i></span
+              >
+            </template>
+          </div>
         </div>
       </details>
     </template>
@@ -102,15 +82,14 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import nunjucks from 'nunjucks'
-import EntitySelection from '@/components/EntitySelection.vue'
+import TypeaheadSelect from '@/components/ui/TypeaheadSelect.vue'
 
-const titleSort = (s1, s2) => (s1.name.toLowerCase() > s2.name.toLowerCase() ? 1 : -1)
+const titleSort = (s1, s2) => s1.name.localeCompare(s2.name, undefined, { sensitivity: 'base' })
 
 const props = defineProps({
   modelValue: {
-    required: true,
     type: Object,
     default: () => ({
       serviceId: null,
@@ -120,11 +99,11 @@ const props = defineProps({
   },
   availableServices: {
     required: true,
-    type: [] // Service[]
+    type: Array // Service[]
   },
   availableEntities: {
     required: true,
-    type: [] // Entity[]
+    type: Array // Entity[]
   }
 })
 
@@ -139,7 +118,6 @@ onMounted(() => {
 })
 
 function update(key, value) {
-  console.log(`Update ${key} to ${JSON.stringify(value)}`)
   emit('update:modelValue', { ...props.modelValue, [key]: value })
 }
 
@@ -153,11 +131,33 @@ const availableDomains = computed(() => {
   if (!props.availableServices.length) {
     return []
   }
-  return props.availableServices
-    .map((service) => service.domain)
-    .filter((element, index, array) => array.indexOf(element) === index)
-    .sort()
+  return [...new Set(props.availableServices.map((service) => service.domain))].sort()
 })
+
+const domainItems = computed(() => availableDomains.value.map((d) => ({ id: d, label: d })))
+
+const serviceItems = computed(() =>
+  domainServices.value.map((s) => ({ id: s.serviceId, label: s.name }))
+)
+
+const entityItems = computed(() =>
+  domainEntities.value.map((e) => ({ id: e.entityId, label: e.title, group: e.domain }))
+)
+
+function onDomainChange(val) {
+  selectedDomain.value = val
+  clear('serviceId', 'entityId', 'serviceData')
+}
+
+function onServiceChange(val) {
+  if (!val) {
+    clear('serviceId', 'entityId', 'serviceData')
+  } else {
+    // Clear stale service data so the watcher below can prefill the
+    // required fields of the newly selected service.
+    emit('update:modelValue', { ...props.modelValue, serviceId: val, serviceData: '' })
+  }
+}
 
 const domainServices = computed(() => {
   if (!props.availableServices.length || !selectedDomain.value) {
@@ -177,9 +177,9 @@ const domainEntities = computed(() => {
   ) {
     return []
   }
-  let selectedService = props.availableServices.filter(
+  const selectedService = props.availableServices.find(
     (service) => service.serviceId === props.modelValue.serviceId
-  )[0]
+  )
   if (selectedService && selectedService.target && selectedService.target.entity) {
     // target.entity may contain a single or an array of entities. Make sure we always work with array.
     let targetEntities = ensureArray(selectedService.target.entity)
@@ -227,9 +227,9 @@ const dataProperties = computed(() => {
   ) {
     return []
   }
-  let selectedService = props.availableServices.filter(
+  const selectedService = props.availableServices.find(
     (service) => service.serviceId === props.modelValue.serviceId
-  )[0]
+  )
   if (!selectedService || !selectedService.dataFields) {
     return []
   }
@@ -243,5 +243,42 @@ const dataProperties = computed(() => {
 
 function ensureArray(input) {
   return Array.isArray(input) ? input : [input]
+}
+
+function generateRequiredFieldsJson(service) {
+  if (!service?.dataFields) return null
+  const required = Object.entries(service.dataFields).filter(([, info]) => info.required)
+  if (required.length === 0) return null
+  const obj = {}
+  required.forEach(([name, info]) => {
+    obj[name] = info.example !== undefined ? info.example : null
+  })
+  return JSON.stringify(obj, null, 2)
+}
+
+watch(
+  () => props.modelValue.serviceId,
+  (newId) => {
+    if (!newId) return
+    // Only prefill when there is no service data yet — otherwise saved
+    // settings arriving asynchronously would be overwritten.
+    if (props.modelValue.serviceData) return
+    const service = props.availableServices.find((s) => s.serviceId === newId)
+    const generated = generateRequiredFieldsJson(service)
+    if (generated) update('serviceData', generated)
+  }
+)
+
+function addField(fieldName, fieldInfo) {
+  let current = {}
+  try {
+    if (props.modelValue.serviceData) current = JSON.parse(props.modelValue.serviceData)
+  } catch {
+    /* ignore invalid JSON */
+  }
+  if (!(fieldName in current)) {
+    current[fieldName] = fieldInfo.example !== undefined ? fieldInfo.example : null
+  }
+  update('serviceData', JSON.stringify(current, null, 2))
 }
 </script>

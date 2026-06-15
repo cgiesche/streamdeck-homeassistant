@@ -5,6 +5,9 @@
 #
 #[domain]:
 #  icon: mdi:lightbulb
+#  color: #FFFFFF
+#  backgroundColor: #1a2b3c       # solid button background
+#  backgroundColorEnd: #000000    # optional; if set -> radial gradient (center -> edge)
 #  labelTemplates:
 #    -
 #    -
@@ -18,12 +21,12 @@
 #        [state]:
 #          icon: mdi:mdi:lightbulb-on
 #          color: #FFFFFF
+#          backgroundColor: #1a2b3c
+#          backgroundColorEnd: #000000
 #          labelTemplates:
 
 _color: '#AAAAAA'
 _labelTemplates:
-  - ''
-  - ''
   - |
     {% if (state | float('f')) == 'f' -%}
       {{ state }}
@@ -140,6 +143,7 @@ cover:
       icon: mdi:arrow-up-box
 
 sensor:
+  icon: mdi:gauge
   classes:
     carbon_dioxide:
       icon: mdi:molecule-co2
@@ -260,9 +264,8 @@ sensor:
       color: '#2C73D2'
 
 weather:
+  icon: mdi:weather-partly-cloudy
   labelTemplates:
-    - ''
-    - ''
     - '{{temperature}}{{temperature_unit}}'
     - '{{humidity}}%'
   states:
@@ -281,7 +284,7 @@ weather:
     partlycloudy:
       icon: mdi:weather-partly-cloudy
     pouring:
-      icon: mdi:weather-puring
+      icon: mdi:weather-pouring
     rainy:
       icon: mdi:weather-rainy
     snowy:
@@ -329,8 +332,6 @@ lawn_mower:
 
 fan:
   labelTemplates:
-    - ''
-    - ''
     - |
       {{'~' if oscillating}}
   icon: mdi:fan
@@ -345,7 +346,7 @@ media_player:
     - ''
     - ''
     - '{{ media_title }}'
-    - '{{ media_artist}}'
+    - '{{ media_artist }}'
   states:
     playing:
       color: '#00C937'

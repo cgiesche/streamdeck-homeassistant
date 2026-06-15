@@ -1,148 +1,158 @@
-import Snap from 'snapsvg-cjs'
-import { urlencode } from 'nunjucks/src/filters'
 import * as Mdi from '@mdi/js'
 import nunjucks from 'nunjucks'
 
-export class SvgUtils {
-  constructor(resolution = { width: 288, height: 288 }) {
-    this.buttonRes = resolution
-    this.halfRes = {
-      width: this.buttonRes.width / 2,
-      height: this.buttonRes.height / 2
-    }
-    this.fontSize = 48
-    this.lineAttr = {
-      fill: '#FFF',
-      'font-family': 'sans-serif',
-      'font-weight': 'bold',
-      'font-size': `${this.fontSize}px`,
-      'text-anchor': 'middle'
-    }
-    this.snap = Snap(this.buttonRes.width, this.buttonRes.height)
-  }
+export const WIDTH = 288
+export const HEIGHT = 288
+const BG_OVERLAY_OPACITY = 0.55
 
-  /**
-   * Renders a complete button image based on the given rendering-config.
-   * @return string
-   */
+export class SvgUtils {
   renderButtonSVG(renderingConfig, stateObject) {
-    const buttonLabels = this.renderTemplates(renderingConfig.labelTemplates, {
+    const labels = this.renderTemplates(renderingConfig.labelTemplates, {
       ...stateObject.attributes,
-      ...{ state: stateObject.state }
+      state: stateObject.state
     })
     return this.#generateButtonSVG(
-      buttonLabels,
+      labels,
       renderingConfig.icon,
       renderingConfig.color,
       renderingConfig.isAction,
-      renderingConfig.isMultiAction
+      renderingConfig.isMultiAction,
+      renderingConfig.iconLayout ?? 'STANDARD',
+      renderingConfig.backgroundImage ?? null,
+      renderingConfig.labelFontSize ?? 48,
+      renderingConfig.backgroundColor ?? null,
+      renderingConfig.backgroundColorEnd ?? null
     )
   }
 
-  /**
-   * Renders the given MDI as SVG.
-   * @return string
-   */
   renderIconSVG(mdiIconName, iconColor) {
-    return this.#generateIconSVG(mdiIconName, iconColor)
+    const path = this.#getMdiPath(mdiIconName)
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${WIDTH}" height="${HEIGHT}" viewBox="0 0 24 24">${path ? `<path d="${path}" fill="${iconColor ?? '#FFF'}"/>` : ''}</svg>`
   }
 
   renderTemplates(templates, values) {
-    return templates
-      ? templates
-          .map((template) => (template ? template : ''))
-          .map((template) => nunjucks.renderString(template, values))
-      : []
+    return templates?.map((template) => nunjucks.renderString(template ?? '', values)) ?? []
   }
 
-  #generateIconSVG(mdiIconName, color) {
-    let iconData = null
-    if (mdiIconName) {
-      iconData = Mdi[this.#toPascalCase(mdiIconName)]
+  #generateButtonSVG(
+    labels,
+    mdiIconName,
+    iconColor,
+    isAction = false,
+    isMultiAction = false,
+    iconLayout = 'STANDARD',
+    backgroundImage = null,
+    fontSize = 48,
+    backgroundColor = null,
+    backgroundColorEnd = null
+  ) {
+    let defsSvg = ''
+    let bgColorSvg = ''
+    if (backgroundColor && backgroundColorEnd) {
+      defsSvg =
+        `<defs><radialGradient id="bgGrad" cx="0%" cy="0%" r="141%">` +
+        `<stop offset="0%" stop-color="${backgroundColor}"/>` +
+        `<stop offset="100%" stop-color="${backgroundColorEnd}"/>` +
+        `</radialGradient></defs>`
+      bgColorSvg = `<rect x="0" y="0" width="${WIDTH}" height="${HEIGHT}" fill="url(#bgGrad)"/>`
+    } else if (backgroundColor) {
+      bgColorSvg = `<rect x="0" y="0" width="${WIDTH}" height="${HEIGHT}" fill="${backgroundColor}"/>`
     }
 
-    const iconSVG = this.snap.path(iconData)
-    iconSVG.attr('fill', color)
-    const iconBBox = iconSVG.getBBox()
-    const iconHeight = iconBBox.height
-    const iconWidth = iconBBox.width
-    const targetHeight = this.buttonRes.height / 1.3
-    const targetWidth = this.buttonRes.width / 1.3
-    const scaleFactor = Math.min(targetHeight / iconHeight, targetWidth / iconWidth)
-    iconSVG.transform(`scale(${scaleFactor})`)
+    const backgroundSvg = backgroundImage
+      ? `<image href="${backgroundImage}" x="0" y="0" width="${WIDTH}" height="${HEIGHT}" preserveAspectRatio="xMidYMid slice"/>` +
+        `<rect x="0" y="0" width="${WIDTH}" height="${HEIGHT}" fill="rgba(0,0,0,${BG_OVERLAY_OPACITY})"/>`
+      : ''
 
-    let outerSVG = this.snap.outerSVG()
-    this.snap.clear()
-    return outerSVG
-  }
+    const iconPath = this.#getMdiPath(mdiIconName)
 
-  #generateButtonSVG(labels, mdiIconName, iconColor, isAction = false, isMultiAction = false) {
-    let iconData = null
-    if (mdiIconName) {
-      iconData = Mdi[this.#toPascalCase(mdiIconName)]
+    let iconTransform, maxLines, labelIndexOffset
+    if (iconLayout === 'FULL') {
+      iconTransform = `translate(0, 0) scale(12)`
+      maxLines = 4
+      labelIndexOffset = 0
+    } else if (iconLayout === 'BOTTOM') {
+      iconTransform = `translate(72, 144) scale(6)`
+      maxLines = 2
+      labelIndexOffset = 0
+    } else {
+      iconTransform = `translate(72, 0) scale(6)`
+      maxLines = 2
+      labelIndexOffset = 2
     }
 
-    if (iconData) {
-      const iconSVG = this.snap.path(iconData)
-      iconSVG.attr('fill', iconColor)
-      const iconBBox = iconSVG.getBBox()
-      const iconHeight = iconBBox.height
-      const iconWidth = iconBBox.width
-      const targetHeight = this.halfRes.height / 1.2
-      const targetWidth = this.buttonRes.width / 1.3
-      const scaleFactor = Math.min(targetHeight / iconHeight, targetWidth / iconWidth)
-      const xPos = (this.buttonRes.width - iconWidth * scaleFactor) / 2 - iconBBox.x * scaleFactor
-      const yPos = (this.halfRes.height - iconHeight * scaleFactor) / 2 - iconBBox.y * scaleFactor
-      iconSVG.transform(`translate(${xPos} ${yPos}) scale(${scaleFactor})`)
-    }
+    const iconSvg = iconPath
+      ? `<g transform="${iconTransform}"><path d="${iconPath}" fill="${iconColor ?? '#FFF'}"/></g>`
+      : ''
 
-    if (isAction) {
-      const color = isMultiAction ? '#3e89ff' : '#62ff65'
-      this.snap.circle(this.buttonRes.width - 1, 0, 30).attr('fill', color)
-    }
+    const indicatorColor = isMultiAction ? '#3e89ff' : '#62ff65'
+    const indicator = isAction
+      ? `<circle cx="${WIDTH - 1}" cy="0" r="30" fill="${indicatorColor}"/>`
+      : ''
 
-    let currentLineNumber = 0
-    for (let i = 0; i < labels.length; i++) {
-      let lines = labels[i].split('\n')
-      for (let i = currentLineNumber; i < lines.length + currentLineNumber; i++) {
-        this.#drawText(lines[i - currentLineNumber], i)
+    const quarterOfArea = HEIGHT / 4
+    let flatLabels = labels.flatMap((label) => label.split('\n'))
+    if (maxLines === 2) {
+      while (flatLabels.length > 0 && flatLabels[0].trim() === '') {
+        flatLabels.shift()
       }
-      currentLineNumber += lines.length
     }
+    const textLines = flatLabels
+      .slice(0, maxLines)
+      .map((line, i) => {
+        const y = quarterOfArea - (quarterOfArea * 1.2 - fontSize) / 2 + (i + labelIndexOffset) * quarterOfArea
+        const escaped = this.#escapeXml(line)
+        const baseAttrs = `x="${WIDTH / 2}" y="${y}" font-family="sans-serif" font-weight="bold" font-size="${fontSize}px" text-anchor="middle"`
+        if (iconLayout === 'FULL') {
+          return (
+            `<text ${baseAttrs} fill="#000" stroke="#000" stroke-width="10" stroke-linejoin="round">${escaped}</text>` +
+            `<text ${baseAttrs} fill="#FFF">${escaped}</text>`
+          )
+        }
+        return `<text ${baseAttrs} fill="#FFF">${escaped}</text>`
+      })
 
-    // Debug Grid
-    // this.snap.line(this.halfRes, 0, this.halfRes, this.buttonRes).attr("stroke", "#FFFFFF")
-    // this.snap.line(this.halfRes / 2, 0, this.halfRes / 2, this.buttonRes).attr("stroke", "#FFFFFF")
-    // this.snap.line(this.halfRes * 1.5, 0, this.halfRes * 1.5, this.buttonRes).attr("stroke", "#FFFFFF")
-    // this.snap.line(0, this.halfRes, this.buttonRes, this.halfRes).attr("stroke", "#FFFFFF")
-    // this.snap.line(0, this.halfRes / 2, this.buttonRes, this.halfRes / 2).attr("stroke", "#FFFFFF")
-    // this.snap.line(0, this.halfRes * 1.5, this.buttonRes, this.halfRes * 1.5).attr("stroke", "#FFFFFF")
-
-    let outerSVG = this.snap.outerSVG()
-    this.snap.clear()
-    return outerSVG
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${WIDTH}" height="${HEIGHT}" viewBox="0 0 ${WIDTH} ${HEIGHT}">${defsSvg}${bgColorSvg}${backgroundSvg}${iconSvg}${indicator}${textLines.join('')}</svg>`
   }
 
-  #drawText(text, lineNr) {
-    const escapedText = urlencode(text)
-    const quarterHeight = this.buttonRes.height / 4
-    this.snap
-      .text(
-        0,
-        quarterHeight - (quarterHeight * 1.2 - this.fontSize) / 2 + lineNr * quarterHeight,
-        escapedText
-      )
-      .attr(this.lineAttr)
-      .transform(`translateX(${this.halfRes.width})`)
+  #getMdiPath(mdiIconName) {
+    if (!mdiIconName) return null
+    return Mdi[this.#toPascalCase(mdiIconName)] ?? null
   }
 
-  #toPascalCase = (iconName) => {
-    const iconNameRaw = iconName.substring(4)
-    const iconNamePascalCase = iconNameRaw.replace(/(^\w|-\w)/g, this.#clearAndUpper)
-    return 'mdi' + iconNamePascalCase
+  #toPascalCase(iconName) {
+    return (
+      'mdi' + iconName.substring(4).replace(/(^\w|-\w)/g, (s) => s.replace(/-/, '').toUpperCase())
+    )
   }
 
-  #clearAndUpper = (text) => {
-    return text.replace(/-/, '').toUpperCase()
+  svgToJpegDataUri(svg) {
+    return new Promise((resolve) => {
+      const svgBlob = new Blob([svg], { type: 'image/svg+xml' })
+      const blobUrl = URL.createObjectURL(svgBlob)
+      const img = new Image()
+      img.onload = () => {
+        URL.revokeObjectURL(blobUrl)
+        const canvas = document.createElement('canvas')
+        canvas.width = WIDTH
+        canvas.height = HEIGHT
+        canvas.getContext('2d').drawImage(img, 0, 0)
+        resolve(canvas.toDataURL('image/jpeg', 0.92))
+      }
+      img.onerror = () => {
+        URL.revokeObjectURL(blobUrl)
+        resolve('data:image/svg+xml;,' + svg)
+      }
+      img.src = blobUrl
+    })
+  }
+
+  #escapeXml(text) {
+    return String(text)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&apos;')
   }
 }

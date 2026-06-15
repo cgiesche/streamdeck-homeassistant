@@ -3,7 +3,7 @@
 
 import js from '@eslint/js'
 import vue from 'eslint-plugin-vue'
-import eslintConfigPrettier from 'eslint-config-prettier'
+import skipFormatting from '@vue/eslint-config-prettier/skip-formatting'
 import globals from 'globals'
 
 export default [
@@ -12,6 +12,7 @@ export default [
     ignores: [
       'node_modules/**',
       'dist/**',
+      'build/**',
       'de.perdoctus.streamdeck.homeassistant.sdPlugin/**',
       'logs/**',
       '.eslintrc.cjs'
@@ -21,8 +22,8 @@ export default [
   // Base JS rules
   js.configs.recommended,
 
-  // Vue 3 essential rules
-  ...vue.configs['flat/essential'],
+  // Vue 3 recommended rules
+  ...vue.configs['flat/recommended'],
 
   // Browser context for application source files
   {
@@ -50,5 +51,5 @@ export default [
   },
 
   // Disable rules that conflict with Prettier formatting
-  eslintConfigPrettier
+  skipFormatting
 ]

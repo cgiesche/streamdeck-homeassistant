@@ -3,44 +3,104 @@
 </template>
 
 <script setup>
+import { GlobalSettings, Settings, DEFAULT_LABEL_FONT_SIZE } from '@/modules/common/settings'
 import { StreamDeck } from '@/modules/common/streamdeck'
+import { LruCache } from '@/modules/common/lruCache'
 import { Homeassistant } from '@/modules/homeassistant/homeassistant'
-import { SvgUtils } from '@/modules/plugin/svgUtils'
-import nunjucks from 'nunjucks'
-import { Settings } from '@/modules/common/settings'
-import { onMounted, ref } from 'vue'
 import { EntityConfigFactory } from '@/modules/plugin/entityConfigFactoryNg'
+import { SvgUtils, WIDTH, HEIGHT } from '@/modules/plugin/svgUtils'
+import { fetchRemoteYaml } from '@/modules/common/remoteConfig'
+import nunjucks from 'nunjucks'
+import { onMounted, ref, shallowRef } from 'vue'
 import defaultActiveStates from '../../public/config/active-states.yml'
-import axios from 'axios'
-import yaml from 'js-yaml'
 
 let entityConfigFactory
 const svgUtils = new SvgUtils()
 
-const $SD = ref(null)
-const $HA = ref(null)
-const $reconnectTimeout = ref({})
+const imageCache = new LruCache(30)
+
+async function fetchEntityPictureAsDataUri(entityPictureUrl, serverUrl) {
+  const fullUrl = entityPictureUrl.startsWith('http')
+    ? entityPictureUrl
+    : serverUrl.replace(/\/$/, '') + entityPictureUrl
+
+  const cached = imageCache.get(fullUrl)
+  if (cached) return cached
+
+  try {
+    const response = await fetch(fullUrl)
+    if (!response.ok) return null
+    const blob = await response.blob()
+    const blobUrl = URL.createObjectURL(blob)
+    return new Promise((resolve) => {
+      const img = new Image()
+      img.onload = () => {
+        URL.revokeObjectURL(blobUrl)
+        const canvas = document.createElement('canvas')
+        canvas.width = WIDTH
+        canvas.height = HEIGHT
+        const ctx = canvas.getContext('2d')
+        ctx.fillStyle = '#000'
+        ctx.fillRect(0, 0, WIDTH, HEIGHT)
+        const scale = Math.max(WIDTH / img.width, HEIGHT / img.height)
+        const w = img.width * scale
+        const h = img.height * scale
+        ctx.drawImage(img, (WIDTH - w) / 2, (HEIGHT - h) / 2, w, h)
+        const dataUri = canvas.toDataURL('image/jpeg', 0.2)
+        imageCache.set(fullUrl, dataUri)
+        resolve(dataUri)
+      }
+      img.onerror = () => {
+        URL.revokeObjectURL(blobUrl)
+        resolve(null)
+      }
+      img.src = blobUrl
+    })
+  } catch {
+    return null
+  }
+}
+
+// shallowRef: a deep ref would wrap the instances in reactive proxies,
+// which breaks classes with private (#) members — private-field brand
+// checks fail when `this` is the proxy instead of the raw instance.
+const $SD = shallowRef(null)
+const $HA = shallowRef(null)
+let reconnectTimeout = null
 const globalSettings = ref({})
-const actionSettings = ref([])
-const buttonLongpressTimeouts = ref(new Map()) //context, timeout
+const actionSettings = ref({})
+const buttonLongpressTimeouts = new Map()
+let haEntitySubscription = null
+let subscriptionGeneration = 0
+// Tracks the latest render started per context so stale async renders
+// (slow entity picture fetch, SVG rasterization) never overwrite newer ones.
+const renderGeneration = new Map()
 
 const activeStates = ref(defaultActiveStates)
 
-let rotationTimeout = []
-let rotationAmount = []
-let rotationPercent = []
+const rotationTimeout = {}
+const rotationAmount = {}
+const rotationPercent = {}
 
 onMounted(async () => {
   window.connectElgatoStreamDeckSocket = (inPort, inPluginUUID, inRegisterEvent, inInfo) => {
     $SD.value = new StreamDeck(inPort, inPluginUUID, inRegisterEvent, inInfo, '{}')
 
     $SD.value.on('globalsettings', (inGlobalSettings) => {
-      console.log('Got global settings.')
-      globalSettings.value = inGlobalSettings
+      $SD.value.log('Got global settings.')
+      const originalJson = JSON.stringify(inGlobalSettings)
+      const migratedSettings = GlobalSettings.migrate(inGlobalSettings)
+      if (JSON.stringify(migratedSettings) !== originalJson) {
+        $SD.value.saveGlobalSettings(migratedSettings)
+      }
+      globalSettings.value = migratedSettings
+      const configUrl =
+        migratedSettings.displayConfiguration?.urlOverride ||
+        migratedSettings.displayConfiguration?.url
       entityConfigFactory = new EntityConfigFactory(
-        inGlobalSettings.displayConfiguration?.urlOverride ||
-          inGlobalSettings.displayConfiguration?.url
+        configUrl ? () => fetchRemoteYaml(configUrl) : null
       )
+      reconnectDelayMs = RECONNECT_BASE_DELAY_MS
       connectHomeAssistant()
     })
 
@@ -63,17 +123,21 @@ onMounted(async () => {
       actionSettings.value[context] = Settings.parse(message.payload.settings)
       if ($HA.value) {
         $HA.value.getStatesDebounced(entityStatesChanged)
+        resubscribeEntities()
       }
     })
 
     $SD.value.on('willDisappear', (message) => {
       let context = message.context
       delete actionSettings.value[context]
+      renderGeneration.delete(context)
+      resubscribeEntities()
     })
 
     $SD.value.on('dialRotate', (message) => {
       let context = message.context
       let settings = actionSettings.value[context]
+      if (!settings) return
       let scaledTicks = message.payload.ticks * (settings.rotationTickMultiplier || 1)
       let tickBucketSizeMs = settings.rotationTickBucketSizeMs || 300
 
@@ -115,15 +179,18 @@ onMounted(async () => {
     $SD.value.on('touchTap', (message) => {
       let context = message.context
       let settings = actionSettings.value[context]
+      if (!settings) return
       callService(context, settings.button.serviceTap)
     })
 
     $SD.value.on('didReceiveSettings', (message) => {
       let context = message.context
       rotationAmount[context] = 0
+      rotationPercent[context] = 0
       actionSettings.value[context] = Settings.parse(message.payload.settings)
       if ($HA.value) {
         $HA.value.getStatesDebounced(entityStatesChanged)
+        resubscribeEntities()
       }
     })
   }
@@ -133,14 +200,11 @@ onMounted(async () => {
 
 async function fetchActiveStates() {
   try {
-    axios
-      .get(
-        'https://cdn.jsdelivr.net/gh/cgiesche/streamdeck-homeassistant@master/public/config/active-states.yml'
-      )
-      .then((response) => (activeStates.value = yaml.load(response.data)))
-      .catch((error) => console.log(`Failed to download updated active-states.json: ${error}`))
+    activeStates.value = await fetchRemoteYaml(
+      'https://cdn.jsdelivr.net/gh/cgiesche/streamdeck-homeassistant@master/public/config/active-states.yml'
+    )
   } catch (error) {
-    console.log(`Failed to download updated active-states.json: ${error}`)
+    console.log(`Failed to download updated active-states.yml: ${error}`)
   }
 }
 
@@ -161,23 +225,86 @@ function connectHomeAssistant() {
   }
 }
 
+const RECONNECT_BASE_DELAY_MS = 5000
+const RECONNECT_MAX_DELAY_MS = 60000
+let reconnectDelayMs = RECONNECT_BASE_DELAY_MS
+
 const onHAConnected = () => {
+  reconnectDelayMs = RECONNECT_BASE_DELAY_MS
   $HA.value.getStatesDebounced(entityStatesChanged)
-  $HA.value.subscribeEvents(entityStateChanged)
+  resubscribeEntities()
 }
 
-function onHAError(msg) {
-  showAlert()
+function onHAError(msg, { isAuthError = false } = {}) {
   console.log(`Home Assistant connection error: ${msg}`)
-  window.clearTimeout($reconnectTimeout)
-  $reconnectTimeout.value = window.setTimeout(connectHomeAssistant, 5000)
+  if (isAuthError) {
+    // Retrying cannot fix an invalid token; wait for new global settings.
+    haEntitySubscription = null
+    showAlert()
+    window.clearTimeout(reconnectTimeout)
+    return
+  }
+  scheduleReconnect()
 }
 
 function onHAClosed(msg) {
-  showAlert()
   console.log(`Home Assistant connection closed, trying to reopen connection: ${msg}`)
-  window.clearTimeout($reconnectTimeout)
-  $reconnectTimeout.value = window.setTimeout(connectHomeAssistant, 5000)
+  scheduleReconnect()
+}
+
+function scheduleReconnect() {
+  haEntitySubscription = null
+  showAlert()
+  window.clearTimeout(reconnectTimeout)
+  reconnectTimeout = window.setTimeout(connectHomeAssistant, reconnectDelayMs)
+  reconnectDelayMs = Math.min(reconnectDelayMs * 2, RECONNECT_MAX_DELAY_MS)
+}
+
+function getConfiguredEntityIds() {
+  return [
+    ...new Set(
+      Object.values(actionSettings.value)
+        .map((s) => s.display.entityId)
+        .filter(Boolean)
+    )
+  ]
+}
+
+async function resubscribeEntities() {
+  if (!$HA.value) return
+  const generation = ++subscriptionGeneration
+
+  if (haEntitySubscription) {
+    const unsubscribe = haEntitySubscription
+    haEntitySubscription = null
+    try {
+      await unsubscribe()
+    } catch {
+      // connection may already be gone
+    }
+  }
+
+  const entityIds = getConfiguredEntityIds()
+  if (entityIds.length === 0) return
+
+  let subscription = null
+  try {
+    subscription = await $HA.value.subscribeEntitiesChanged(entityIds, entityStateChanged)
+  } catch (e) {
+    console.log(`Failed to subscribe to entity changes: ${e}`)
+    return
+  }
+
+  if (generation !== subscriptionGeneration) {
+    // A newer resubscribe started while we were awaiting; discard this one.
+    try {
+      await subscription?.()
+    } catch {
+      // ignore
+    }
+    return
+  }
+  haEntitySubscription = subscription
 }
 
 function showAlert() {
@@ -189,15 +316,15 @@ function entityStatesChanged(event) {
 }
 
 function entityStateChanged(event) {
-  if (event) {
-    let newState = event.data.new_state
+  const newState = event?.variables?.trigger?.to_state
+  if (newState) {
     updateState(newState)
   }
 }
 
 function updateState(stateMessage) {
   if (!stateMessage.entity_id) {
-    console.log(`Missing entity_id in updated state: ${stateMessage}`)
+    console.log(`Missing entity_id in updated state: ${JSON.stringify(stateMessage)}`)
     return
   }
 
@@ -206,23 +333,23 @@ function updateState(stateMessage) {
     (key) => actionSettings.value[key].display.entityId === stateMessage.entity_id
   )
 
-  changedContexts.forEach((context) => {
-    try {
-      if (stateMessage.last_updated != null)
-        stateMessage.attributes['last_updated'] = new Date(
-          stateMessage.last_updated
-        ).toLocaleTimeString()
-      if (stateMessage.last_changed != null)
-        stateMessage.attributes['last_changed'] = new Date(
-          stateMessage.last_changed
-        ).toLocaleTimeString()
+  const enrichedState = {
+    ...stateMessage,
+    attributes: { ...stateMessage.attributes }
+  }
+  if (enrichedState.last_updated != null)
+    enrichedState.attributes['last_updated'] = new Date(enrichedState.last_updated).toLocaleTimeString()
+  if (enrichedState.last_changed != null)
+    enrichedState.attributes['last_changed'] = new Date(enrichedState.last_changed).toLocaleTimeString()
 
-      updateContextState(context, domain, stateMessage)
-    } catch (e) {
+  changedContexts.forEach((context) => {
+    const generation = (renderGeneration.get(context) ?? 0) + 1
+    renderGeneration.set(context, generation)
+    updateContextState(context, domain, enrichedState, generation).catch((e) => {
       console.error(e)
       $SD.value.setImage(context, null)
       $SD.value.showAlert(context)
-    }
+    })
   })
 }
 
@@ -230,22 +357,21 @@ function isEncoder(contextSettings) {
   return contextSettings.controllerType === 'Encoder'
 }
 
-function updateContextState(currentContext, domain, stateObject) {
+async function updateContextState(currentContext, domain, stateObject, generation) {
+  const isStale = () => renderGeneration.get(currentContext) !== generation
   let contextSettings = actionSettings.value[currentContext]
+  if (!contextSettings) return
   let renderingConfig = entityConfigFactory.determineConfig(
     domain,
     stateObject,
     contextSettings.display
   )
 
-  renderingConfig.isAction =
-    contextSettings.button.serviceShortPress.serviceId &&
-    (contextSettings.display.enableServiceIndicator === undefined ||
-      contextSettings.display.enableServiceIndicator) // undefined = on by default
+  const showIndicators = contextSettings.display.enableServiceIndicator
+  renderingConfig.isAction = contextSettings.button.serviceShortPress.serviceId && showIndicators
   renderingConfig.isMultiAction =
-    contextSettings.button.serviceLongPress.serviceId &&
-    (contextSettings.display.enableServiceIndicator === undefined ||
-      contextSettings.display.enableServiceIndicator) // undefined = on by default
+    contextSettings.button.serviceLongPress.serviceId && showIndicators
+  renderingConfig.labelFontSize = contextSettings.display.labelFontSize ?? DEFAULT_LABEL_FONT_SIZE
 
   if (renderingConfig.rotationPercent !== undefined) {
     rotationPercent[currentContext] = renderingConfig.rotationPercent
@@ -255,7 +381,7 @@ function updateContextState(currentContext, domain, stateObject) {
     let state = stateObject.state
     let stateAttributes = stateObject.attributes
     renderingConfig.customTitle = nunjucks.renderString(contextSettings.display.buttonTitle, {
-      ...{ state },
+      state,
       ...stateAttributes
     })
   }
@@ -263,6 +389,22 @@ function updateContextState(currentContext, domain, stateObject) {
   if (contextSettings.display.useCustomButtonLabels) {
     renderingConfig.labelTemplates = contextSettings.display.buttonLabels.split('\n')
   }
+
+  if (!renderingConfig.color) {
+    renderingConfig.color =
+      activeStates.value.includes(stateObject.state)
+        ? entityConfigFactory.colors.active
+        : entityConfigFactory.colors.neutral
+  }
+
+  const entityPicture = stateObject.attributes?.entity_picture
+  if (entityPicture && globalSettings.value?.serverUrl) {
+    renderingConfig.backgroundImage = await fetchEntityPictureAsDataUri(
+      entityPicture,
+      globalSettings.value.serverUrl
+    )
+  }
+  if (isStale()) return
 
   if (isEncoder(contextSettings)) {
     if (!renderingConfig.feedbackLayout) {
@@ -273,24 +415,25 @@ function updateContextState(currentContext, domain, stateObject) {
     if (!renderingConfig.feedback) {
       renderingConfig.feedback = {}
     }
-    renderingConfig.feedback.title = renderingConfig.customTitle ? renderingConfig.customTitle : ''
-    renderingConfig.feedback.icon =
-      'data:image/svg+xml;charset=utf8,' +
-      svgUtils.renderIconSVG(renderingConfig.icon, renderingConfig.color)
+    renderingConfig.feedback.title = renderingConfig.customTitle ?? ''
     if (renderingConfig.feedback.value === undefined) {
       renderingConfig.feedback.value = svgUtils
         .renderTemplates(renderingConfig.labelTemplates, {
           ...stateObject.attributes,
-          ...{ state: stateObject.state }
+          state: stateObject.state
         })
         .join(' ')
     }
+    renderingConfig.feedback.icon = await svgUtils.svgToJpegDataUri(
+      svgUtils.renderButtonSVG({ ...renderingConfig, labelTemplates: [] }, stateObject)
+    )
+    if (isStale()) return
     $SD.value.setFeedback(currentContext, renderingConfig.feedback)
   } else if (contextSettings.display.useStateImagesForOnOffStates) {
     if (renderingConfig.customTitle) {
       $SD.value.setTitle(currentContext, renderingConfig.customTitle)
     }
-    if (activeStates.value.indexOf(stateObject.state) !== -1) {
+    if (activeStates.value.includes(stateObject.state)) {
       console.log('Setting state of ' + currentContext + ' to 1')
       $SD.value.setState(currentContext, 1)
     } else {
@@ -301,61 +444,39 @@ function updateContextState(currentContext, domain, stateObject) {
     if (renderingConfig.customTitle) {
       $SD.value.setTitle(currentContext, renderingConfig.customTitle)
     }
-
-    renderingConfig.isAction =
-      contextSettings.button.serviceShortPress.serviceId &&
-      (contextSettings.display.enableServiceIndicator === undefined ||
-        contextSettings.display.enableServiceIndicator) // undefined = on by default
-    renderingConfig.isMultiAction =
-      contextSettings.button.serviceLongPress.serviceId &&
-      (contextSettings.display.enableServiceIndicator === undefined ||
-        contextSettings.display.enableServiceIndicator) // undefined = on by default
-
-    if (!renderingConfig.color) {
-      renderingConfig.color =
-        activeStates.value.indexOf(stateObject.state) !== -1
-          ? entityConfigFactory.colors.active
-          : entityConfigFactory.colors.neutral
-    }
-
-    const buttonSVG = svgUtils.renderButtonSVG(renderingConfig, stateObject)
-    setButtonSVG(buttonSVG, currentContext)
-  }
-}
-
-function setButtonSVG(svg, changedContext) {
-  const image = 'data:image/svg+xml;,' + svg
-  if (actionSettings.value[changedContext].controllerType === 'Encoder') {
-    $SD.value.setFeedbackLayout(changedContext, { layout: '$A0' })
-    $SD.value.setFeedback(changedContext, { 'full-canvas': image, canvas: null, title: '' })
-  } else {
-    $SD.value.setImage(changedContext, image)
+    const image = await svgUtils.svgToJpegDataUri(
+      svgUtils.renderButtonSVG(renderingConfig, stateObject)
+    )
+    if (isStale()) return
+    $SD.value.setImage(currentContext, image)
   }
 }
 
 function buttonDown(context) {
   const timeout = setTimeout(buttonLongPress, 300, context)
-  buttonLongpressTimeouts.value.set(context, timeout)
+  buttonLongpressTimeouts.set(context, timeout)
 }
 
 function buttonUp(context) {
   // If "long press timeout" is still present, we perform a normal press
-  const lpTimeout = buttonLongpressTimeouts.value.get(context)
+  const lpTimeout = buttonLongpressTimeouts.get(context)
   if (lpTimeout) {
     clearTimeout(lpTimeout)
-    buttonLongpressTimeouts.value.delete(context)
+    buttonLongpressTimeouts.delete(context)
     buttonShortPress(context)
   }
 }
 
 function buttonShortPress(context) {
   let settings = actionSettings.value[context]
+  if (!settings) return
   callService(context, settings.button.serviceShortPress)
 }
 
 function buttonLongPress(context) {
-  buttonLongpressTimeouts.value.delete(context)
+  buttonLongpressTimeouts.delete(context)
   let settings = actionSettings.value[context]
+  if (!settings) return
   if (settings.button.serviceLongPress.serviceId) {
     callService(context, settings.button.serviceLongPress)
   } else {
@@ -364,31 +485,40 @@ function buttonLongPress(context) {
 }
 
 function callService(context, serviceToCall, serviceDataAttributes = {}) {
-  if ($HA.value) {
-    if (serviceToCall['serviceId']) {
-      try {
-        const serviceIdParts = serviceToCall.serviceId.split('.')
+  if (!serviceToCall['serviceId']) return
 
-        let serviceData = null
-        if (serviceToCall.serviceData) {
-          let renderedServiceData = nunjucks.renderString(
-            serviceToCall.serviceData,
-            serviceDataAttributes
-          )
-          serviceData = JSON.parse(renderedServiceData)
-        }
+  try {
+    let serviceData = null
+    if (serviceToCall.serviceData) {
+      let renderedServiceData = nunjucks.renderString(
+        serviceToCall.serviceData,
+        serviceDataAttributes
+      )
+      serviceData = JSON.parse(renderedServiceData)
+    }
 
-        $HA.value.callService(
-          serviceIdParts[1],
-          serviceIdParts[0],
-          serviceToCall.entityId,
-          serviceData
-        )
-      } catch (e) {
-        console.error(e)
+    if (serviceToCall.serviceId === 'streamdeck.open_url') {
+      const url = serviceData?.url
+      if (url) {
+        $SD.value.openUrl(url)
+      } else {
         $SD.value.showAlert(context)
       }
+      return
     }
+
+    const serviceIdParts = serviceToCall.serviceId.split('.')
+    if ($HA.value) {
+      $HA.value
+        .callService(serviceIdParts[0], serviceIdParts[1], serviceToCall.entityId, serviceData)
+        .catch((e) => {
+          console.error(e)
+          $SD.value.showAlert(context)
+        })
+    }
+  } catch (e) {
+    console.error(e)
+    $SD.value.showAlert(context)
   }
 }
 </script>

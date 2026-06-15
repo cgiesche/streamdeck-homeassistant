@@ -16,7 +16,10 @@ jobs:
 
       - name: Determine tag name
         id: tagName
-        run: echo ::set-output name=tag::${GITHUB_REF#refs/*/}
+        run: |
+          TAG=${GITHUB_REF#refs/*/}
+          STRIPPED_TAG=$(echo $TAG | sed -E 's/^v?([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
+          echo ::set-output name=tag::$STRIPPED_TAG
 
       - name: Update manifest version
         uses: jossef/action-set-json-field@v1

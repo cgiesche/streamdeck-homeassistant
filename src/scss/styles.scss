@@ -1,3 +1,183 @@
-$body-bg-dark: #2d2d2d;
+$body-bg-dark: #1a1a2e;
 
-@import 'bootstrap/scss/bootstrap';
+// ── Bootstrap – selective import (only modules actually used in the PI) ────
+// Configuration (required by all other partials)
+@import 'bootstrap/scss/functions';
+@import 'bootstrap/scss/variables';
+@import 'bootstrap/scss/variables-dark';
+@import 'bootstrap/scss/maps';
+@import 'bootstrap/scss/mixins';
+@import 'bootstrap/scss/utilities';
+
+// Base
+@import 'bootstrap/scss/root';
+@import 'bootstrap/scss/reboot';
+@import 'bootstrap/scss/type';
+
+// Components in use
+@import 'bootstrap/scss/forms';
+@import 'bootstrap/scss/buttons';
+@import 'bootstrap/scss/transitions';
+@import 'bootstrap/scss/button-group';
+@import 'bootstrap/scss/accordion';
+@import 'bootstrap/scss/badge';
+@import 'bootstrap/scss/alert';
+@import 'bootstrap/scss/close';
+@import 'bootstrap/scss/spinners';
+@import 'bootstrap/scss/nav';
+
+// Helpers (only text-truncate is used)
+@import 'bootstrap/scss/helpers/text-truncation';
+
+// Utilities API – generates spacing, flex, display, color, etc.
+@import 'bootstrap/scss/utilities/api';
+
+// ── PI Layout ──────────────────────────────────────────────────────────────
+.pi-root {
+  padding: 0.625rem 0.75rem;
+}
+
+// ── Section Headers ────────────────────────────────────────────────────────
+.pi-section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--bs-secondary-color);
+  margin-top: 1rem;
+  margin-bottom: 0.625rem;
+
+  &::before {
+    content: '';
+    display: inline-block;
+    width: 3px;
+    height: 0.8rem;
+    background-color: var(--bs-primary);
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+}
+
+// ── Connection Status Bar ──────────────────────────────────────────────────
+.pi-connection-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.625rem;
+  background: var(--bs-secondary-bg);
+  border: 1px solid var(--bs-border-color);
+  border-radius: var(--bs-border-radius);
+}
+
+.pi-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+
+  &.connected {
+    background-color: #2ecc71;
+    box-shadow: 0 0 6px rgba(46, 204, 113, 0.6);
+  }
+
+  &.connecting {
+    background-color: var(--bs-warning);
+    animation: pi-pulse 1.2s ease-in-out infinite;
+  }
+
+  &.disconnected {
+    background-color: var(--bs-danger);
+  }
+}
+
+@keyframes pi-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+
+// ── Available-Variables Disclosure ────────────────────────────────────────
+details.pi-vars {
+  margin-top: 0.375rem;
+
+  > summary {
+    font-size: 0.7rem;
+    cursor: pointer;
+    color: var(--bs-secondary-color);
+    user-select: none;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+
+    &::before {
+      content: '▸';
+      display: inline-block;
+      transition: transform 0.15s ease;
+    }
+
+    &:hover {
+      color: var(--bs-body-color);
+    }
+  }
+
+  &[open] > summary::before {
+    transform: rotate(90deg);
+  }
+
+  > .pi-vars-content {
+    margin-top: 0.3rem;
+    padding: 0.375rem 0.5rem;
+    background: var(--bs-tertiary-bg);
+    border-radius: var(--bs-border-radius-sm);
+    border: 1px solid var(--bs-border-color);
+  }
+}
+
+// ── Accordion ─────────────────────────────────────────────────────────────
+.accordion-button {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+.accordion-body {
+  padding: 0.75rem;
+}
+
+// ── Icon-Source Button Group ───────────────────────────────────────────────
+.pi-icon-btn-group {
+  .btn {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.4rem;
+  }
+}
+
+// ── Tab Bar ────────────────────────────────────────────────────────────────
+.pi-tabs {
+  .nav-link {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.75rem;
+  }
+}
+
+.pi-tab-badge {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--bs-success);
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
+// ── Form tweaks ────────────────────────────────────────────────────────────
+.form-check-input:focus {
+  box-shadow: 0 0 0 0.2rem rgba(var(--bs-primary-rgb), 0.25);
+}
