@@ -44,7 +44,7 @@
   "UUID": "de.perdoctus.streamdeck.homeassistant",
   "Category": "Home Assistant",
   "CategoryIcon": "images/category",
-  "SDKVersion": 2,
+  "SDKVersion": 3,
   "Author": "Christoph Giesche",
   "CodePath": "plugin.html",
   "Description": "Control your Home Assistant entities with stream deck.",
@@ -64,6 +64,6 @@
   ],
   "Software":
   {
-    "MinimumVersion" : "6.4"
+    "MinimumVersion" : "6.9"
   }
 }
