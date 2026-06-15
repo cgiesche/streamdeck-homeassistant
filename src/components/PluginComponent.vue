@@ -424,8 +424,9 @@ async function updateContextState(currentContext, domain, stateObject, generatio
         })
         .join(' ')
     }
-    renderingConfig.feedback.icon = await svgUtils.svgToJpegDataUri(
-      svgUtils.renderButtonSVG({ ...renderingConfig, labelTemplates: [] }, stateObject)
+    renderingConfig.feedback.icon = await svgUtils.svgToImageDataUri(
+      svgUtils.renderButtonSVG({ ...renderingConfig, labelTemplates: [] }, stateObject),
+      !renderingConfig.backgroundColor && !renderingConfig.backgroundImage
     )
     if (isStale()) return
     $SD.value.setFeedback(currentContext, renderingConfig.feedback)
@@ -444,8 +445,9 @@ async function updateContextState(currentContext, domain, stateObject, generatio
     if (renderingConfig.customTitle) {
       $SD.value.setTitle(currentContext, renderingConfig.customTitle)
     }
-    const image = await svgUtils.svgToJpegDataUri(
-      svgUtils.renderButtonSVG(renderingConfig, stateObject)
+    const image = await svgUtils.svgToImageDataUri(
+      svgUtils.renderButtonSVG(renderingConfig, stateObject),
+      !renderingConfig.backgroundColor && !renderingConfig.backgroundImage
     )
     if (isStale()) return
     $SD.value.setImage(currentContext, image)
