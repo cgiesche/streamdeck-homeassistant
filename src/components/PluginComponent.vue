@@ -119,7 +119,11 @@ onMounted(async () => {
     $SD.value.on('willAppear', (message) => {
       let context = message.context
       rotationAmount[context] = 0
-      rotationPercent[context] = 0
+      // Keep accumulated rotationPercent across page changes (willAppear fires
+      // on every page switch for the same context); only initialise once.
+      if (rotationPercent[context] === undefined) {
+        rotationPercent[context] = 0
+      }
       actionSettings.value[context] = Settings.parse(message.payload.settings)
       if ($HA.value) {
         $HA.value.getStatesDebounced(entityStatesChanged)
@@ -186,7 +190,9 @@ onMounted(async () => {
     $SD.value.on('didReceiveSettings', (message) => {
       let context = message.context
       rotationAmount[context] = 0
-      rotationPercent[context] = 0
+      if (rotationPercent[context] === undefined) {
+        rotationPercent[context] = 0
+      }
       actionSettings.value[context] = Settings.parse(message.payload.settings)
       if ($HA.value) {
         $HA.value.getStatesDebounced(entityStatesChanged)
