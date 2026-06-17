@@ -1,7 +1,6 @@
 import {
   createConnection,
   createLongLivedTokenAuth,
-  callService as haCallService,
   ERR_CANNOT_CONNECT,
   ERR_INVALID_AUTH,
   ERR_CONNECTION_LOST,
@@ -100,7 +99,19 @@ export class Homeassistant {
     if (!this._connection) {
       return Promise.reject(new Error('Not connected to Home Assistant'))
     }
-    const target = entity_id ? { entity_id } : undefined
-    return haCallService(this._connection, domain, service, serviceData, target)
+    // Use execute_script (not call_service) so HA renders Jinja templates in
+    // serviceData server-side, e.g. {{ state_attr(...) }}. The plain
+    // call_service WS API does not template service data.
+    const step = {
+      service: `${domain}.${service}`,
+      data: serviceData || {}
+    }
+    if (entity_id) {
+      step.target = { entity_id }
+    }
+    return this._connection.sendMessagePromise({
+      type: 'execute_script',
+      sequence: [step]
+    })
   }
 }
