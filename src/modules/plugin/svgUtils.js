@@ -126,7 +126,7 @@ export class SvgUtils {
     )
   }
 
-  svgToJpegDataUri(svg) {
+  svgToImageDataUri(svg, transparent = false) {
     return new Promise((resolve) => {
       const svgBlob = new Blob([svg], { type: 'image/svg+xml' })
       const blobUrl = URL.createObjectURL(svgBlob)
@@ -137,7 +137,9 @@ export class SvgUtils {
         canvas.width = WIDTH
         canvas.height = HEIGHT
         canvas.getContext('2d').drawImage(img, 0, 0)
-        resolve(canvas.toDataURL('image/jpeg', 0.92))
+        // JPEG has no alpha channel -> transparent areas become black. Use PNG
+        // when no background so "none" stays transparent instead of black.
+        resolve(transparent ? canvas.toDataURL('image/png') : canvas.toDataURL('image/jpeg', 0.92))
       }
       img.onerror = () => {
         URL.revokeObjectURL(blobUrl)
