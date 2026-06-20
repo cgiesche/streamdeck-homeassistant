@@ -66,10 +66,11 @@ function migrateV5(s) {
   const v6 = { ...s, display: { ...s.display }, version: 6 }
   v6.display.iconLayout = 'STANDARD'
   if (v6.display.buttonLabels) {
-    v6.display.buttonLabels = v6.display.buttonLabels
-      .split('\n')
-      .filter((line) => line.trim() !== '')
-      .join('\n')
+    const lines = v6.display.buttonLabels.split('\n')
+    while (lines.length > 2 && lines[0].trim() === '') {
+      lines.shift()
+    }
+    v6.display.buttonLabels = lines.join('\n')
   }
   return v6
 }

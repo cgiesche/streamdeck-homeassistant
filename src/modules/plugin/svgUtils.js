@@ -93,7 +93,7 @@ export class SvgUtils {
     const quarterOfArea = HEIGHT / 4
     let flatLabels = labels.flatMap((label) => label.split('\n'))
     if (maxLines === 2) {
-      while (flatLabels.length > 0 && flatLabels[0].trim() === '') {
+      while (flatLabels.length > 2 && flatLabels[0].trim() === '') {
         flatLabels.shift()
       }
     }
