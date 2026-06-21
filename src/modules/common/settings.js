@@ -1,3 +1,5 @@
+import { trimBlankLabelLines } from './labelLines.js'
+
 export const CURRENT_VERSION = 8
 export const DEFAULT_LABEL_FONT_SIZE = 48
 
@@ -66,10 +68,7 @@ function migrateV5(s) {
   const v6 = { ...s, display: { ...s.display }, version: 6 }
   v6.display.iconLayout = 'STANDARD'
   if (v6.display.buttonLabels) {
-    const lines = v6.display.buttonLabels.split('\n')
-    while (lines.length > 2 && lines[0].trim() === '') {
-      lines.shift()
-    }
+    const lines = trimBlankLabelLines(v6.display.buttonLabels.split('\n'), 2)
     v6.display.buttonLabels = lines.join('\n')
   }
   return v6
