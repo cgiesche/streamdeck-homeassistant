@@ -1,5 +1,6 @@
 import * as Mdi from '@mdi/js'
 import nunjucks from 'nunjucks'
+import { trimBlankLabelLines } from '../common/labelLines.js'
 
 export const WIDTH = 288
 export const HEIGHT = 288
@@ -93,9 +94,7 @@ export class SvgUtils {
     const quarterOfArea = HEIGHT / 4
     let flatLabels = labels.flatMap((label) => label.split('\n'))
     if (maxLines === 2) {
-      while (flatLabels.length > 0 && flatLabels[0].trim() === '') {
-        flatLabels.shift()
-      }
+      flatLabels = trimBlankLabelLines(flatLabels, maxLines)
     }
     const textLines = flatLabels
       .slice(0, maxLines)

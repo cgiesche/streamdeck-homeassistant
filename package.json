@@ -12,7 +12,9 @@
     "bundle": "streamdeck bundle -f --no-update-check ./build/de.perdoctus.streamdeck.homeassistant.sdPlugin",
     "bundle-dev": "vite build --mode development --sourcemap inline --minify false && streamdeck bundle -f -o ./build --no-update-check ./build/de.perdoctus.streamdeck.homeassistant.sdPlugin",
     "lint": "eslint . --fix",
-    "format": "prettier --write src/"
+    "format": "prettier --write src/",
+    "test": "vitest run",
+    "test-watch": "vitest"
   },
   "dependencies": {
     "@mdi/font": "^7.4.47",
@@ -37,6 +39,7 @@
     "npm-check-updates": "^19.1.2",
     "prettier": "^3.6.2",
     "sass": "^1.93.3",
-    "vite": "^7.2.2"
+    "vite": "^7.2.2",
+    "vitest": "^4.1.9"
   }
 }
