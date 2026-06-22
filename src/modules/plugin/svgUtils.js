@@ -68,7 +68,7 @@ export class SvgUtils {
     const iconPath = this.#getMdiPath(mdiIconName)
 
     let iconTransform, maxLines, labelIndexOffset
-    if (iconLayout === 'FULL') {
+    if (!iconPath || iconLayout === 'FULL') {
       iconTransform = `translate(0, 0) scale(12)`
       maxLines = 4
       labelIndexOffset = 0
