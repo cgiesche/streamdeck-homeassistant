@@ -13,5 +13,5 @@
     "noEmit": true
   },
   "include": ["src/**/*", "*.js", "*.html"],
-  "exclude": ["node_modules", "de.perdoctus.streamdeck.homeassistant.sdPlugin"]
+  "exclude": ["node_modules", "build"]
 }

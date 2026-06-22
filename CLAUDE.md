@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # Install dependencies
 npm install
 
-# Build for production (outputs to de.perdoctus.streamdeck.homeassistant.sdPlugin/)
+# Build for production (outputs to build/de.perdoctus.streamdeck.homeassistant.sdPlugin/)
 npm run build
 
 # Build in watch mode with sourcemaps (for development)
@@ -75,7 +75,7 @@ The visual appearance of buttons is driven by YAML configuration files (`public/
 
 ### Build Output
 
-Vite builds directly into `de.perdoctus.streamdeck.homeassistant.sdPlugin/`, which is the installed plugin directory. The `build-dev` watch mode combined with `RestartStreamDeck.js` (a custom Vite plugin) automatically restarts the Stream Deck app after each build.
+Vite builds into `build/de.perdoctus.streamdeck.homeassistant.sdPlugin/`. The `bundle` step packages this into `build/de.perdoctus.streamdeck.homeassistant.streamDeckPlugin`. The `build-dev` watch mode combined with `RestartStreamDeck.js` (a custom Vite plugin) automatically restarts the Stream Deck app after each build.
 
 ### Settings Structure (v5)
 

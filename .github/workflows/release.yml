@@ -11,22 +11,23 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2.1.4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
 
       - name: Determine tag name
         id: tagName
         run: |
           TAG=${GITHUB_REF#refs/*/}
           STRIPPED_TAG=$(echo $TAG | sed -E 's/^v?([0-9]+\.[0-9]+\.[0-9]+).*/\1/')
-          echo ::set-output name=tag::$STRIPPED_TAG
+          echo "tag=$STRIPPED_TAG" >> "$GITHUB_OUTPUT"
 
       - name: Update manifest version
-        uses: jossef/action-set-json-field@v1
-        with:
-          file: public/manifest.json
-          field: Version
-          value: ${{ steps.tagName.outputs.tag }}.${{ github.run_number }}
+        run: |
+          VERSION="${{ steps.tagName.outputs.tag }}.${{ github.run_number }}"
+          jq --arg v "$VERSION" '.Version = $v' public/manifest.json > public/manifest.json.tmp
+          mv public/manifest.json.tmp public/manifest.json
 
       - name: NPM Install
         run: npm install
@@ -36,12 +37,6 @@ jobs:
         run: npm run bundle
 
       - name: Upload Release Asset
-        id: upload-release-asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: softprops/action-gh-release@v2
         with:
-          upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./de.perdoctus.streamdeck.homeassistant.streamDeckPlugin
-          asset_name: de.perdoctus.streamdeck.homeassistant.streamDeckPlugin
-          asset_content_type: application/zip
+          files: ./build/de.perdoctus.streamdeck.homeassistant.streamDeckPlugin
