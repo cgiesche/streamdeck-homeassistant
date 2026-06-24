@@ -343,8 +343,6 @@ media_player:
   icon: mdi:play-circle
   color: '#AAAAAA'
   labelTemplates:
-    - ''
-    - ''
     - '{{ media_title }}'
     - '{{ media_artist }}'
   states:
