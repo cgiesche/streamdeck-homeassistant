@@ -832,3 +832,21 @@ details.pi-vars {
 .font-mono {
   font-family: var(--pi-font-mono);
 }
+
+/* ── Debug report footer ──────────────────────────────────────────────── */
+.pi-debug-footer {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--pi-border);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.pi-debug-btn {
+  align-self: flex-start;
+  font-size: 12px;
+}
+.pi-debug-footer .pi-textarea {
+  font-family: var(--pi-font-mono);
+  font-size: 11px;
+}

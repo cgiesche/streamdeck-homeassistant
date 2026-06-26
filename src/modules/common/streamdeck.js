@@ -16,6 +16,10 @@ export class StreamDeck {
   constructor(inPort, inPropertyInspectorUUID, inRegisterEvent, inInfo, inActionInfo) {
     let actionInfo = JSON.parse(inActionInfo)
 
+    // Registration info from the Stream Deck app: app version, OS/platform,
+    // plugin version, device model. Used by the PI debug report.
+    this.info = inInfo ? JSON.parse(inInfo) : {}
+    this.actionInfo = actionInfo
     this.propertyInspectorUUID = inPropertyInspectorUUID
     this.events = ELGEvents.eventEmitter()
 

@@ -425,6 +425,21 @@
         Save configuration
       </button>
     </template>
+
+    <!-- ── Debug report footer (always available) ─────────────────────────── -->
+    <div class="pi-debug-footer">
+      <button class="pi-btn-ghost pi-debug-btn" type="button" @click="copyDebugInfo">
+        {{ copyLabel }}
+      </button>
+      <span class="pi-hint">Copies version &amp; connection info (token redacted) for bug reports.</span>
+      <textarea
+        v-if="debugReportText"
+        class="pi-textarea mt-1"
+        rows="8"
+        readonly
+        :value="debugReportText"
+      ></textarea>
+    </div>
   </div>
 </template>
 
@@ -447,6 +462,7 @@ import TypeaheadSelect from '@/components/ui/TypeaheadSelect.vue'
 import PiToggleRow from '@/components/ui/PiToggleRow.vue'
 import axios from 'axios'
 import { fetchRemoteYaml } from '@/modules/common/remoteConfig'
+import { getLogEntries } from '@/modules/common/debugLog'
 
 const manifest = ref(defaultManifest)
 
@@ -491,6 +507,9 @@ const availableServices = ref([])
 const currentStates = ref([])
 const haConnectionState = ref('disconnected') // disconnected, connecting, connected
 const haError = ref('')
+// Persists the most recent connection error for the debug report, even after
+// haError is cleared (e.g. on the next save attempt).
+const lastHaError = ref('')
 
 const controllerType = ref('')
 
@@ -602,12 +621,14 @@ function connectHomeAssistant() {
   }
 
   haConnectionState.value = 'connecting'
+  console.log(`Connecting to Home Assistant: ${redactUrl(serverUrl.value)}`)
 
   try {
     $HA = new Homeassistant(
       serverUrl.value,
       accessToken.value,
       () => {
+        console.log('Home Assistant connected')
         haConnectionState.value = 'connected'
         $HA.getStates((states) => {
           availableEntities.value = states
@@ -654,14 +675,19 @@ function connectHomeAssistant() {
         })
       },
       (message) => {
+        console.error(`Home Assistant connection error: ${message}`)
+        lastHaError.value = message
         haError.value = message
         haConnectionState.value = 'disconnected'
       },
       () => {
+        console.warn('Home Assistant connection closed')
         haConnectionState.value = 'disconnected'
       }
     )
   } catch (e) {
+    console.error(`Home Assistant connect failed: ${e}`)
+    lastHaError.value = String(e)
     haError.value = e
     haConnectionState.value = 'disconnected'
   }
@@ -676,6 +702,8 @@ async function saveGlobalSettings() {
     try {
       await axios.get(displayConfigurationUrlOverride.value)
     } catch (error) {
+      console.error(`Could not read custom display configuration: ${error}`)
+      lastHaError.value = `Could not read custom display configuration: ${error}`
       haError.value = `Could not read custom display configuration: ${error}`
       return
     }
@@ -733,5 +761,85 @@ function saveSettings() {
   }
 
   $SD.saveSettings(settings)
+}
+
+// ── Debug report ──────────────────────────────────────────────────────────
+const copyLabel = ref('Copy debug info')
+const debugReportText = ref('')
+
+function redactUrl(url) {
+  if (!url) return '(none)'
+  try {
+    const u = new URL(url)
+    return `${u.protocol}//********${u.port ? `:${u.port}` : ''}`
+  } catch {
+    return '(unparseable)'
+  }
+}
+
+function buildDebugReport() {
+  const info = $SD?.info ?? {}
+  const app = info.application ?? {}
+  const plugin = info.plugin ?? {}
+  const devices = (info.devices ?? []).map((d) => `${d.name ?? '?'} (type ${d.type})`).join(', ')
+  return [
+    '=== Stream Deck Home Assistant — debug info ===',
+    `generated:        ${new Date().toISOString()}`,
+    `plugin version:   ${plugin.version ?? 'unknown'}`,
+    `stream deck app:  ${app.version ?? 'unknown'} (${app.platform ?? '?'} ${app.platformVersion ?? ''})`,
+    `language:         ${app.language ?? '?'}`,
+    `devices:          ${devices || '(none)'}`,
+    `action:           ${$SD?.actionInfo?.action ?? 'unknown'}`,
+    `controller:       ${controllerType.value || 'unknown'}`,
+    `user agent:       ${navigator.userAgent}`,
+    '',
+    '--- Home Assistant connection ---',
+    `server:           ${redactUrl(serverUrl.value)}`,
+    `token:            ${accessToken.value ? `${accessToken.value.length} chars (redacted)` : '(empty)'}`,
+    `theme:            ${displayConfiguration.value?.title ?? '(default)'}`,
+    `theme override:   ${displayConfigurationUrlOverride.value || '(none)'}`,
+    `state:            ${haConnectionState.value}`,
+    `last error:       ${haError.value || lastHaError.value || '(none)'}`,
+    '',
+    '--- Recent log (Property Inspector context) ---',
+    ...(getLogEntries().length ? getLogEntries() : ['(no log entries captured)'])
+  ].join('\n')
+}
+
+function fallbackCopy(text) {
+  try {
+    const ta = document.createElement('textarea')
+    ta.value = text
+    ta.style.position = 'fixed'
+    ta.style.opacity = '0'
+    document.body.appendChild(ta)
+    ta.focus()
+    ta.select()
+    const ok = document.execCommand('copy')
+    document.body.removeChild(ta)
+    return ok
+  } catch {
+    return false
+  }
+}
+
+async function copyDebugInfo() {
+  const report = buildDebugReport()
+  let ok = false
+  try {
+    await navigator.clipboard.writeText(report)
+    ok = true
+  } catch {
+    ok = fallbackCopy(report)
+  }
+  if (ok) {
+    copyLabel.value = 'Copied!'
+    debugReportText.value = ''
+  } else {
+    // Clipboard blocked in this webview — show the text so the user can copy it manually.
+    copyLabel.value = 'Copy failed — select the text below'
+    debugReportText.value = report
+  }
+  setTimeout(() => (copyLabel.value = 'Copy debug info'), 2500)
 }
 </script>
