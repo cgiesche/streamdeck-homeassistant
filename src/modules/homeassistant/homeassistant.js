@@ -84,15 +84,38 @@ export class Homeassistant {
     this._connection.sendMessagePromise({ type: 'get_services' }).then(callback)
   }
 
-  subscribeEntitiesChanged(entityIds, callback) {
-    if (!this._connection) return Promise.resolve(null)
-    return this._connection.subscribeMessage(callback, {
-      type: 'subscribe_trigger',
-      trigger: {
-        platform: 'state',
-        entity_id: entityIds
+  async subscribeEntitiesChanged(entityIds, callback) {
+    if (!this._connection) return null
+    try {
+      return await this._connection.subscribeMessage(callback, {
+        type: 'subscribe_trigger',
+        trigger: {
+          platform: 'state',
+          entity_id: entityIds
+        }
+      })
+    } catch (e) {
+      if (e?.code !== 'invalid_format' || entityIds.length <= 1) throw e
+      // Batch rejected due to one or more invalid entity IDs — retry one-by-one so
+      // a single misconfigured button doesn't break live updates for all others.
+      console.warn('subscribe_trigger batch failed with invalid_format; retrying per entity')
+      const unsubscribers = []
+      for (const entityId of entityIds) {
+        try {
+          const unsub = await this._connection.subscribeMessage(callback, {
+            type: 'subscribe_trigger',
+            trigger: { platform: 'state', entity_id: entityId }
+          })
+          unsubscribers.push(unsub)
+        } catch {
+          console.warn(`Skipping invalid entity "${entityId}" — check its configuration in Stream Deck`)
+        }
       }
-    })
+      if (unsubscribers.length === 0) throw e
+      return async () => {
+        await Promise.all(unsubscribers.map((u) => u().catch(() => {})))
+      }
+    }
   }
 
   callService(domain, service, entity_id = null, serviceData = {}) {
