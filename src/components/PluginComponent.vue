@@ -10,7 +10,7 @@ import { Homeassistant } from '@/modules/homeassistant/homeassistant'
 import { EntityConfigFactory } from '@/modules/plugin/entityConfigFactoryNg'
 import { SvgUtils, WIDTH, HEIGHT } from '@/modules/plugin/svgUtils'
 import { fetchRemoteYaml } from '@/modules/common/remoteConfig'
-import nunjucks from 'nunjucks'
+import nunjucksEnv from '../modules/common/nunjucksEnv.js'
 import { onMounted, ref, shallowRef } from 'vue'
 import defaultActiveStates from '../../public/config/active-states.yml'
 
@@ -386,7 +386,7 @@ async function updateContextState(currentContext, domain, stateObject, generatio
   if (contextSettings.display.useCustomTitle) {
     let state = stateObject.state
     let stateAttributes = stateObject.attributes
-    renderingConfig.customTitle = nunjucks.renderString(contextSettings.display.buttonTitle, {
+    renderingConfig.customTitle = nunjucksEnv.renderString(contextSettings.display.buttonTitle, {
       state,
       ...stateAttributes
     })
@@ -498,7 +498,7 @@ function callService(context, serviceToCall, serviceDataAttributes = {}) {
   try {
     let serviceData = null
     if (serviceToCall.serviceData) {
-      let renderedServiceData = nunjucks.renderString(
+      let renderedServiceData = nunjucksEnv.renderString(
         serviceToCall.serviceData,
         serviceDataAttributes
       )

@@ -83,7 +83,7 @@
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import nunjucks from 'nunjucks'
+import nunjucksEnv from '../modules/common/nunjucksEnv.js'
 import TypeaheadSelect from '@/components/ui/TypeaheadSelect.vue'
 
 const titleSort = (s1, s2) => s1.name.localeCompare(s2.name, undefined, { sensitivity: 'base' })
@@ -203,7 +203,7 @@ const serviceDataInvalidFeedback = computed(() => {
     return ''
   }
   try {
-    const renderedServiceData = nunjucks.renderString(serviceDataString, {
+    const renderedServiceData = nunjucksEnv.renderString(serviceDataString, {
       ticks: 5,
       rotationPercent: 100,
       rotationAbsolute: 100

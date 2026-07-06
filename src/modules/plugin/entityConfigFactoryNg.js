@@ -1,5 +1,5 @@
 import defaultDisplayConfiguration from '../../../public/config/default-display-config.yml'
-import nunjucks from 'nunjucks'
+import nunjucksEnv from '../common/nunjucksEnv.js'
 
 export class EntityConfigFactory {
   displayConfiguration = defaultDisplayConfiguration
@@ -123,7 +123,7 @@ export class EntityConfigFactory {
    */
   render(string, stateObject) {
     if (string) {
-      let renderedString = nunjucks.renderString(string, stateObject)
+      let renderedString = nunjucksEnv.renderString(string, stateObject)
       if (renderedString) {
         return renderedString.trim()
       }
