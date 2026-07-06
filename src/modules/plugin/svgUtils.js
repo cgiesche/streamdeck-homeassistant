@@ -1,4 +1,5 @@
 import * as Mdi from '@mdi/js'
+import { getHuePath } from './hueIcons.js'
 import nunjucks from 'nunjucks'
 import { trimBlankLabelLines } from '../common/labelLines.js'
 
@@ -24,11 +25,6 @@ export class SvgUtils {
       renderingConfig.backgroundColor ?? null,
       renderingConfig.backgroundColorEnd ?? null
     )
-  }
-
-  renderIconSVG(mdiIconName, iconColor) {
-    const path = this.#getMdiPath(mdiIconName)
-    return `<svg xmlns="http://www.w3.org/2000/svg" width="${WIDTH}" height="${HEIGHT}" viewBox="0 0 24 24">${path ? `<path d="${path}" fill="${iconColor ?? '#FFF'}"/>` : ''}</svg>`
   }
 
   renderTemplates(templates, values) {
@@ -65,7 +61,7 @@ export class SvgUtils {
         `<rect x="0" y="0" width="${WIDTH}" height="${HEIGHT}" fill="rgba(0,0,0,${BG_OVERLAY_OPACITY})"/>`
       : ''
 
-    const iconPath = this.#getMdiPath(mdiIconName)
+    const iconPath = this.#getIconPath(mdiIconName)
 
     let iconTransform, maxLines, labelIndexOffset
     if (!iconPath || iconLayout === 'FULL') {
@@ -112,6 +108,15 @@ export class SvgUtils {
       })
 
     return `<svg xmlns="http://www.w3.org/2000/svg" width="${WIDTH}" height="${HEIGHT}" viewBox="0 0 ${WIDTH} ${HEIGHT}">${defsSvg}${bgColorSvg}${backgroundSvg}${iconSvg}${indicator}${textLines.join('')}</svg>`
+  }
+
+  #getIconPath(iconName) {
+    if (!iconName) return null
+    if (iconName.startsWith('hue:')) {
+      return getHuePath(iconName.substring(4))
+    } else {
+      return this.#getMdiPath(iconName)
+    }
   }
 
   #getMdiPath(mdiIconName) {
