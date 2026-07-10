@@ -1,6 +1,6 @@
 import * as Mdi from '@mdi/js'
 import { getHuePath } from './hueIcons.js'
-import nunjucks from 'nunjucks'
+import nunjucksEnv from '../common/nunjucksEnv.js'
 import { trimBlankLabelLines } from '../common/labelLines.js'
 
 export const WIDTH = 288
@@ -28,7 +28,7 @@ export class SvgUtils {
   }
 
   renderTemplates(templates, values) {
-    return templates?.map((template) => nunjucks.renderString(template ?? '', values)) ?? []
+    return templates?.map((template) => nunjucksEnv.renderString(template ?? '', values)) ?? []
   }
 
   #generateButtonSVG(
