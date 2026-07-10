@@ -416,6 +416,10 @@ async function updateContextState(currentContext, domain, stateObject, generatio
     if (!renderingConfig.feedbackLayout) {
       renderingConfig.feedbackLayout = '$A1'
     }
+    // Per-dial layout override (e.g. '$A1' to hide the progress bar) wins over the theme.
+    if (contextSettings.display.feedbackLayoutOverride) {
+      renderingConfig.feedbackLayout = contextSettings.display.feedbackLayoutOverride
+    }
     $SD.value.setFeedbackLayout(currentContext, { layout: renderingConfig.feedbackLayout })
 
     if (!renderingConfig.feedback) {
@@ -429,6 +433,19 @@ async function updateContextState(currentContext, domain, stateObject, generatio
           state: stateObject.state
         })
         .join(' ')
+    }
+    // Per-dial progress-bar value override: lets two dials on the same entity show
+    // different bars (e.g. brightness vs. color temp). Falls back to the theme's
+    // indicator when disabled or when the template doesn't yield a number.
+    if (contextSettings.display.useCustomIndicator) {
+      const rendered = svgUtils.renderTemplates([contextSettings.display.customIndicator], {
+        ...stateObject.attributes,
+        state: stateObject.state
+      })[0]
+      const indicator = Number(rendered)
+      if (!Number.isNaN(indicator)) {
+        renderingConfig.feedback.indicator = Math.max(0, Math.min(100, indicator))
+      }
     }
     renderingConfig.feedback.icon = await svgUtils.svgToImageDataUri(
       svgUtils.renderButtonSVG({ ...renderingConfig, labelTemplates: [] }, stateObject),

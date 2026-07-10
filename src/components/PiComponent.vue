@@ -309,6 +309,41 @@
           </details>
         </PiToggleRow>
 
+        <!-- Progress bar overrides (Encoder / dial only) -->
+        <template v-if="controllerType === 'Encoder'">
+          <PiToggleRow id="chkCustomIndicator" v-model="useCustomIndicator" label="Custom progress bar">
+            <input
+              id="customIndicator"
+              v-model="customIndicator"
+              class="pi-input mb-1"
+              placeholder="Template resolving to a number 0-100"
+              type="text"
+            />
+            <div class="pi-hint">
+              Overrides the dial's progress bar. Must resolve to 0-100. Use entity
+              attributes (e.g. color_temp_kelvin) so two dials on the same entity can
+              show different bars.
+            </div>
+            <details v-if="entityAttributes.length" class="pi-vars">
+              <summary>Available variables</summary>
+              <div class="pi-vars-content">
+                <div v-for="attr in entityAttributes" :key="attr" class="pi-var-item">
+                  {{ attr }}
+                </div>
+              </div>
+            </details>
+          </PiToggleRow>
+
+          <div class="mb-3">
+            <label class="pi-label" for="feedbackLayoutOverride">Progress bar layout</label>
+            <select id="feedbackLayoutOverride" v-model="feedbackLayoutOverride" class="pi-select">
+              <option value="">Theme default</option>
+              <option value="$B1">Show bar</option>
+              <option value="$A1">Hide bar</option>
+            </select>
+          </div>
+        </template>
+
         <!-- Label font size -->
         <div class="pi-form-row">
           <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px">
@@ -492,6 +527,9 @@ const buttonTitle = ref('{{friendly_name}}')
 const useStateImagesForOnOffStates = ref(false) // determined by action ID (manifest)
 const useCustomButtonLabels = ref(false)
 const buttonLabels = ref('')
+const useCustomIndicator = ref(false)
+const customIndicator = ref('')
+const feedbackLayoutOverride = ref('')
 const enableServiceIndicator = ref(true)
 const iconSettings = ref('PREFER_PLUGIN')
 const iconLayout = ref('STANDARD')
@@ -578,6 +616,9 @@ onMounted(() => {
       buttonTitle.value = settings['display']['buttonTitle'] || '{{friendly_name}}'
       useCustomButtonLabels.value = settings['display']['useCustomButtonLabels']
       buttonLabels.value = settings['display']['buttonLabels']
+      useCustomIndicator.value = settings['display']['useCustomIndicator'] || false
+      customIndicator.value = settings['display']['customIndicator'] || ''
+      feedbackLayoutOverride.value = settings['display']['feedbackLayoutOverride'] || ''
       serviceShortPress.value = settings['button']['serviceShortPress']
       serviceLongPress.value = settings['button']['serviceLongPress']
       serviceTap.value = settings['button']['serviceTap']
@@ -746,6 +787,9 @@ function saveSettings() {
       backgroundColorEnd: bgColorEnd,
       useCustomButtonLabels: useCustomButtonLabels.value,
       buttonLabels: buttonLabels.value,
+      useCustomIndicator: useCustomIndicator.value,
+      customIndicator: customIndicator.value,
+      feedbackLayoutOverride: feedbackLayoutOverride.value,
       useStateImagesForOnOffStates: useStateImagesForOnOffStates.value // determined by action ID (manifest)
     },
 
