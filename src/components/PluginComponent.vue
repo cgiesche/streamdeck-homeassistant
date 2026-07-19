@@ -78,6 +78,9 @@ const renderGeneration = new Map()
 
 const activeStates = ref(defaultActiveStates)
 
+// Entity states rendered with the offline icon (custom-icons action).
+const OFFLINE_STATES = ['unavailable', 'unknown', 'none']
+
 const rotationTimeout = {}
 const rotationAmount = {}
 const rotationPercent = {}
@@ -440,12 +443,22 @@ async function updateContextState(currentContext, domain, stateObject, generatio
     if (renderingConfig.customTitle) {
       $SD.value.setTitle(currentContext, renderingConfig.customTitle)
     }
-    if (activeStates.value.includes(stateObject.state)) {
-      console.log('Setting state of ' + currentContext + ' to 1')
-      $SD.value.setState(currentContext, 1)
+    const display = contextSettings.display
+    const isOffline = OFFLINE_STATES.includes(stateObject.state)
+    const isActive = activeStates.value.includes(stateObject.state)
+    // Icons uploaded in the property inspector; offline falls back to off.
+    const customIcon = isOffline
+      ? display.offlineIcon || display.offIcon
+      : isActive
+        ? display.onIcon
+        : display.offIcon
+    if (customIcon) {
+      $SD.value.setImage(currentContext, customIcon)
     } else {
-      console.log('Setting state of ' + currentContext + ' to 0')
-      $SD.value.setState(currentContext, 0)
+      console.log('Setting state of ' + currentContext + ' to ' + (isActive ? 1 : 0))
+      $SD.value.setState(currentContext, isActive ? 1 : 0)
+      // Clear a possible custom-icon override so state images show again.
+      $SD.value.setImage(currentContext, null)
     }
   } else {
     if (renderingConfig.customTitle) {

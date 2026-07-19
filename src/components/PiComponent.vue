@@ -170,6 +170,60 @@
         <label class="pi-label">Entity</label>
         <TypeaheadSelect v-model="entity" class="mb-3" :items="entityItems" placeholder="No entity selected" />
 
+        <!-- Custom state icons (custom-icons action only) -->
+        <div v-if="useStateImagesForOnOffStates" class="mb-3">
+          <label class="pi-label">Custom icons</label>
+          <div class="pi-icon-row">
+            <div v-for="slot in CUSTOM_ICON_SLOTS" :key="slot.key" class="pi-icon-slot">
+              <button
+                type="button"
+                class="pi-icon-tile"
+                :class="{
+                  'pi-icon-tile-set': customIcons[slot.key],
+                  'pi-icon-tile-drag': dragOverSlot === slot.key
+                }"
+                :title="`Choose ${slot.label.toLowerCase()} image (click or drop a file)`"
+                @click="pickCustomIcon(slot.key)"
+                @dragover.prevent
+                @dragenter.prevent="dragOverSlot = slot.key"
+                @dragleave="onIconDragLeave(slot.key)"
+                @drop.prevent="onCustomIconDropped(slot.key, $event)"
+              >
+                <img v-if="customIcons[slot.key]" :src="customIcons[slot.key]" :alt="slot.label" />
+                <span v-else class="pi-icon-plus">+</span>
+              </button>
+              <button
+                v-if="customIcons[slot.key]"
+                type="button"
+                class="pi-icon-remove"
+                title="Remove"
+                @click="clearCustomIcon(slot.key)"
+              >
+                ×
+              </button>
+              <div class="pi-icon-label">{{ slot.label }}</div>
+            </div>
+          </div>
+          <input
+            ref="customIconFileInput"
+            type="file"
+            accept="image/*"
+            style="display: none"
+            @change="onCustomIconSelected($event)"
+          />
+          <div v-if="customIconError" class="pi-hint" style="color: var(--pi-warning)">
+            {{ customIconError }}
+          </div>
+          <div class="pi-hint" style="color: var(--pi-warning)">
+            Icons dragged directly onto the key in Stream Deck override these. Reset the key
+            images to default (arrow menu on the key preview) for icons set here to show.
+          </div>
+          <div class="pi-hint">
+            Offline is shown when the entity is unavailable or unknown; if not set, the off icon
+            is used. Remember to save your settings below.
+          </div>
+        </div>
+
         <!-- Icon source radio group -->
         <div class="mb-3">
           <label class="pi-label">Icon source</label>
@@ -455,7 +509,12 @@ import {
 import { Homeassistant } from '@/modules/homeassistant/homeassistant'
 import { Entity } from '@/modules/pi/entity'
 import { Service } from '@/modules/pi/service'
-import { computed, onMounted, ref, watch } from 'vue'
+import {
+  fileUrlFromDataTransfer,
+  fileUrlFromInputValue,
+  loadIconAsDataUri
+} from '@/modules/pi/iconLoader'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import ServiceCallConfiguration from '@/components/ServiceCallConfiguration.vue'
 import { ObjectUtils } from '@/modules/common/utils'
 import TypeaheadSelect from '@/components/ui/TypeaheadSelect.vue'
@@ -490,6 +549,20 @@ const rotationTickBucketSizeMs = ref(300)
 const useCustomTitle = ref(false)
 const buttonTitle = ref('{{friendly_name}}')
 const useStateImagesForOnOffStates = ref(false) // determined by action ID (manifest)
+// Plugin-rendered state icons (data URIs); key images set in the Stream
+// Deck UI take priority over these.
+const CUSTOM_ICON_SLOTS = [
+  { key: 'off', label: 'Off' },
+  { key: 'on', label: 'On' },
+  { key: 'offline', label: 'Offline' }
+]
+const customIcons = reactive({ on: '', off: '', offline: '' })
+const customIconError = ref('')
+const customIconFileInput = ref(null)
+// Slot the hidden file input is currently picking for.
+let pendingIconSlot = null
+// Slot currently hovered by a drag, for the drop highlight.
+const dragOverSlot = ref(null)
 const useCustomButtonLabels = ref(false)
 const buttonLabels = ref('')
 const enableServiceIndicator = ref(true)
@@ -515,6 +588,11 @@ const controllerType = ref('')
 
 onMounted(() => {
   updateManifest()
+
+  // A file dropped outside the icon tiles would otherwise navigate the
+  // inspector page to the dropped file.
+  window.addEventListener('dragover', (e) => e.preventDefault())
+  window.addEventListener('drop', (e) => e.preventDefault())
 
   window.connectElgatoStreamDeckSocket = (
     inPort,
@@ -578,6 +656,9 @@ onMounted(() => {
       buttonTitle.value = settings['display']['buttonTitle'] || '{{friendly_name}}'
       useCustomButtonLabels.value = settings['display']['useCustomButtonLabels']
       buttonLabels.value = settings['display']['buttonLabels']
+      customIcons.on = settings['display']['onIcon'] ?? ''
+      customIcons.off = settings['display']['offIcon'] ?? ''
+      customIcons.offline = settings['display']['offlineIcon'] ?? ''
       serviceShortPress.value = settings['button']['serviceShortPress']
       serviceLongPress.value = settings['button']['serviceLongPress']
       serviceTap.value = settings['button']['serviceTap']
@@ -746,6 +827,9 @@ function saveSettings() {
       backgroundColorEnd: bgColorEnd,
       useCustomButtonLabels: useCustomButtonLabels.value,
       buttonLabels: buttonLabels.value,
+      onIcon: customIcons.on,
+      offIcon: customIcons.off,
+      offlineIcon: customIcons.offline,
       useStateImagesForOnOffStates: useStateImagesForOnOffStates.value // determined by action ID (manifest)
     },
 
@@ -761,6 +845,52 @@ function saveSettings() {
   }
 
   $SD.saveSettings(settings)
+}
+
+// ── Custom icons (custom-icons action) ────────────────────────────────────
+function pickCustomIcon(slot) {
+  pendingIconSlot = slot
+  customIconFileInput.value?.click()
+}
+
+async function applyCustomIcon(slot, file, fileUrl) {
+  try {
+    customIcons[slot] = await loadIconAsDataUri(file, fileUrl)
+    customIconError.value = ''
+  } catch (e) {
+    customIconError.value = e.message
+  }
+}
+
+async function onCustomIconSelected(event) {
+  const input = event.target
+  const file = input.files && input.files[0]
+  const fileUrl = fileUrlFromInputValue(input.value)
+  if (!pendingIconSlot || (!file && !fileUrl)) return
+  await applyCustomIcon(pendingIconSlot, file, fileUrl)
+  input.value = ''
+}
+
+function onCustomIconDropped(slot, event) {
+  dragOverSlot.value = null
+  const dt = event.dataTransfer
+  if (!dt) return
+  const file = dt.files && dt.files[0]
+  const fileUrl = fileUrlFromDataTransfer(dt)
+  if (!file && !fileUrl) {
+    customIconError.value = 'Drop a local image file.'
+    return
+  }
+  applyCustomIcon(slot, file, fileUrl)
+}
+
+function onIconDragLeave(slot) {
+  if (dragOverSlot.value === slot) dragOverSlot.value = null
+}
+
+function clearCustomIcon(slot) {
+  customIcons[slot] = ''
+  customIconError.value = ''
 }
 
 // ── Debug report ──────────────────────────────────────────────────────────
