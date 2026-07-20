@@ -16,6 +16,7 @@ export class SvgUtils {
     return this.#generateButtonSVG(
       labels,
       renderingConfig.icon,
+      renderingConfig.customIcon,
       renderingConfig.color,
       renderingConfig.isAction,
       renderingConfig.isMultiAction,
@@ -34,6 +35,7 @@ export class SvgUtils {
   #generateButtonSVG(
     labels,
     mdiIconName,
+    customIcon,
     iconColor,
     isAction = false,
     isMultiAction = false,
@@ -61,10 +63,10 @@ export class SvgUtils {
         `<rect x="0" y="0" width="${WIDTH}" height="${HEIGHT}" fill="rgba(0,0,0,${BG_OVERLAY_OPACITY})"/>`
       : ''
 
-    const iconPath = this.#getIconPath(mdiIconName)
+    const iconPath = customIcon ? null : this.#getIconPath(mdiIconName)
 
     let iconTransform, maxLines, labelIndexOffset
-    if (!iconPath || iconLayout === 'FULL') {
+    if ((!customIcon && !iconPath) || iconLayout === 'FULL') {
       iconTransform = `translate(0, 0) scale(12)`
       maxLines = 4
       labelIndexOffset = 0
@@ -78,9 +80,12 @@ export class SvgUtils {
       labelIndexOffset = 2
     }
 
-    const iconSvg = iconPath
-      ? `<g transform="${iconTransform}"><path d="${iconPath}" fill="${iconColor ?? '#FFF'}"/></g>`
-      : ''
+    let iconSvg = ''
+    if (customIcon) {
+      iconSvg = this.#renderCustomIcon(customIcon, iconColor, iconTransform)
+    } else if (iconPath) {
+      iconSvg = `<g transform="${iconTransform}"><path d="${iconPath}" fill="${iconColor ?? '#FFF'}"/></g>`
+    }
 
     const indicatorColor = isMultiAction ? '#3e89ff' : '#62ff65'
     const indicator = isAction
@@ -108,6 +113,11 @@ export class SvgUtils {
       })
 
     return `<svg xmlns="http://www.w3.org/2000/svg" width="${WIDTH}" height="${HEIGHT}" viewBox="0 0 ${WIDTH} ${HEIGHT}">${defsSvg}${bgColorSvg}${backgroundSvg}${iconSvg}${indicator}${textLines.join('')}</svg>`
+  }
+
+  #renderCustomIcon(customIcon, iconColor, transform) {
+    const color = iconColor ?? '#FFF'
+    return `<g transform="${transform}"><svg width="24" height="24" viewBox="${customIcon.viewBox}" preserveAspectRatio="xMidYMid meet" fill="${color}" color="${color}">${customIcon.body}</svg></g>`
   }
 
   #getIconPath(iconName) {
