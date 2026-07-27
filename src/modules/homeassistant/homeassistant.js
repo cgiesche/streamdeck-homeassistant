@@ -84,6 +84,22 @@ export class Homeassistant {
     this._connection.sendMessagePromise({ type: 'get_services' }).then(callback)
   }
 
+  getCustomIcon(set, icon) {
+    if (!this._connection) {
+      return Promise.reject(new Error('Not connected to Home Assistant'))
+    }
+    return this._connection.sendMessagePromise({
+      type: 'custom_icons/icon',
+      set,
+      icon
+    })
+  }
+
+  subscribeEvent(eventType, callback) {
+    if (!this._connection) return Promise.resolve(null)
+    return this._connection.subscribeEvents(callback, eventType)
+  }
+
   async subscribeEntitiesChanged(entityIds, callback) {
     if (!this._connection) return null
     try {

@@ -9,12 +9,14 @@ import { LruCache } from '@/modules/common/lruCache'
 import { Homeassistant } from '@/modules/homeassistant/homeassistant'
 import { EntityConfigFactory } from '@/modules/plugin/entityConfigFactoryNg'
 import { SvgUtils, WIDTH, HEIGHT } from '@/modules/plugin/svgUtils'
+import { CustomIconResolver, applyCustomIcon } from '@/modules/plugin/customIconResolver'
 import { fetchRemoteYaml } from '@/modules/common/remoteConfig'
 import nunjucksEnv from '../modules/common/nunjucksEnv.js'
 import { onMounted, ref, shallowRef } from 'vue'
 import defaultActiveStates from '../../public/config/active-states.yml'
 
 let entityConfigFactory
+let customIconResolver
 const svgUtils = new SvgUtils()
 
 const imageCache = new LruCache(30)
@@ -228,6 +230,7 @@ function connectHomeAssistant() {
       onHAError,
       onHAClosed
     )
+    customIconResolver = new CustomIconResolver((set, icon) => $HA.value.getCustomIcon(set, icon))
   }
 }
 
@@ -237,6 +240,14 @@ let reconnectDelayMs = RECONNECT_BASE_DELAY_MS
 
 const onHAConnected = () => {
   reconnectDelayMs = RECONNECT_BASE_DELAY_MS
+  const homeAssistant = $HA.value
+  homeAssistant
+    .subscribeEvent('homeassistant_started', () => {
+      if ($HA.value !== homeAssistant) return
+      customIconResolver.reset()
+      homeAssistant.getStatesDebounced(entityStatesChanged)
+    })
+    .catch((error) => console.log(`Failed to subscribe to Home Assistant start: ${error}`))
   $HA.value.getStatesDebounced(entityStatesChanged)
   resubscribeEntities()
 }
@@ -402,6 +413,9 @@ async function updateContextState(currentContext, domain, stateObject, generatio
         ? entityConfigFactory.colors.active
         : entityConfigFactory.colors.neutral
   }
+
+  await applyCustomIcon(renderingConfig, customIconResolver)
+  if (isStale()) return
 
   const entityPicture = stateObject.attributes?.entity_picture
   if (entityPicture && globalSettings.value?.serverUrl) {
