@@ -235,14 +235,22 @@ const RECONNECT_BASE_DELAY_MS = 5000
 const RECONNECT_MAX_DELAY_MS = 60000
 let reconnectDelayMs = RECONNECT_BASE_DELAY_MS
 
+// Connection lifecycle goes to the Stream Deck/OpenDeck log file, so dropped
+// connections can be diagnosed after the fact.
+function logConnection(message) {
+  console.log(message)
+  $SD.value?.log(message)
+}
+
 const onHAConnected = () => {
+  logConnection('Connected to Home Assistant (heartbeat enabled)')
   reconnectDelayMs = RECONNECT_BASE_DELAY_MS
   $HA.value.getStatesDebounced(entityStatesChanged)
   resubscribeEntities()
 }
 
 function onHAError(msg, { isAuthError = false } = {}) {
-  console.log(`Home Assistant connection error: ${msg}`)
+  logConnection(`Home Assistant connection error: ${msg}`)
   if (isAuthError) {
     // Retrying cannot fix an invalid token; wait for new global settings.
     haEntitySubscription = null
@@ -254,7 +262,9 @@ function onHAError(msg, { isAuthError = false } = {}) {
 }
 
 function onHAClosed(msg) {
-  console.log(`Home Assistant connection closed, trying to reopen connection: ${msg}`)
+  logConnection(
+    `Home Assistant connection closed (${msg}), reconnecting in ${reconnectDelayMs / 1000}s`
+  )
   scheduleReconnect()
 }
 
