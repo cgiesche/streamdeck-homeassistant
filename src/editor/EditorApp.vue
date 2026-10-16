@@ -281,7 +281,8 @@
 <script setup>
 import { ref, reactive, computed, defineComponent, h } from 'vue'
 import * as Mdi from '@mdi/js'
-import jsYaml from 'js-yaml'
+import { dump as dumpYaml } from 'js-yaml'
+import { loadYaml } from '../modules/common/remoteConfig.js'
 import defaultConfig from '../../public/config/default-display-config.yml'
 import { EntityConfigFactory } from '../modules/plugin/entityConfigFactoryNg.js'
 import { SvgUtils } from '../modules/plugin/svgUtils.js'
@@ -319,7 +320,7 @@ function loadFile(e) {
   const reader = new FileReader()
   reader.onload = (ev) => {
     try {
-      config.value = jsYaml.load(ev.target.result)
+      config.value = loadYaml(ev.target.result)
     } catch (err) {
       alert('Failed to parse YAML: ' + err.message)
     }
@@ -328,7 +329,7 @@ function loadFile(e) {
 }
 
 function downloadYaml() {
-  const yaml = jsYaml.dump(config.value, { lineWidth: 120 })
+  const yaml = dumpYaml(config.value, { lineWidth: 120 })
   const blob = new Blob([yaml], { type: 'text/yaml' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')

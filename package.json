@@ -17,30 +17,34 @@
     "test-watch": "vitest"
   },
   "dependencies": {
-    "@iconify/utils": "^3.1.4",
+    "@iconify/utils": "^3.1.7",
     "@mdi/font": "^7.4.47",
     "@mdi/js": "^7.4.47",
-    "axios": "^1.16.1",
-    "core-js": "^3.46.0",
-    "home-assistant-js-websocket": "^9.6.0",
-    "js-yaml": "4.1.1",
+    "axios": "^1.20.0",
+    "core-js": "^3.50.0",
+    "home-assistant-js-websocket": "^9.7.1",
+    "js-yaml": "5.5.0",
     "nunjucks": "3.2.4",
-    "vue": "^3.5.24"
+    "vue": "^3.5.44"
   },
   "overrides": {
-    "js-yaml": "4.1.1"
+    "@modyfi/vite-plugin-yaml": {
+      "js-yaml": "4.3.2"
+    }
   },
   "devDependencies": {
-    "@elgato/cli": "^1.5.1",
+    "@elgato/cli": "^1.10.2",
+    "@eslint/js": "^10.0.1",
     "@modyfi/vite-plugin-yaml": "^1.1.1",
-    "@vitejs/plugin-vue": "^6.0.1",
+    "@vitejs/plugin-vue": "^6.0.10",
     "@vue/eslint-config-prettier": "^10.2.0",
-    "eslint": "^9.39.1",
-    "eslint-plugin-vue": "^10.5.1",
-    "npm-check-updates": "^19.1.2",
-    "prettier": "^3.6.2",
-    "sass": "^1.93.3",
-    "vite": "^7.2.2",
-    "vitest": "^4.1.9"
+    "eslint": "^10.12.0",
+    "eslint-plugin-vue": "^10.11.1",
+    "globals": "^17.13.0",
+    "npm-check-updates": "^23.1.1",
+    "prettier": "^3.9.10",
+    "sass": "^1.105.2",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.5"
   }
 }

@@ -825,7 +825,7 @@ function fallbackCopy(text) {
 
 async function copyDebugInfo() {
   const report = buildDebugReport()
-  let ok = false
+  let ok
   try {
     await navigator.clipboard.writeText(report)
     ok = true

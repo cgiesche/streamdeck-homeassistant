@@ -317,7 +317,7 @@ async function resubscribeEntities() {
   const entityIds = getConfiguredEntityIds()
   if (entityIds.length === 0) return
 
-  let subscription = null
+  let subscription
   try {
     subscription = await $HA.value.subscribeEntitiesChanged(entityIds, entityStateChanged)
   } catch (e) {
