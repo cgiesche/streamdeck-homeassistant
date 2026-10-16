@@ -68,6 +68,8 @@ Controls which icon is shown on the button:
 | **Home Assistant** | Uses the icon configured on the HA entity. Falls back to the plugin icon. |
 | **Hide** | No icon is shown. |
 
+With the [Custom Icons](https://github.com/thomasloven/hass-custom_icons) integration installed, identifiers such as `fa6-solid:shield` and `local:my-icon` are supported. Icons are cached and fall back to the plugin icon when unavailable. Custom SVGs can use `currentColor` to inherit the entity color; explicit colors are preserved.
+
 #### Visual Service Indicators *(Keypad only)*
 
 When enabled, small colored dots appear at the corners of the button to indicate which actions are configured (short press, long press, etc.).

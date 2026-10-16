@@ -48,6 +48,9 @@ export class EntityConfigFactory {
       (!renderingConfig.icon || displaySettings.iconSettings === 'PREFER_HA')
     ) {
       // Use icon from home-assistant, if no default or preferred
+      if (renderingConfig.icon && renderingConfig.icon !== attributes.icon) {
+        renderingConfig.fallbackIcon = renderingConfig.icon
+      }
       renderingConfig.icon = attributes.icon
     }
     let rgbColor = attributes.rgb_color
