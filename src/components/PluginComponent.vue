@@ -230,7 +230,10 @@ function connectHomeAssistant() {
       onHAError,
       onHAClosed
     )
-    customIconResolver = new CustomIconResolver((set, icon) => $HA.value.getCustomIcon(set, icon))
+    const homeAssistant = $HA.value
+    customIconResolver = new CustomIconResolver((set, icon) =>
+      homeAssistant.getCustomIcon(set, icon)
+    )
   }
 }
 
@@ -424,8 +427,11 @@ async function updateContextState(currentContext, domain, stateObject, generatio
         : entityConfigFactory.colors.neutral
   }
 
-  await applyCustomIcon(renderingConfig, customIconResolver)
-  if (isStale()) return
+  // State-image keys never render the icon, so skip the lookup for them
+  if (isEncoder(contextSettings) || !contextSettings.display.useStateImagesForOnOffStates) {
+    await applyCustomIcon(renderingConfig, customIconResolver)
+    if (isStale()) return
+  }
 
   const entityPicture = stateObject.attributes?.entity_picture
   if (entityPicture && globalSettings.value?.serverUrl) {

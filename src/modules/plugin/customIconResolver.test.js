@@ -1,7 +1,13 @@
 import { describe, it, expect, vi } from 'vitest'
 import { Homeassistant } from '../homeassistant/homeassistant.js'
 import { EntityConfigFactory } from './entityConfigFactoryNg.js'
-import { CustomIconResolver, applyCustomIcon, parseIcon, renderIcon } from './customIconResolver.js'
+import {
+  CustomIconResolver,
+  FAILURE_RETRY_MS,
+  applyCustomIcon,
+  parseIcon,
+  renderIcon
+} from './customIconResolver.js'
 
 const iconData = {
   body: '<path d="M0 0h32v16z"/>',
@@ -25,6 +31,12 @@ describe('custom icon data', () => {
       viewBox: '0 0 16 16'
     })
     expect(renderIcon({ body: '<path/>', viewBox: [0, 0, 0, 16] })).toBeNull()
+  })
+
+  it('escapes path data', () => {
+    expect(renderIcon({ path: 'M0 0"/><script/>', viewBox: [0, 0, 16, 16] }).body).toBe(
+      '<path d="M0 0&quot;/&gt;&lt;script/&gt;"/>'
+    )
   })
 
   it('applies Iconify rotation and flip metadata', () => {
@@ -83,6 +95,26 @@ describe('CustomIconResolver', () => {
     expect(unavailable).toHaveBeenCalledTimes(2)
   })
 
+  it('retries failed lookups after the retry delay', async () => {
+    vi.useFakeTimers()
+    try {
+      const loadIcon = vi.fn(async () => {
+        throw { code: 'not_found' }
+      })
+      const resolver = new CustomIconResolver(loadIcon)
+      expect(await resolver.resolve('custom-set:late')).toBeNull()
+
+      loadIcon.mockResolvedValue(iconData)
+      vi.advanceTimersByTime(FAILURE_RETRY_MS - 1)
+      expect(await resolver.resolve('custom-set:late')).toBeNull()
+      vi.advanceTimersByTime(1)
+      expect(await resolver.resolve('custom-set:late')).not.toBeNull()
+      expect(loadIcon).toHaveBeenCalledTimes(2)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
   it('subscribes to Home Assistant lifecycle events', async () => {
     const callback = vi.fn()
     const subscribeEvents = vi.fn(async () => vi.fn())
@@ -131,6 +163,20 @@ describe('applyCustomIcon', () => {
     )
     await applyCustomIcon(fallbackConfig, { resolve: vi.fn(async () => null) })
     expect(fallbackConfig.icon).toBe('mdi:lightbulb')
+  })
+
+  it('resolves a custom fallback icon', async () => {
+    const resolvedIcon = renderIcon(iconData)
+    const renderingConfig = { icon: 'custom-set:missing', fallbackIcon: 'local:theme' }
+    const resolve = vi.fn(async (icon) => (icon === 'local:theme' ? resolvedIcon : null))
+    await applyCustomIcon(renderingConfig, { resolve })
+    expect(renderingConfig.customIcon).toEqual(resolvedIcon)
+    expect(renderingConfig.icon).toBe('local:theme')
+
+    const missingConfig = { icon: 'custom-set:missing', fallbackIcon: 'local:missing' }
+    await applyCustomIcon(missingConfig, { resolve: vi.fn(async () => null) })
+    expect(missingConfig.customIcon).toBeNull()
+    expect(missingConfig.icon).toBeNull()
   })
 
   it('does not request hidden or built-in icons', async () => {
