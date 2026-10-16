@@ -615,20 +615,40 @@ const entityAttributes = computed(() => {
   return []
 })
 
-function connectHomeAssistant() {
+// The PI may connect while HA is briefly unreachable (e.g. preloaded by
+// OpenDeck at login before the network is up). Keep retrying like the
+// plugin does instead of giving up after the first failed setup.
+const RECONNECT_BASE_DELAY_MS = 5000
+const RECONNECT_MAX_DELAY_MS = 60000
+let reconnectDelayMs = RECONNECT_BASE_DELAY_MS
+let reconnectTimeout = null
+
+function scheduleReconnect(url, token) {
+  window.clearTimeout(reconnectTimeout)
+  console.log(`Reconnecting to Home Assistant in ${reconnectDelayMs / 1000}s`)
+  reconnectTimeout = window.setTimeout(() => connectHomeAssistant(url, token), reconnectDelayMs)
+  reconnectDelayMs = Math.min(reconnectDelayMs * 2, RECONNECT_MAX_DELAY_MS)
+}
+
+// Retries reuse the url/token of the original attempt, not whatever is
+// currently (and possibly half-)typed into the unsaved input fields.
+function connectHomeAssistant(url = serverUrl.value, token = accessToken.value) {
+  window.clearTimeout(reconnectTimeout)
   if ($HA) {
     $HA.close()
   }
 
   haConnectionState.value = 'connecting'
-  console.log(`Connecting to Home Assistant: ${redactUrl(serverUrl.value)}`)
+  console.log(`Connecting to Home Assistant: ${redactUrl(url)}`)
 
   try {
     $HA = new Homeassistant(
-      serverUrl.value,
-      accessToken.value,
+      url,
+      token,
       () => {
         console.log('Home Assistant connected')
+        reconnectDelayMs = RECONNECT_BASE_DELAY_MS
+        haError.value = ''
         haConnectionState.value = 'connected'
         $HA.getStates((states) => {
           availableEntities.value = states
@@ -674,15 +694,18 @@ function connectHomeAssistant() {
           )
         })
       },
-      (message) => {
+      (message, { isAuthError = false } = {}) => {
         console.error(`Home Assistant connection error: ${message}`)
         lastHaError.value = message
         haError.value = message
         haConnectionState.value = 'disconnected'
+        // Retrying cannot fix an invalid token; wait for the user to save new settings.
+        if (!isAuthError) scheduleReconnect(url, token)
       },
       () => {
         console.warn('Home Assistant connection closed')
         haConnectionState.value = 'disconnected'
+        scheduleReconnect(url, token)
       }
     )
   } catch (e) {
@@ -716,6 +739,7 @@ async function saveGlobalSettings() {
     displayConfiguration: displayConfigurationsSettings
   })
 
+  reconnectDelayMs = RECONNECT_BASE_DELAY_MS
   connectHomeAssistant()
 }
 
