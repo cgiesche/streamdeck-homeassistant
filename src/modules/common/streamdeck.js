@@ -67,7 +67,9 @@ export class StreamDeck {
   }
 
   setImage(context, image) {
-    this.#send({ event: 'setImage', context, payload: { image, target: 0, state: 0 } })
+    // No `state` in the payload: the image then applies to every state of
+    // the action, so overrides also cover multi-state (custom icon) actions.
+    this.#send({ event: 'setImage', context, payload: { image, target: 0 } })
   }
 
   setFeedback(context, payload) {
