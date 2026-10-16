@@ -16,6 +16,14 @@ const HA_ERROR_MESSAGES = {
   [ERR_INVALID_HTTPS_TO_HTTP]: 'Cannot connect: server uses HTTP but a secure connection (HTTPS) is required.'
 }
 
+// A connection whose network path dies silently (NAT/proxy/CDN drops it
+// without a FIN or RST) never fires a close event, and messages sent on it are
+// lost until the OS gives up retransmitting (~15 minutes on Linux). Ping Home
+// Assistant periodically and force a reconnect when it stops answering.
+const HEARTBEAT_INTERVAL_MS = 30000
+const HEARTBEAT_TIMEOUT_MS = 10000
+const HEARTBEAT_TIMED_OUT = Symbol('heartbeat timed out')
+
 export class Homeassistant {
   constructor(url, accessToken, onReady, onError, onClose) {
     this._connection = null
@@ -23,6 +31,9 @@ export class Homeassistant {
     this._closed = false
     this._statesDebounceTimer = null
     this._pendingStateCallbacks = new Set()
+    this._heartbeatTimer = null
+    this._heartbeatPending = false
+    this._closeReason = null
 
     const auth = createLongLivedTokenAuth(url, accessToken)
 
@@ -33,11 +44,17 @@ export class Homeassistant {
           return
         }
         this._connection = conn
-        conn.addEventListener('disconnected', () => !this._closed && onClose?.())
+        conn.addEventListener('disconnected', () => {
+          if (this._closed) return
+          const reason = this._closeReason ?? 'socket closed'
+          this._closeReason = null
+          onClose?.(reason)
+        })
         conn.addEventListener(
           'reconnect-error',
           () => !this._closed && onError?.('Reconnection failed')
         )
+        this._heartbeatTimer = setInterval(() => this._heartbeat(), HEARTBEAT_INTERVAL_MS)
         onReady?.()
       })
       .catch((err) => {
@@ -50,11 +67,38 @@ export class Homeassistant {
 
   close() {
     this._closed = true
+    clearInterval(this._heartbeatTimer)
+    this._heartbeatTimer = null
     clearTimeout(this._statesDebounceTimer)
     this._statesDebounceTimer = null
     this._pendingStateCallbacks.clear()
     this._connection?.close()
     this._connection = null
+  }
+
+  async _heartbeat() {
+    const conn = this._connection
+    if (!conn?.connected || this._heartbeatPending) return
+    this._heartbeatPending = true
+    let timer
+    try {
+      await Promise.race([
+        conn.ping(),
+        new Promise((_, reject) => {
+          timer = setTimeout(() => reject(HEARTBEAT_TIMED_OUT), HEARTBEAT_TIMEOUT_MS)
+        })
+      ])
+    } catch (e) {
+      // Other rejections mean the socket already closed; the 'disconnected'
+      // handler deals with those.
+      if (e === HEARTBEAT_TIMED_OUT && !this._closed && conn === this._connection) {
+        this._closeReason = `no reply to ping within ${HEARTBEAT_TIMEOUT_MS / 1000}s`
+        conn.reconnect(true)
+      }
+    } finally {
+      clearTimeout(timer)
+      this._heartbeatPending = false
+    }
   }
 
   // Coalesces bursts of calls into one get_states request, but every callback
