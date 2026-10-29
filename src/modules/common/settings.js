@@ -1,6 +1,6 @@
 import { trimBlankLabelLines } from './labelLines.js'
 
-export const CURRENT_VERSION = 8
+export const CURRENT_VERSION = 9
 export const DEFAULT_LABEL_FONT_SIZE = 48
 
 function migrateV1(s) {
@@ -87,6 +87,16 @@ function migrateV7(s) {
   return v8
 }
 
+function migrateV8(s) {
+  const v9 = { ...s, display: { ...s.display }, version: 9 }
+  // Per-dial (Encoder) progress-bar overrides. Empty/false means "use the theme
+  // default", so existing dials are unchanged.
+  v9.display.useCustomIndicator = false
+  v9.display.customIndicator = ''
+  v9.display.feedbackLayoutOverride = ''
+  return v9
+}
+
 const MIGRATIONS = {
   1: migrateV1,
   2: migrateV2,
@@ -94,7 +104,8 @@ const MIGRATIONS = {
   4: migrateV4,
   5: migrateV5,
   6: migrateV6,
-  7: migrateV7
+  7: migrateV7,
+  8: migrateV8
 }
 
 export class Settings {
