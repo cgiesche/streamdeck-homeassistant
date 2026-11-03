@@ -185,6 +185,102 @@ a {
   cursor: pointer;
 }
 
+// ── Custom icon tiles ────────────────────────────────────────────────────
+.pi-icon-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.pi-icon-slot {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.pi-icon-tile {
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed var(--pi-border-strong);
+  border-radius: var(--pi-radius);
+  background: var(--pi-bg-sunken);
+  cursor: pointer;
+  overflow: hidden;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+
+  // Children must not intercept drag events, or dragleave fires when
+  // hovering them and the drop highlight flickers off.
+  img,
+  .pi-icon-plus {
+    pointer-events: none;
+  }
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  &:hover {
+    border-color: var(--pi-accent);
+  }
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--pi-accent);
+  }
+  &.pi-icon-tile-set {
+    border-style: solid;
+    border-color: var(--pi-border);
+  }
+  &.pi-icon-tile-drag {
+    border-color: var(--pi-accent);
+    box-shadow: 0 0 0 2px var(--pi-accent-dim);
+  }
+}
+
+.pi-icon-plus {
+  font-size: 22px;
+  line-height: 1;
+  color: var(--pi-text-muted);
+}
+
+.pi-icon-remove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--pi-border-strong);
+  border-radius: 50%;
+  background: var(--pi-bg-raised);
+  color: var(--pi-text-secondary);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--pi-text-primary);
+    border-color: var(--pi-accent);
+  }
+}
+
+.pi-icon-label {
+  font-size: 11px;
+  color: var(--pi-text-secondary);
+}
+
 // ── Buttons ───────────────────────────────────────────────────────────────
 .pi-btn {
   display: inline-flex;
