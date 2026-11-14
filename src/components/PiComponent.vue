@@ -577,7 +577,7 @@ onMounted(() => {
       useCustomTitle.value = settings['display']['useCustomTitle']
       buttonTitle.value = settings['display']['buttonTitle'] || '{{friendly_name}}'
       useCustomButtonLabels.value = settings['display']['useCustomButtonLabels']
-      buttonLabels.value = settings['display']['buttonLabels']
+      buttonLabels.value = settings['display']['buttonLabels'] ?? ''
       serviceShortPress.value = settings['button']['serviceShortPress']
       serviceLongPress.value = settings['button']['serviceLongPress']
       serviceTap.value = settings['button']['serviceTap']
@@ -711,7 +711,7 @@ function connectHomeAssistant(url = serverUrl.value, token = accessToken.value) 
   } catch (e) {
     console.error(`Home Assistant connect failed: ${e}`)
     lastHaError.value = String(e)
-    haError.value = e
+    haError.value = String(e)
     haConnectionState.value = 'disconnected'
   }
 }

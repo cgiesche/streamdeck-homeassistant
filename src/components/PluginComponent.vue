@@ -99,9 +99,19 @@ onMounted(async () => {
       const configUrl =
         migratedSettings.displayConfiguration?.urlOverride ||
         migratedSettings.displayConfiguration?.url
-      entityConfigFactory = new EntityConfigFactory(
+      const factory = new EntityConfigFactory(
         configUrl ? () => fetchRemoteYaml(configUrl) : null
       )
+      entityConfigFactory = factory
+      if (configUrl) {
+        // Buttons may already have been drawn with the default config while
+        // the custom theme was still loading; redraw them once it is in.
+        factory.loaded.then(() => {
+          if (entityConfigFactory === factory && $HA.value) {
+            $HA.value.getStatesDebounced(entityStatesChanged)
+          }
+        })
+      }
       reconnectDelayMs = RECONNECT_BASE_DELAY_MS
       connectHomeAssistant()
     })
@@ -217,6 +227,8 @@ async function fetchActiveStates() {
 }
 
 function connectHomeAssistant() {
+  // A reconnect scheduled for the previous connection must not replace this one.
+  window.clearTimeout(reconnectTimeout)
   console.log('Connecting to Home Assistant')
   if (globalSettings.value.serverUrl && globalSettings.value.accessToken) {
     if ($HA.value) {
@@ -417,7 +429,7 @@ async function updateContextState(currentContext, domain, stateObject, generatio
   }
 
   if (contextSettings.display.useCustomButtonLabels) {
-    renderingConfig.labelTemplates = contextSettings.display.buttonLabels.split('\n')
+    renderingConfig.labelTemplates = (contextSettings.display.buttonLabels ?? '').split('\n')
   }
 
   if (!renderingConfig.color) {
