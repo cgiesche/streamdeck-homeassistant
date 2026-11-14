@@ -157,7 +157,9 @@ export class SvgUtils {
       }
       img.onerror = () => {
         URL.revokeObjectURL(blobUrl)
-        resolve('data:image/svg+xml;,' + svg)
+        // Must be URI-encoded: an unencoded '#' (e.g. fill="#FFF") would
+        // start a URL fragment and truncate the SVG.
+        resolve('data:image/svg+xml,' + encodeURIComponent(svg))
       }
       img.src = blobUrl
     })

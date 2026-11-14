@@ -20,11 +20,15 @@ export class EntityConfigFactory {
    * @param {(() => Promise<object>) | null} configLoader - async function that resolves to parsed config object
    */
   constructor(configLoader = null) {
-    if (configLoader) {
-      configLoader()
-        .then((config) => (this.displayConfiguration = config))
-        .catch((error) => console.log(`Failed to load display configuration: ${error}`))
-    }
+    // Resolves once the (remote) display configuration is in place, so callers
+    // can re-render buttons that were drawn with the default config meanwhile.
+    this.loaded = configLoader
+      ? configLoader()
+          .then((config) => {
+            this.displayConfiguration = config
+          })
+          .catch((error) => console.log(`Failed to load display configuration: ${error}`))
+      : Promise.resolve()
   }
 
   /**
@@ -125,13 +129,10 @@ export class EntityConfigFactory {
    * @returns String
    */
   render(string, stateObject) {
-    if (string) {
-      let renderedString = nunjucksEnv.renderString(string, stateObject)
-      if (renderedString) {
-        return renderedString.trim()
-      }
-    }
-    return string
+    if (typeof string !== 'string' || !string) return string
+    // An empty result is meaningful (e.g. "{% if state == 'on' %}#FFF{% endif %}"
+    // while off) and must not fall back to the raw template text.
+    return nunjucksEnv.renderString(string, stateObject).trim()
   }
 
   resolve(prop, resolvers) {

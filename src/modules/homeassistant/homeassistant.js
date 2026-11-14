@@ -119,13 +119,21 @@ export class Homeassistant {
   }
 
   getStates(callback) {
-    if (!this._connection) return
-    this._connection.sendMessagePromise({ type: 'get_states' }).then(callback)
+    this._request('get_states', callback)
   }
 
   getServices(callback) {
+    this._request('get_services', callback)
+  }
+
+  // Requests can fail when the connection drops mid-flight; log instead of
+  // leaving an unhandled rejection. The reconnect triggers a fresh sync.
+  _request(type, callback) {
     if (!this._connection) return
-    this._connection.sendMessagePromise({ type: 'get_services' }).then(callback)
+    this._connection
+      .sendMessagePromise({ type })
+      .then(callback)
+      .catch((e) => console.warn(`${type} failed: ${e?.message ?? JSON.stringify(e)}`))
   }
 
   getCustomIcon(set, icon) {
