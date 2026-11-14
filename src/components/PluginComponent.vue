@@ -77,6 +77,8 @@ let subscriptionGeneration = 0
 // Tracks the latest render started per context so stale async renders
 // (slow entity picture fetch, SVG rasterization) never overwrite newer ones.
 const renderGeneration = new Map()
+// Last title sent per context (null = reset to user-defined title)
+const lastSentTitle = new Map()
 
 const activeStates = ref(defaultActiveStates)
 
@@ -137,6 +139,7 @@ onMounted(async () => {
       let context = message.context
       delete actionSettings.value[context]
       renderGeneration.delete(context)
+      lastSentTitle.delete(context)
       resubscribeEntities()
     })
 
@@ -467,9 +470,7 @@ async function updateContextState(currentContext, domain, stateObject, generatio
     if (isStale()) return
     $SD.value.setFeedback(currentContext, renderingConfig.feedback)
   } else if (contextSettings.display.useStateImagesForOnOffStates) {
-    if (renderingConfig.customTitle) {
-      $SD.value.setTitle(currentContext, renderingConfig.customTitle)
-    }
+    applyTitle(currentContext, renderingConfig.customTitle)
     if (activeStates.value.includes(stateObject.state)) {
       console.log('Setting state of ' + currentContext + ' to 1')
       $SD.value.setState(currentContext, 1)
@@ -478,15 +479,26 @@ async function updateContextState(currentContext, domain, stateObject, generatio
       $SD.value.setState(currentContext, 0)
     }
   } else {
-    if (renderingConfig.customTitle) {
-      $SD.value.setTitle(currentContext, renderingConfig.customTitle)
-    }
+    applyTitle(currentContext, renderingConfig.customTitle)
     const image = await svgUtils.svgToImageDataUri(
       svgUtils.renderButtonSVG(renderingConfig, stateObject),
       !renderingConfig.backgroundColor && !renderingConfig.backgroundImage
     )
     if (isStale()) return
     $SD.value.setImage(currentContext, image)
+  }
+}
+
+// Sends the custom title, or resets to the user-defined title when there is none.
+// Only sends on change so a disabled custom title is cleared exactly once.
+function applyTitle(context, customTitle) {
+  const title = customTitle ?? null
+  if (lastSentTitle.has(context) && lastSentTitle.get(context) === title) return
+  lastSentTitle.set(context, title)
+  if (title === null) {
+    $SD.value.resetTitle(context)
+  } else {
+    $SD.value.setTitle(context, title)
   }
 }
 

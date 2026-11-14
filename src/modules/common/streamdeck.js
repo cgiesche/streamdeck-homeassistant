@@ -66,6 +66,11 @@ export class StreamDeck {
     this.#send({ event: 'setTitle', context, payload: { title, target: 0 } })
   }
 
+  // Omitting the title makes the Stream Deck fall back to the user-defined title
+  resetTitle(context) {
+    this.#send({ event: 'setTitle', context, payload: { target: 0 } })
+  }
+
   setImage(context, image) {
     this.#send({ event: 'setImage', context, payload: { image, target: 0, state: 0 } })
   }
